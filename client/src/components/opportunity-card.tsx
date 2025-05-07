@@ -21,7 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
+import { SimpleCheckbox } from "@/components/simple-checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -178,9 +178,9 @@ export default function OpportunityCard({
       {/* Selection checkbox */}
       {selectable && (
         <div className="absolute top-3 left-3 z-10">
-          <Checkbox 
+          <SimpleCheckbox 
             checked={selected === true}
-            onCheckedChange={handleSelectChange} 
+            onChange={handleSelectChange} 
           />
         </div>
       )}
@@ -315,9 +315,9 @@ export default function OpportunityCard({
       {/* Selection checkbox */}
       {selectable && (
         <div className="flex-shrink-0">
-          <Checkbox 
+          <SimpleCheckbox 
             checked={selected === true}
-            onCheckedChange={handleSelectChange}
+            onChange={handleSelectChange}
           />
         </div>
       )}
