@@ -84,17 +84,19 @@ export default function Sidebar() {
           <Link 
             key={route.href} 
             href={route.href}
-            onClick={() => setOpen(false)}
           >
-            <a className={cn(
-              "flex items-center px-3 py-2 text-sm font-medium rounded-md",
-              location === route.href 
-                ? "bg-primary-50 text-primary-700" 
-                : "text-gray-700 hover:bg-gray-100"
-            )}>
+            <div 
+              onClick={() => setOpen(false)}
+              className={cn(
+                "flex items-center px-3 py-2 text-sm font-medium rounded-md cursor-pointer",
+                location === route.href 
+                  ? "bg-primary-50 text-primary-700" 
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
               <route.icon className="h-5 w-5 mr-3" />
               {route.label}
-            </a>
+            </div>
           </Link>
         ))}
 
@@ -105,17 +107,19 @@ export default function Sidebar() {
           <Link 
             key={route.href} 
             href={route.href}
-            onClick={() => setOpen(false)}
           >
-            <a className={cn(
-              "flex items-center px-3 py-2 text-sm font-medium rounded-md",
-              location === route.href 
-                ? "bg-primary-50 text-primary-700" 
-                : "text-gray-700 hover:bg-gray-100"
-            )}>
+            <div 
+              onClick={() => setOpen(false)}
+              className={cn(
+                "flex items-center px-3 py-2 text-sm font-medium rounded-md cursor-pointer",
+                location === route.href 
+                  ? "bg-primary-50 text-primary-700" 
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
               <route.icon className="h-5 w-5 mr-3" />
               {route.label}
-            </a>
+            </div>
           </Link>
         ))}
       </div>

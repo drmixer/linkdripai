@@ -88,48 +88,48 @@ export default function Dashboard() {
           <>
             <StatCard
               title="Daily Opportunities"
-              value={`${stats?.dailyOpportunities.used} / ${stats?.dailyOpportunities.total}`}
+              value={stats?.dailyOpportunities ? `${stats.dailyOpportunities.used} / ${stats.dailyOpportunities.total}` : "0 / 0"}
               icon={<Link2 />}
               iconBgColor="bg-blue-100"
               iconColor="text-primary-600"
-              progressValue={(stats?.dailyOpportunities.used / stats?.dailyOpportunities.total) * 100}
+              progressValue={stats?.dailyOpportunities ? (stats.dailyOpportunities.used / stats.dailyOpportunities.total) * 100 : 0}
               progressColor="bg-primary-500"
             />
             
             <StatCard
               title="Credits Available"
-              value={`${stats?.credits.available} / ${stats?.credits.total}`}
+              value={stats?.credits ? `${stats.credits.available} / ${stats.credits.total}` : "0 / 0"}
               icon={<CreditCard />}
               iconBgColor="bg-green-100"
               iconColor="text-success-500"
-              progressValue={(stats?.credits.available / stats?.credits.total) * 100}
+              progressValue={stats?.credits ? (stats.credits.available / stats.credits.total) * 100 : 0}
               progressColor="bg-success-500"
             />
             
             <StatCard
               title="Emails Sent"
-              value={stats?.emailsSent.total.toString()}
+              value={stats?.emailsSent ? stats.emailsSent.total.toString() : "0"}
               icon={<Mail />}
               iconBgColor="bg-purple-100"
               iconColor="text-purple-600"
-              additionalInfo={{
+              additionalInfo={stats?.emailsSent ? {
                 label: "This month",
-                value: `${stats?.emailsSent.changePercentage}% increase`,
-                isPositive: stats?.emailsSent.changePercentage > 0,
-              }}
+                value: `${stats.emailsSent.changePercentage}% increase`,
+                isPositive: stats.emailsSent.changePercentage > 0,
+              } : undefined}
             />
             
             <StatCard
               title="Backlinks Secured"
-              value={stats?.backlinksSecured.total.toString()}
+              value={stats?.backlinksSecured ? stats.backlinksSecured.total.toString() : "0"}
               icon={<Award />}
               iconBgColor="bg-yellow-100"
               iconColor="text-yellow-600"
-              additionalInfo={{
-                label: `Average DA: ${stats?.backlinksSecured.averageDA}`,
-                value: `${stats?.backlinksSecured.new} new`,
+              additionalInfo={stats?.backlinksSecured ? {
+                label: `Average DA: ${stats.backlinksSecured.averageDA}`,
+                value: `${stats.backlinksSecured.new} new`,
                 isPositive: true,
-              }}
+              } : undefined}
             />
           </>
         )}
