@@ -179,10 +179,8 @@ export default function OpportunityCard({
       {selectable && (
         <div className="absolute top-3 left-3 z-10">
           <Checkbox 
-            id={`prospect-grid-${prospect.id}`}
-            checked={selected}
+            checked={selected === true}
             onCheckedChange={handleSelectChange} 
-            className="focus:ring-0"
           />
         </div>
       )}
@@ -318,10 +316,8 @@ export default function OpportunityCard({
       {selectable && (
         <div className="flex-shrink-0">
           <Checkbox 
-            id={`prospect-list-${prospect.id}`}
-            checked={selected}
-            onCheckedChange={handleSelectChange} 
-            className="focus:ring-0"
+            checked={selected === true}
+            onCheckedChange={handleSelectChange}
           />
         </div>
       )}
