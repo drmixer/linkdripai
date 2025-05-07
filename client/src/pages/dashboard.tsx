@@ -509,7 +509,10 @@ export default function Dashboard() {
                 key={prospect.id} 
                 prospect={prospect}
                 onEmail={() => handleEmailClick(prospect)}
-                onHide={() => console.log("Hide:", prospect.id)}
+                onHide={() => {
+                  // Remove this prospect from the filtered list after hiding
+                  queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
+                }}
                 isNew={prospect.isNew ?? true}
                 selectable={true}
                 selected={selectedItems.includes(prospect.id)}

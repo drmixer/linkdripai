@@ -1,7 +1,7 @@
 import Layout from "@/components/layout";
 import OpportunityCard from "@/components/opportunity-card";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 import { Prospect } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
@@ -213,6 +213,10 @@ export default function Opportunities() {
               key={prospect.id}
               prospect={prospect}
               onEmail={() => handleEmailClick(prospect)}
+              onHide={() => {
+                // Refresh opportunities list after hiding
+                queryClient.invalidateQueries({ queryKey: ["/api/prospects/unlocked"] });
+              }}
             />
           ))}
         </div>

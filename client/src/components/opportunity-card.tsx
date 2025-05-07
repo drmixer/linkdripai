@@ -137,6 +137,8 @@ export default function OpportunityCard({
   const handleHide = () => {
     if (hideMutation.isPending) return;
     hideMutation.mutate();
+    // Call the parent component's onHide callback if provided
+    if (onHide) onHide();
   };
 
   const handleSelectChange = (checked: boolean) => {
@@ -176,7 +178,9 @@ export default function OpportunityCard({
       {selectable && (
         <div className="absolute top-3 left-3 z-10">
           <Checkbox 
-            checked={selected} 
+            id={`prospect-grid-${prospect.id}`}
+            checked={selected}
+            defaultChecked={selected}
             onCheckedChange={handleSelectChange} 
             className="border-2 data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
           />
@@ -314,7 +318,9 @@ export default function OpportunityCard({
       {selectable && (
         <div className="flex-shrink-0">
           <Checkbox 
-            checked={selected} 
+            id={`prospect-list-${prospect.id}`}
+            checked={selected}
+            defaultChecked={selected}
             onCheckedChange={handleSelectChange} 
             className="border-2 data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
           />
