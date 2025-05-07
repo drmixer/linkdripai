@@ -351,6 +351,47 @@ export class MemStorage implements IStorage {
   }
   
   // Onboarding methods
+  async updateUserSubscription(userId: number, plan: string): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Update credits and daily opportunities based on the plan
+    let credits = 10;
+    let dailyOpportunitiesLimit = 5;
+    
+    switch (plan) {
+      case 'Pro':
+        credits = 300;
+        dailyOpportunitiesLimit = 30;
+        break;
+      case 'Grow':
+        credits = 150;
+        dailyOpportunitiesLimit = 20;
+        break;
+      case 'Starter':
+        credits = 50;
+        dailyOpportunitiesLimit = 10;
+        break;
+      default: // Free Trial
+        credits = 10;
+        dailyOpportunitiesLimit = 5;
+        break;
+    }
+    
+    const updatedUser = {
+      ...user,
+      subscription: plan,
+      credits,
+      totalCredits: credits,
+      dailyOpportunitiesLimit,
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
   async updateUserWebsites(userId: number, websites: any[]): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) {
@@ -653,6 +694,47 @@ export class DatabaseStorage implements IStorage {
       dailyOpportunitiesLimit: 5,
     }).returning();
     return user;
+  }
+
+  async updateUserSubscription(userId: number, plan: string): Promise<User> {
+    // Update credits and daily opportunities based on the plan
+    let credits = 10;
+    let dailyOpportunitiesLimit = 5;
+    
+    switch (plan) {
+      case 'Pro':
+        credits = 300;
+        dailyOpportunitiesLimit = 30;
+        break;
+      case 'Grow':
+        credits = 150;
+        dailyOpportunitiesLimit = 20;
+        break;
+      case 'Starter':
+        credits = 50;
+        dailyOpportunitiesLimit = 10;
+        break;
+      default: // Free Trial
+        credits = 10;
+        dailyOpportunitiesLimit = 5;
+        break;
+    }
+    
+    const [updatedUser] = await db.update(users)
+      .set({ 
+        subscription: plan, 
+        credits, 
+        totalCredits: credits, 
+        dailyOpportunitiesLimit 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+    
+    return updatedUser;
   }
 
   async updateUserCredits(userId: number, credits: number): Promise<User> {

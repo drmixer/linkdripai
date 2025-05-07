@@ -197,7 +197,12 @@ export default function Onboarding() {
   const onSubscriptionSubmit = async (data: SubscriptionFormValues) => {
     try {
       setIsLoading(true);
+      
+      // Update the selected plan
       setSelectedPlan(data.plan);
+      
+      // Update the user's subscription in the database
+      await apiRequest("POST", "/api/onboarding/subscription", { plan: data.plan });
       
       // Move to website setup step
       setStep(2);
