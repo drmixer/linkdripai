@@ -35,9 +35,9 @@ export default function Opportunities() {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   const { data: opportunities, isLoading } = useQuery({
-    queryKey: ["/api/prospects"],
+    queryKey: ["/api/prospects/unlocked"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/prospects");
+      const res = await apiRequest("GET", "/api/prospects/unlocked");
       return await res.json();
     },
   });
@@ -95,7 +95,7 @@ export default function Opportunities() {
     : [];
 
   return (
-    <Layout title="Daily Opportunities">
+    <Layout title="Unlocked Opportunities">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 space-y-4 md:space-y-0">
         <div className="relative w-full md:w-96">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

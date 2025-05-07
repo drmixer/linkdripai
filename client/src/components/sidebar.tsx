@@ -10,7 +10,9 @@ import {
   HelpCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  PlusCircleIcon
+  PlusCircleIcon,
+  LineChartIcon,
+  UnlockIcon
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -30,14 +32,19 @@ export default function Sidebar() {
       href: "/dashboard",
     },
     {
-      label: "Opportunities",
-      icon: Link2Icon,
+      label: "Unlocked Opportunities",
+      icon: UnlockIcon,
       href: "/opportunities",
     },
     {
       label: "Outreach",
       icon: MailIcon,
       href: "/email-outreach",
+    },
+    {
+      label: "Analytics",
+      icon: LineChartIcon,
+      href: "/analytics",
     },
     {
       label: "Sites",
@@ -118,15 +125,6 @@ export default function Sidebar() {
           )
         ))}
       </div>
-
-      {!collapsed && (
-        <div className="p-3">
-          <Button variant="outline" className="w-full justify-start text-primary-600 border-primary-200 bg-primary-50 hover:bg-primary-100">
-            <PlusCircleIcon className="h-5 w-5 mr-2" />
-            Add Website
-          </Button>
-        </div>
-      )}
 
       <div className="p-3 mt-auto">
         <Button 
