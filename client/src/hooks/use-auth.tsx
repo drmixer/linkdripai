@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful",
-        description: `Welcome to LinkSyncOS, ${user.firstName}!`,
+        description: `Welcome to LinkDripAI, ${user.firstName}!`,
       });
     },
     onError: (error: Error) => {

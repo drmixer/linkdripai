@@ -15,7 +15,7 @@ export default function PricingPage() {
     {
       id: "free-trial",
       name: "Free Trial",
-      description: "Try LinkSyncOS free for 7 days",
+      description: "Try LinkDripAI free for 7 days",
       price: "0",
       features: [
         "5 daily opportunities",
@@ -80,7 +80,7 @@ export default function PricingPage() {
               <div className="rounded-md bg-primary p-1.5 mr-2">
                 <LinkIcon className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold">LinkSyncOS</span>
+              <span className="text-xl font-bold">LinkDripAI</span>
             </Link>
             <div className="flex items-center space-x-4">
               <Link href="/auth">
@@ -186,7 +186,7 @@ export default function PricingPage() {
             </div>
             <div>
               <h3 className="text-lg font-medium mb-2">What happens after my free trial ends?</h3>
-              <p className="text-gray-600">After your 7-day free trial, you'll be prompted to select a paid plan to continue using LinkSyncOS. Don't worry - we'll remind you before your trial ends and no credit card is required to start.</p>
+              <p className="text-gray-600">After your 7-day free trial, you'll be prompted to select a paid plan to continue using LinkDripAI. Don't worry - we'll remind you before your trial ends and no credit card is required to start.</p>
             </div>
             <div>
               <h3 className="text-lg font-medium mb-2">Do credits roll over?</h3>
