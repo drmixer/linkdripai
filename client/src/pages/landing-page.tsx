@@ -404,8 +404,8 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href="/pricing" className="w-full">
-                    <Button variant="outline" className="w-full">Get Started</Button>
+                  <Link href="/auth?tab=register&plan=Free+Trial" className="w-full">
+                    <Button variant="outline" className="w-full">Start Free Trial</Button>
                   </Link>
                 </CardFooter>
               </Card>
@@ -452,7 +452,7 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href="/pricing" className="w-full">
+                  <Link href="/auth?tab=register&plan=Starter" className="w-full">
                     <Button className="w-full">Get Started</Button>
                   </Link>
                 </CardFooter>
