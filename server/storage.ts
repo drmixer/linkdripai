@@ -60,6 +60,11 @@ export interface IStorage {
   updateUserCredits(userId: number, credits: number): Promise<User>;
   getUserStats(userId: number): Promise<Stats>;
   
+  // Onboarding methods
+  updateUserWebsites(userId: number, websites: any[]): Promise<User>;
+  updateWebsitePreferences(userId: number, websiteIndex: number, preferences: any): Promise<User>;
+  completeOnboarding(userId: number): Promise<User>;
+  
   // Prospect methods
   getDailyProspects(userId: number): Promise<Prospect[]>;
   getAllProspects(userId: number): Promise<Prospect[]>;
@@ -343,6 +348,62 @@ export class MemStorage implements IStorage {
     this.prospects.set(id, updatedProspect);
     return updatedProspect;
   }
+  
+  // Onboarding methods
+  async updateUserWebsites(userId: number, websites: any[]): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    const updatedUser = {
+      ...user,
+      websites: websites,
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async updateWebsitePreferences(userId: number, websiteIndex: number, preferences: any): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    if (!user.websites || !Array.isArray(user.websites) || websiteIndex >= user.websites.length) {
+      throw new Error("Website not found");
+    }
+    
+    const websites = [...(user.websites || [])];
+    websites[websiteIndex] = {
+      ...websites[websiteIndex],
+      preferences,
+    };
+    
+    const updatedUser = {
+      ...user,
+      websites,
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async completeOnboarding(userId: number): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    const updatedUser = {
+      ...user,
+      onboardingCompleted: true,
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
 
   async generateEmail(prospect: Prospect, template: string): Promise<EmailTemplate> {
     // Generate email templates based on the selected template and prospect data
@@ -604,6 +665,62 @@ ${originalEmail.body}`,
       creditUsage,
       daDistribution,
     };
+  }
+  
+  // Onboarding methods
+  async updateUserWebsites(userId: number, websites: any[]): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set({ websites })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+    
+    return updatedUser;
+  }
+  
+  async updateWebsitePreferences(userId: number, websiteIndex: number, preferences: any): Promise<User> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    if (!user.websites || !Array.isArray(user.websites) || websiteIndex >= user.websites.length) {
+      throw new Error("Website not found");
+    }
+    
+    const websites = [...(user.websites || [])];
+    websites[websiteIndex] = {
+      ...websites[websiteIndex],
+      preferences,
+    };
+    
+    const [updatedUser] = await db.update(users)
+      .set({ websites })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error("Failed to update user");
+    }
+    
+    return updatedUser;
+  }
+  
+  async completeOnboarding(userId: number): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set({ onboardingCompleted: true })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+    
+    return updatedUser;
   }
 }
 

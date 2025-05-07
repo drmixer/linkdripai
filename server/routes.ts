@@ -210,6 +210,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+  
+  // Onboarding API endpoints
+  app.post("/api/onboarding/websites", isAuthenticated, async (req, res) => {
+    try {
+      const { websites } = req.body;
+      
+      if (!Array.isArray(websites)) {
+        return res.status(400).json({ message: "Websites must be an array" });
+      }
+      
+      const updatedUser = await storage.updateUserWebsites(req.user!.id, websites);
+      res.json(updatedUser);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.post("/api/onboarding/preferences", isAuthenticated, async (req, res) => {
+    try {
+      const { websiteIndex, preferences } = req.body;
+      
+      if (typeof websiteIndex !== 'number' || !preferences) {
+        return res.status(400).json({ message: "Invalid request format" });
+      }
+      
+      const updatedUser = await storage.updateWebsitePreferences(req.user!.id, websiteIndex, preferences);
+      res.json(updatedUser);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.post("/api/onboarding/complete", isAuthenticated, async (req, res) => {
+    try {
+      const updatedUser = await storage.completeOnboarding(req.user!.id);
+      res.json(updatedUser);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
