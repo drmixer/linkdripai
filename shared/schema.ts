@@ -87,11 +87,8 @@ export const insertProspectSchema = createInsertSchema(prospects).omit({
   createdAt: true,
 });
 
-// Outreach emails table
-// Have to declare the type first to avoid the circular reference issue
-const outreachEmailsTable = "outreachEmails";
-
-export const outreachEmails = pgTable(outreachEmailsTable, {
+// Outreach emails table without circular references
+export const outreachEmails = pgTable("outreachEmails", {
   id: serial("id").primaryKey(),
   prospectId: integer("prospectId").notNull().references(() => prospects.id),
   userId: integer("userId").notNull().references(() => users.id),
@@ -105,7 +102,7 @@ export const outreachEmails = pgTable(outreachEmailsTable, {
   sentAt: timestamp("sentAt").defaultNow(),
   responseAt: timestamp("responseAt"),
   isFollowUp: boolean("isFollowUp").default(false),
-  parentEmailId: integer("parentEmailId").references(() => outreachEmails.id),
+  parentEmailId: integer("parentEmailId"),
 });
 
 export const insertEmailSchema = createInsertSchema(outreachEmails).omit({
