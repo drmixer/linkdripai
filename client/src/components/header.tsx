@@ -1,6 +1,16 @@
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { BellIcon } from "lucide-react";
+import { 
+  Clock,
+  CreditCard, 
+  BellIcon, 
+  Sparkles, 
+  Settings, 
+  HelpCircle, 
+  LogOut, 
+  CreditCardIcon,
+  Link2,
+} from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -11,126 +21,237 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export default function Header() {
   const { user, logoutMutation } = useAuth();
-  const [website, setWebsite] = useState("myblog.com");
+  const [selectedWebsite, setSelectedWebsite] = useState<string>("");
+  const [websites, setWebsites] = useState<Array<{id: number, name: string, url: string}>>([]);
+  const [nextDripTime, setNextDripTime] = useState<Date>(new Date(Date.now() + 24 * 60 * 60 * 1000));
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+  const [newOpportunitiesCount, setNewOpportunitiesCount] = useState<number>(0);
+  
+  // Effects for simulation - would be replaced with real data
+  useEffect(() => {
+    // Simulate websites based on plan
+    const planWebsites = {
+      'Starter': [{id: 1, name: "My Website", url: "mywebsite.com"}],
+      'Grow': [
+        {id: 1, name: "My Website", url: "mywebsite.com"},
+        {id: 2, name: "My Blog", url: "myblog.com"}
+      ],
+      'Pro': [
+        {id: 1, name: "My Website", url: "mywebsite.com"},
+        {id: 2, name: "My Blog", url: "myblog.com"},
+        {id: 3, name: "My Shop", url: "myshop.com"},
+        {id: 4, name: "My Portfolio", url: "myportfolio.com"},
+        {id: 5, name: "My Magazine", url: "mymagazine.com"}
+      ],
+      'Free Trial': [{id: 1, name: "My Website", url: "mywebsite.com"}]
+    };
+    
+    const planName = user?.subscription || 'Free Trial';
+    const userWebsites = planWebsites[planName as keyof typeof planWebsites] || planWebsites['Free Trial'];
+    
+    setWebsites(userWebsites);
+    if (userWebsites.length > 0 && !selectedWebsite) {
+      setSelectedWebsite(userWebsites[0].url);
+    }
+    
+    // Simulate new opportunities
+    setNewOpportunitiesCount(Math.floor(Math.random() * 10) + 5);
+  }, [user]);
+  
+  // Countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      const diff = nextDripTime.getTime() - now.getTime();
+      
+      if (diff <= 0) {
+        // Reset for next day
+        setNextDripTime(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+        return;
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      setTimeRemaining(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [nextDripTime]);
   
   const handleLogout = () => {
     logoutMutation.mutate();
   };
 
+  const handleWebsiteChange = (url: string) => {
+    setSelectedWebsite(url);
+  };
+
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : 'U';
   const credits = user?.credits || 0;
-  const totalCredits = user?.totalCredits || 0;
-  const planName = user?.subscription || 'Free';
+  const planName = user?.subscription || 'Free Trial';
 
   return (
-    <header className="hidden md:flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200">
-      {/* Website selector */}
+    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-white border-b border-gray-200">
+      {/* Left: Logo */}
       <div className="flex items-center">
-        <div className="relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                <span>{website}</span>
-                <svg className="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Select Website</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setWebsite("myblog.com")}>
-                myblog.com
+        <Link href="/" className="flex items-center">
+          <div className="flex-shrink-0 flex items-center mr-1">
+            <div className="h-8 w-8 rounded-md bg-primary-600 flex items-center justify-center">
+              <Link2 className="h-5 w-5 text-white" />
+            </div>
+          </div>
+          <span className="text-xl font-bold text-gray-900 ml-2">LinkDripAI</span>
+        </Link>
+      </div>
+      
+      {/* Center: Website selector */}
+      <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="h-9 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+              <span className="max-w-[180px] truncate">{selectedWebsite}</span>
+              <svg className="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="w-72">
+            <DropdownMenuLabel>Select Website</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {websites.map(site => (
+              <DropdownMenuItem 
+                key={site.id} 
+                onClick={() => handleWebsiteChange(site.url)}
+                className={cn("cursor-pointer", selectedWebsite === site.url && "bg-primary-50")}
+              >
+                <div className="flex items-center w-full">
+                  <div className="h-6 w-6 mr-2 rounded bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
+                    {site.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="flex-1 truncate">{site.url}</span>
+                </div>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setWebsite("myshop.com")}>
-                myshop.com
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Link href="/websites">Manage Websites</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        
-        <div className="ml-4 flex items-center text-sm text-gray-500">
-          <span className="mr-2">Your plan:</span>
-          <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-            {planName}
-          </span>
-        </div>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/websites" className="w-full cursor-pointer">
+                <div className="flex items-center w-full text-primary-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Manage Websites
+                </div>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Right side actions */}
-      <div className="flex items-center">
-        {/* Credits indicator */}
-        <div className="mr-4 flex items-center px-3 py-1.5 bg-gray-100 rounded-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="text-sm font-medium text-gray-900">{credits} Credits</span>
-        </div>
+      <div className="flex items-center space-x-3">
+        {/* Credits */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="hidden md:flex items-center px-3 py-1.5 bg-gray-100 rounded-lg">
+                <CreditCardIcon className="h-4 w-4 text-gray-500 mr-1.5" />
+                <span className="text-sm font-medium text-gray-900">{credits} credits</span>
+                <Button variant="link" className="h-auto p-0 ml-1.5 text-primary-600 text-xs">
+                  Buy
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Credits are used to unlock opportunities</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
-        {/* Notifications */}
+        {/* New Opportunities */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" className="hidden md:flex items-center h-9 px-3 py-1.5">
+                <Sparkles className="h-4 w-4 text-amber-500 mr-1.5" />
+                <span className="text-sm font-medium">{newOpportunitiesCount} new</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{newOpportunitiesCount} new opportunities today</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        {/* Timer */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="hidden md:flex items-center px-3 py-1.5 bg-gray-100 rounded-lg">
+                <Clock className="h-4 w-4 text-gray-500 mr-1.5" />
+                <span className="text-sm font-medium text-gray-900">{timeRemaining}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Time until next opportunities</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="p-1 rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none">
-              <span className="sr-only">View notifications</span>
-              <BellIcon className="h-6 w-6" />
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 bg-gray-200">
+              <span className="sr-only">Open user menu</span>
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary-100 text-primary-800 text-sm">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-56">
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
+              <Badge variant="outline" className="mt-1 bg-primary-50 text-primary-700 hover:bg-primary-50">
+                {planName}
+              </Badge>
+            </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <div className="flex flex-col space-y-1">
-                <span className="text-sm font-medium">New response received</span>
-                <span className="text-xs text-gray-500">2 hours ago</span>
-              </div>
+            <DropdownMenuItem asChild>
+              <Link href="/account" className="flex cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <div className="flex flex-col space-y-1">
-                <span className="text-sm font-medium">5 new opportunities added</span>
-                <span className="text-xs text-gray-500">Today</span>
-              </div>
+            <DropdownMenuItem asChild>
+              <Link href="/billing" className="flex cursor-pointer">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Billing & Add-ons</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/help" className="flex cursor-pointer">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                <span>Help Center</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View all notifications</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} className="flex cursor-pointer">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* Profile dropdown */}
-        <div className="ml-3 relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                <span className="sr-only">Open user menu</span>
-                <Avatar>
-                  <AvatarFallback className="bg-purple-100 text-purple-500">{initials}</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Link href="/account">Profile Settings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/websites">Manage Websites</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/billing">Subscription & Billing</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </div>
     </header>
   );

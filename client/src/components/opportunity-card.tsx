@@ -4,21 +4,56 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Prospect } from "@shared/schema";
 import { Link } from "wouter";
+import { 
+  LockIcon, 
+  Unlock, 
+  Star, 
+  Mail, 
+  EyeOff,
+  ExternalLink,
+  BadgeCheck,
+  Tag,
+  Globe,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 interface OpportunityCardProps {
   prospect: Prospect;
   onUnlock?: () => void;
   onSave?: () => void;
   onEmail?: () => void;
+  onHide?: () => void;
+  isNew?: boolean;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectChange?: (selected: boolean) => void;
+  view?: "grid" | "list";
 }
 
 export default function OpportunityCard({ 
   prospect, 
   onUnlock, 
   onSave, 
-  onEmail 
+  onEmail,
+  onHide,
+  isNew = false,
+  selectable = false,
+  selected = false,
+  onSelectChange,
+  view = "grid"
 }: OpportunityCardProps) {
   const { toast } = useToast();
+  const [isHovering, setIsHovering] = useState(false);
   
   const unlockMutation = useMutation({
     mutationFn: async () => {
@@ -51,14 +86,36 @@ export default function OpportunityCard({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/prospects/saved"] });
       toast({
-        title: "Prospect saved",
-        description: "You can find this in your saved prospects.",
+        title: "Prospect starred",
+        description: "You can find this in your starred opportunities.",
       });
       if (onSave) onSave();
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to save prospect",
+        title: "Failed to star opportunity",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const hideMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/prospects/${prospect.id}/hide`, {});
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+      toast({
+        title: "Opportunity hidden",
+        description: "You can find this in your hidden opportunities filter.",
+      });
+      if (onHide) onHide();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to hide opportunity",
         description: error.message,
         variant: "destructive",
       });
@@ -77,131 +134,298 @@ export default function OpportunityCard({
     if (onEmail) onEmail();
   };
   
-  return (
-    <div className={`relative bg-white rounded-lg shadow overflow-hidden ${
-      prospect.isUnlocked ? "border border-primary-100" : "border border-gray-200"
-    }`}>
-      {prospect.isUnlocked && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-primary-500"></div>
-      )}
-      <div className="absolute top-3 right-3">
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <svg className="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
-            <circle cx="4" cy="4" r="3" />
-          </svg>
-          {prospect.fitScore}% Fit
-        </span>
-      </div>
-      <div className="p-5">
-        <div className="flex items-center mb-3">
-          {prospect.isUnlocked ? (
-            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-              {prospect.siteName ? (
-                <span className="text-sm font-medium">
-                  {prospect.siteName.split(' ').map(word => word[0]).join('').slice(0, 2)}
-                </span>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                </svg>
-              )}
-            </div>
-          ) : (
-            <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-              </svg>
-            </div>
-          )}
-          
-          <div className="ml-3">
-            <h3 className="text-lg font-medium text-gray-900">
-              {prospect.isUnlocked ? prospect.siteName : prospect.siteType}
-            </h3>
-            <p className="text-sm text-gray-500">
-              Domain Authority: {prospect.domainAuthority}
-            </p>
-          </div>
-        </div>
-        
-        <div className="mt-4 space-y-2.5">
-          <div className="flex items-center">
-            <div className="w-5 h-5 flex-shrink-0 mr-2 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-            </div>
-            <span className="text-sm text-gray-600">Niche: {prospect.niche}</span>
-          </div>
-          
-          {prospect.isUnlocked && prospect.contactEmail && (
-            <div className="flex items-center">
-              <div className="w-5 h-5 flex-shrink-0 mr-2 text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                </svg>
-              </div>
-              <span className="text-sm text-gray-600">Contact: {prospect.contactEmail}</span>
-            </div>
-          )}
-          
-          <div className="flex items-center">
-            <div className="w-5 h-5 flex-shrink-0 mr-2 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <span className="text-sm text-gray-600">Type: {prospect.siteType}</span>
-          </div>
-          
-          <div className="flex items-center">
-            <div className="w-5 h-5 flex-shrink-0 mr-2 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </div>
-            <span className="text-sm text-gray-600">Monthly traffic: ~{prospect.monthlyTraffic}</span>
-          </div>
-        </div>
+  const handleHide = () => {
+    if (hideMutation.isPending) return;
+    hideMutation.mutate();
+  };
 
+  const handleSelectChange = (checked: boolean) => {
+    if (onSelectChange) onSelectChange(checked);
+  };
+
+  const getStatusIcon = () => {
+    if (prospect.isUnlocked) {
+      if (prospect.isSaved) {
+        return <Star className="h-4 w-4 text-amber-500" />;
+      }
+      return <Unlock className="h-4 w-4 text-green-600" />;
+    }
+    return <LockIcon className="h-4 w-4 text-gray-500" />;
+  };
+
+  const renderGridView = () => (
+    <Card 
+      className={cn(
+        "relative overflow-hidden h-full transition-all duration-200",
+        isNew ? "border-l-4 border-l-amber-400" : "",
+        prospect.isUnlocked ? "shadow-md" : "shadow",
+        isHovering ? "shadow-lg" : ""
+      )}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      {/* Traffic indicator & DA score */}
+      <div className="absolute top-0 left-0 w-full h-1.5 bg-gray-100">
+        <div 
+          className="h-full bg-green-500" 
+          style={{ width: `${parseInt(prospect.monthlyTraffic) / 10000 * 100}%`, maxWidth: '100%' }}
+        ></div>
+      </div>
+
+      {/* Selection checkbox */}
+      {selectable && (
+        <div className="absolute top-3 left-3 z-10">
+          <Checkbox 
+            checked={selected} 
+            onCheckedChange={handleSelectChange} 
+            className="border-2 data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
+          />
+        </div>
+      )}
+
+      {/* Fit score */}
+      <div className="absolute top-3 right-3">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="outline" className="bg-white border-gray-200 text-xs font-medium">
+                <BadgeCheck className="h-3 w-3 mr-1 text-green-500" />
+                {prospect.fitScore}% Fit
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>AI-calculated relevance score based on your site</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      <CardContent className="p-5 pt-8">
+        <div className="flex flex-col space-y-4">
+          {/* Header with DA and type */}
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-md bg-primary-50 text-primary-700 flex items-center justify-center font-bold text-lg">
+                  {prospect.domainAuthority}
+                </div>
+                <div>
+                  <Badge variant="outline" className="text-xs border-gray-200">
+                    <Globe className="h-3 w-3 mr-1 opacity-70" />
+                    {prospect.siteType}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {getStatusIcon()}
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div>
+            <h3 className="font-medium text-gray-900 mb-1">
+              {prospect.isUnlocked ? prospect.siteName : "Domain locked"}
+            </h3>
+            
+            <div className="mb-2 flex items-center">
+              <Badge variant="outline" className="text-xs bg-gray-50">
+                <Tag className="h-3 w-3 mr-1 opacity-70" />
+                {prospect.niche}
+              </Badge>
+            </div>
+            
+            {prospect.isUnlocked && (
+              <div className="mt-2 space-y-1.5 text-xs text-gray-500">
+                <div className="flex items-center">
+                  <Globe className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                  <span className="truncate">{prospect.domain}</span>
+                </div>
+                {prospect.contactEmail && (
+                  <div className="flex items-center">
+                    <Mail className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                    <span className="truncate">{prospect.contactEmail}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+
+      {/* Actions */}
+      <CardFooter className="p-3 pt-0 flex flex-wrap gap-2 mt-auto">
         {prospect.isUnlocked ? (
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            <Button
+          <>
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="flex-1 h-9"
               onClick={handleEmail}
-              className="flex items-center justify-center"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Email
+              <Mail className="h-4 w-4 mr-1.5" />
+              <span>Email</span>
             </Button>
-            <Button
-              variant="outline"
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-9 w-9" 
               onClick={handleSave}
               disabled={saveMutation.isPending}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-              Save
+              <Star className={cn("h-4 w-4", prospect.isSaved ? "fill-amber-400 text-amber-400" : "")} />
             </Button>
-          </div>
-        ) : (
-          <div className="mt-5">
             <Button 
-              className="w-full flex items-center justify-center"
-              onClick={handleUnlock}
-              disabled={unlockMutation.isPending}
+              variant="outline" 
+              size="icon"
+              className="h-9 w-9"
+              onClick={handleHide}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-              </svg>
-              {unlockMutation.isPending ? 'Unlocking...' : 'Unlock for 1 credit'}
+              <EyeOff className="h-4 w-4" />
             </Button>
+          </>
+        ) : (
+          <Button 
+            className="w-full flex items-center justify-center h-9"
+            onClick={handleUnlock}
+            disabled={unlockMutation.isPending}
+          >
+            <Unlock className="h-4 w-4 mr-1.5" />
+            {unlockMutation.isPending ? 'Unlocking...' : 'Unlock for 1 credit'}
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
+  );
+
+  const renderListView = () => (
+    <div 
+      className={cn(
+        "relative w-full p-4 border rounded-lg flex items-center gap-4 transition-all duration-200",
+        isNew ? "border-l-4 border-l-amber-400 pl-5" : "",
+        prospect.isUnlocked ? "bg-white shadow-sm" : "bg-gray-50",
+        isHovering ? "shadow-md" : ""
+      )}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      {/* Selection checkbox */}
+      {selectable && (
+        <div className="flex-shrink-0">
+          <Checkbox 
+            checked={selected} 
+            onCheckedChange={handleSelectChange} 
+            className="border-2 data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
+          />
+        </div>
+      )}
+
+      {/* DA Score */}
+      <div className="w-12 h-12 flex-shrink-0 rounded-md bg-primary-50 text-primary-700 flex items-center justify-center">
+        <div className="text-center">
+          <div className="font-bold text-lg leading-none">{prospect.domainAuthority}</div>
+          <div className="text-[10px] opacity-70">DA</div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-medium text-gray-900 truncate">
+            {prospect.isUnlocked ? prospect.siteName : "Domain locked"}
+          </h3>
+          <Badge variant="outline" className="text-xs border-gray-200 whitespace-nowrap flex-shrink-0">
+            <Globe className="h-3 w-3 mr-1 opacity-70" />
+            {prospect.siteType}
+          </Badge>
+          <Badge variant="outline" className="text-xs bg-gray-50 whitespace-nowrap flex-shrink-0">
+            <Tag className="h-3 w-3 mr-1 opacity-70" />
+            {prospect.niche}
+          </Badge>
+        </div>
+        
+        {prospect.isUnlocked && (
+          <div className="text-sm text-gray-500 flex items-center gap-4">
+            <span className="truncate">{prospect.domain}</span>
+            {prospect.contactEmail && (
+              <span className="truncate">{prospect.contactEmail}</span>
+            )}
           </div>
+        )}
+      </div>
+
+      {/* Fit Score */}
+      <div className="hidden md:block flex-shrink-0">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center">
+                <div className="w-16 bg-gray-100 rounded-full h-2">
+                  <div 
+                    className="h-2 rounded-full bg-green-500" 
+                    style={{ width: `${prospect.fitScore}%` }}
+                  ></div>
+                </div>
+                <span className="ml-2 text-sm font-medium text-gray-700">{prospect.fitScore}%</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>AI-calculated relevance score based on your site</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      {/* Status */}
+      <div className="flex-shrink-0 w-6">
+        {getStatusIcon()}
+      </div>
+
+      {/* Actions */}
+      <div className="flex-shrink-0 flex items-center gap-2">
+        {prospect.isUnlocked ? (
+          <>
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="h-9"
+              onClick={handleEmail}
+            >
+              <Mail className="h-4 w-4 mr-1.5" />
+              <span>Email</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-9 w-9" 
+              onClick={handleSave}
+              disabled={saveMutation.isPending}
+            >
+              <Star className={cn("h-4 w-4", prospect.isSaved ? "fill-amber-400 text-amber-400" : "")} />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-9 w-9"
+              onClick={handleHide}
+            >
+              <EyeOff className="h-4 w-4" />
+            </Button>
+          </>
+        ) : (
+          <Button 
+            className="flex items-center justify-center h-9"
+            onClick={handleUnlock}
+            disabled={unlockMutation.isPending}
+          >
+            <Unlock className="h-4 w-4 mr-1.5" />
+            {unlockMutation.isPending ? 'Unlocking...' : 'Unlock'}
+          </Button>
         )}
       </div>
     </div>
   );
+
+  return view === "grid" ? renderGridView() : renderListView();
 }

@@ -1,18 +1,27 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { HomeIcon, Link2Icon, FolderIcon, MailIcon, BarChart2Icon, SlidersIcon, UserCogIcon, GlobeIcon, CreditCardIcon } from "lucide-react";
+import { 
+  HomeIcon, 
+  Link2Icon, 
+  MailIcon, 
+  GlobeIcon, 
+  CreditCardIcon, 
+  HelpCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PlusCircleIcon
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function Sidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-
-  const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : 'U';
-  const planType = user?.subscription || 'Free Trial';
+  const [collapsed, setCollapsed] = useState(false);
 
   const routes = [
     {
@@ -21,125 +30,114 @@ export default function Sidebar() {
       href: "/dashboard",
     },
     {
-      label: "Daily Opportunities",
+      label: "Opportunities",
       icon: Link2Icon,
       href: "/opportunities",
     },
     {
-      label: "Saved Prospects",
-      icon: FolderIcon,
-      href: "/saved-prospects",
-    },
-    {
-      label: "Email Outreach",
+      label: "Outreach",
       icon: MailIcon,
       href: "/email-outreach",
     },
     {
-      label: "Analytics",
-      icon: BarChart2Icon,
-      href: "/analytics",
-    },
-  ];
-
-  const settingsRoutes = [
-    {
-      label: "Preferences",
-      icon: SlidersIcon,
-      href: "/preferences",
-    },
-    {
-      label: "Account Settings",
-      icon: UserCogIcon,
-      href: "/account",
-    },
-    {
-      label: "Manage Websites",
+      label: "Sites",
       icon: GlobeIcon,
       href: "/websites",
     },
     {
-      label: "Billing & Credits",
+      label: "Billing & Add-ons",
       icon: CreditCardIcon,
       href: "/billing",
+    },
+    {
+      label: "Help Center",
+      icon: HelpCircleIcon,
+      href: "/help",
     },
   ];
 
   const SidebarContent = () => (
     <>
-      <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <div className="rounded-md bg-primary p-1.5 mr-2">
-            <Link2Icon className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
-        </div>
-      </div>
-            
-      <div className="flex flex-col flex-1 px-3 py-4 space-y-1">
-        <div className="px-3 pb-2">
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Main</p>
-        </div>
-        {routes.map((route) => (
-          <Link 
-            key={route.href} 
-            href={route.href}
-          >
-            <div 
-              onClick={() => setOpen(false)}
-              className={cn(
-                "flex items-center px-3 py-2 text-sm font-medium rounded-md cursor-pointer",
-                location === route.href 
-                  ? "bg-primary-50 text-primary-700" 
-                  : "text-gray-700 hover:bg-gray-100"
-              )}
-            >
-              <route.icon className="h-5 w-5 mr-3" />
-              {route.label}
-            </div>
-          </Link>
-        ))}
-
-        <div className="px-3 pt-5 pb-2">
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Settings</p>
-        </div>
-        {settingsRoutes.map((route) => (
-          <Link 
-            key={route.href} 
-            href={route.href}
-          >
-            <div 
-              onClick={() => setOpen(false)}
-              className={cn(
-                "flex items-center px-3 py-2 text-sm font-medium rounded-md cursor-pointer",
-                location === route.href 
-                  ? "bg-primary-50 text-primary-700" 
-                  : "text-gray-700 hover:bg-gray-100"
-              )}
-            >
-              <route.icon className="h-5 w-5 mr-3" />
-              {route.label}
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      <div className="mx-3 my-4">
-        <div className="p-4 bg-gray-50 rounded-lg">
+      {/* Only show logo in mobile sidebar or when desktop sidebar is expanded */}
+      {(!collapsed || open) && (
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                <span className="text-sm font-medium text-purple-500">{initials}</span>
-              </div>
+            <div className="rounded-md bg-primary-600 p-1.5 mr-2">
+              <Link2Icon className="h-5 w-5 text-white" />
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.firstName} {user?.lastName}
-              </p>
-              <p className="text-xs text-gray-500 truncate">{planType}</p>
-            </div>
+            <span className="text-lg font-bold text-gray-900">LinkDripAI</span>
           </div>
         </div>
+      )}
+            
+      <div className="flex flex-col flex-1 p-3 space-y-1">
+        {routes.map((route) => (
+          collapsed ? (
+            <TooltipProvider key={route.href}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="mx-auto">
+                    <Link href={route.href}>
+                      <div 
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center justify-center p-2 rounded-md cursor-pointer",
+                          location === route.href 
+                            ? "bg-primary-50 text-primary-700" 
+                            : "text-gray-700 hover:bg-gray-100"
+                        )}
+                      >
+                        <route.icon className="h-5 w-5" />
+                      </div>
+                    </Link>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {route.label}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <Link 
+              key={route.href} 
+              href={route.href}
+            >
+              <div 
+                onClick={() => setOpen(false)}
+                className={cn(
+                  "flex items-center px-3 py-2 text-sm font-medium rounded-md cursor-pointer",
+                  location === route.href 
+                    ? "bg-primary-50 text-primary-700" 
+                    : "text-gray-700 hover:bg-gray-100"
+                )}
+              >
+                <route.icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                {route.label}
+              </div>
+            </Link>
+          )
+        ))}
+      </div>
+
+      {!collapsed && (
+        <div className="p-3">
+          <Button variant="outline" className="w-full justify-start text-primary-600 border-primary-200 bg-primary-50 hover:bg-primary-100">
+            <PlusCircleIcon className="h-5 w-5 mr-2" />
+            Add Website
+          </Button>
+        </div>
+      )}
+
+      <div className="p-3 mt-auto">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="w-full flex justify-center items-center text-gray-500 hover:text-gray-900"
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          {collapsed ? <ChevronRightIcon className="h-5 w-5" /> : <ChevronLeftIcon className="h-5 w-5" />}
+          {!collapsed && <span className="ml-2">Collapse</span>}
+        </Button>
       </div>
     </>
   );
@@ -157,13 +155,13 @@ export default function Sidebar() {
               <span className="sr-only">Toggle menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0">
+          <SheetContent side="left" className="p-0 w-72">
             <SidebarContent />
           </SheetContent>
         </Sheet>
         
         <div className="flex items-center">
-          <div className="rounded-md bg-primary p-1 mr-2">
+          <div className="rounded-md bg-primary-600 p-1 mr-2">
             <Link2Icon className="h-5 w-5 text-white" />
           </div>
           <span className="text-lg font-bold text-gray-900">LinkDripAI</span>
@@ -171,7 +169,12 @@ export default function Sidebar() {
       </div>
       
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-64 min-h-screen overflow-y-auto bg-white border-r border-gray-200">
+      <aside 
+        className={cn(
+          "hidden md:flex md:flex-col md:min-h-screen overflow-y-auto bg-white border-r border-gray-200 transition-all duration-300 ease-in-out",
+          collapsed ? "md:w-16" : "md:w-64"
+        )}
+      >
         <SidebarContent />
       </aside>
     </>
