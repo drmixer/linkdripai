@@ -614,9 +614,9 @@ export default function LandingPage() {
               <div className="rounded-md bg-primary p-1.5 mr-2">
                 <Link2 className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold">LinkSyncOS</span>
+              <span className="text-xl font-bold">LinkDripAI</span>
             </div>
-            <p className="text-gray-400 text-sm">© {new Date().getFullYear()} LinkSyncOS. All rights reserved.</p>
+            <p className="text-gray-400 text-sm">© {new Date().getFullYear()} LinkDripAI. All rights reserved.</p>
           </div>
         </div>
       </footer>
