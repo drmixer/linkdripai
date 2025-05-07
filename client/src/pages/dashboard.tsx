@@ -277,20 +277,21 @@ export default function Dashboard() {
     return opportunities.filter(opp => {
       // Filter by search query
       const searchMatch = searchQuery === "" || 
-        opp.siteName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (opp.siteName && opp.siteName.toLowerCase().includes(searchQuery.toLowerCase())) ||
         opp.niche.toLowerCase().includes(searchQuery.toLowerCase()) ||
         opp.siteType.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Filter by DA range
-      const daMatch = opp.domainAuthority >= daRange[0] && opp.domainAuthority <= daRange[1];
+      const daValue = parseInt(opp.domainAuthority);
+      const daMatch = !isNaN(daValue) && daValue >= daRange[0] && daValue <= daRange[1];
       
       // Filter by fit score range
       const fitMatch = opp.fitScore >= fitScoreRange[0] && opp.fitScore <= fitScoreRange[1];
       
       // Filter by tab
       const tabMatch = (
-        (selectedTab === "new" && opp.isNew) ||
-        (selectedTab === "earlier" && !opp.isNew) ||
+        (selectedTab === "new" && (opp.isNew ?? true)) ||
+        (selectedTab === "earlier" && !(opp.isNew ?? true)) ||
         selectedTab === "all"
       );
       
@@ -299,8 +300,8 @@ export default function Dashboard() {
   };
   
   // Split opportunities into new and earlier
-  const newOpportunities = opportunities?.filter(opp => opp.isNew) || [];
-  const earlierOpportunities = opportunities?.filter(opp => !opp.isNew) || [];
+  const newOpportunities = opportunities?.filter((opp: Prospect) => opp.isNew ?? true) || [];
+  const earlierOpportunities = opportunities?.filter((opp: Prospect) => !(opp.isNew ?? true)) || [];
   const filteredOpportunities = filterOpportunities(opportunities);
   
   const totalCredits = stats?.credits?.total || 0;
@@ -592,7 +593,7 @@ export default function Dashboard() {
                 prospect={prospect}
                 onEmail={() => handleEmailClick(prospect)}
                 onHide={() => console.log("Hide:", prospect.id)}
-                isNew={prospect.isNew}
+                isNew={prospect.isNew ?? true}
                 selectable={true}
                 selected={selectedItems.includes(prospect.id)}
                 onSelectChange={(selected) => handleItemSelect(prospect.id, selected)}

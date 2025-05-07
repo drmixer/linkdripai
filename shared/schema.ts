@@ -61,6 +61,7 @@ export const prospects = pgTable("prospects", {
   id: serial("id").primaryKey(),
   siteType: text("siteType").notNull(),
   siteName: text("siteName"),
+  domain: text("domain"),
   domainAuthority: text("domainAuthority").notNull(),
   niche: text("niche").notNull(),
   monthlyTraffic: text("monthlyTraffic").notNull(),
@@ -69,6 +70,8 @@ export const prospects = pgTable("prospects", {
   fitScore: integer("fitScore").notNull(),
   isUnlocked: boolean("isUnlocked").default(false),
   isSaved: boolean("isSaved").default(false),
+  isNew: boolean("isNew").default(true),
+  isHidden: boolean("isHidden").default(false),
   unlockedBy: integer("unlockedBy").references(() => users.id),
   unlockedAt: timestamp("unlockedAt"),
   createdAt: timestamp("createdAt").defaultNow(),
@@ -84,7 +87,10 @@ export const insertProspectSchema = createInsertSchema(prospects).omit({
 });
 
 // Outreach emails table
-export const outreachEmails = pgTable("outreachEmails", {
+// Have to declare the type first to avoid the circular reference issue
+const outreachEmailsTable = "outreachEmails";
+
+export const outreachEmails = pgTable(outreachEmailsTable, {
   id: serial("id").primaryKey(),
   prospectId: integer("prospectId").notNull().references(() => prospects.id),
   userId: integer("userId").notNull().references(() => users.id),
@@ -98,7 +104,7 @@ export const outreachEmails = pgTable("outreachEmails", {
   sentAt: timestamp("sentAt").defaultNow(),
   responseAt: timestamp("responseAt"),
   isFollowUp: boolean("isFollowUp").default(false),
-  parentEmailId: integer("parentEmailId").references(() => outreachEmails.id),
+  parentEmailId: integer("parentEmailId").references((): ReturnType<typeof integer> => outreachEmails.id),
 });
 
 export const insertEmailSchema = createInsertSchema(outreachEmails).omit({

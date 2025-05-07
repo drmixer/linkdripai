@@ -33,7 +33,7 @@ interface OpportunityCardProps {
   onSave?: () => void;
   onEmail?: () => void;
   onHide?: () => void;
-  isNew?: boolean;
+  isNew?: boolean; // Use this to override the prospect.isNew property
   selectable?: boolean;
   selected?: boolean;
   onSelectChange?: (selected: boolean) => void;
@@ -240,7 +240,7 @@ export default function OpportunityCard({
               <div className="mt-2 space-y-1.5 text-xs text-gray-500">
                 <div className="flex items-center">
                   <Globe className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                  <span className="truncate">{prospect.domain}</span>
+                  <span className="truncate">{prospect.domain || (prospect.siteName && `${prospect.siteName.toLowerCase().replace(/\s+/g, '')}.com`)}</span>
                 </div>
                 {prospect.contactEmail && (
                   <div className="flex items-center">
@@ -347,7 +347,7 @@ export default function OpportunityCard({
         
         {prospect.isUnlocked && (
           <div className="text-sm text-gray-500 flex items-center gap-4">
-            <span className="truncate">{prospect.domain}</span>
+            <span className="truncate">{prospect.domain || (prospect.siteName && `${prospect.siteName.toLowerCase().replace(/\s+/g, '')}.com`)}</span>
             {prospect.contactEmail && (
               <span className="truncate">{prospect.contactEmail}</span>
             )}
