@@ -1,0 +1,43 @@
+import { Switch, Route } from "wouter";
+import { queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import NotFound from "@/pages/not-found";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "./lib/protected-route";
+import Dashboard from "@/pages/dashboard";
+import AuthPage from "@/pages/auth-page";
+import Opportunities from "@/pages/opportunities";
+import SavedProspects from "@/pages/saved-prospects";
+import EmailOutreach from "@/pages/email-outreach";
+import Analytics from "@/pages/analytics";
+
+function Router() {
+  return (
+    <Switch>
+      <ProtectedRoute path="/" component={Dashboard} />
+      <ProtectedRoute path="/opportunities" component={Opportunities} />
+      <ProtectedRoute path="/saved-prospects" component={SavedProspects} />
+      <ProtectedRoute path="/email-outreach" component={EmailOutreach} />
+      <ProtectedRoute path="/analytics" component={Analytics} />
+      <Route path="/auth" component={AuthPage} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
