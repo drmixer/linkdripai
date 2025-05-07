@@ -123,18 +123,22 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [totalSteps, setTotalSteps] = useState(4);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string>("Free Trial");
+  // Get the selected plan from localStorage if available
+  const [selectedPlan, setSelectedPlan] = useState<"Free Trial" | "Starter" | "Grow" | "Pro">(() => {
+    const savedPlan = typeof window !== 'undefined' ? localStorage.getItem('selectedPlan') : null;
+    return (savedPlan as "Free Trial" | "Starter" | "Grow" | "Pro") || "Free Trial";
+  });
   const [websites, setWebsites] = useState<WebsiteFormValues[]>([]);
   const [currentWebsiteIndex, setCurrentWebsiteIndex] = useState(0);
   const [preferences, setPreferences] = useState<(PreferencesFormValues & { websiteId: number })[]>([]);
   const { user } = useAuth();
   const [_, navigate] = useLocation();
 
-  // Initialize subscription form
+  // Initialize subscription form with the selected plan from localStorage
   const subscriptionForm = useForm<SubscriptionFormValues>({
     resolver: zodResolver(subscriptionSchema),
     defaultValues: {
-      plan: "Free Trial",
+      plan: selectedPlan,
     },
   });
 
@@ -270,6 +274,9 @@ export default function Onboarding() {
       
       // Update cached user data
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Clear the selectedPlan from localStorage
+      localStorage.removeItem('selectedPlan');
       
       // Navigate to the dashboard
       navigate("/dashboard");

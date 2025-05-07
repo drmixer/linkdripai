@@ -99,6 +99,9 @@ export default function AuthPage() {
   async function onRegisterSubmit(data: RegisterFormValues) {
     setIsLoading(true);
     try {
+      // Store the selected plan in localStorage for the onboarding page
+      localStorage.setItem('selectedPlan', selectedPlan);
+      
       const { confirmPassword, ...registerData } = data;
       await registerMutation.mutateAsync(registerData);
     } finally {
