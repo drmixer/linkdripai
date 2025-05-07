@@ -32,10 +32,10 @@ export default function LandingPage() {
             <a href="#pricing" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Pricing</a>
           </nav>
           <div className="flex items-center gap-4">
-            <Link href="/auth">
+            <Link href="/auth?tab=login">
               <Button variant="ghost" size="sm">Log in</Button>
             </Link>
-            <Link href="/auth">
+            <Link href="/pricing">
               <Button size="sm">Get Started</Button>
             </Link>
           </div>
@@ -61,7 +61,7 @@ export default function LandingPage() {
                   LinkSyncOS helps you find relevant backlink prospects, manage your outreach, and secure high-authority links with AI-powered email sequences. Boost your SEO results with less effort.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/auth">
+                  <Link href="/pricing">
                     <Button size="lg" className="px-8 py-6">
                       Start Free Trial
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -404,7 +404,7 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href="/auth" className="w-full">
+                  <Link href="/pricing" className="w-full">
                     <Button variant="outline" className="w-full">Get Started</Button>
                   </Link>
                 </CardFooter>
@@ -452,7 +452,7 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href="/auth" className="w-full">
+                  <Link href="/pricing" className="w-full">
                     <Button className="w-full">Get Started</Button>
                   </Link>
                 </CardFooter>
@@ -497,7 +497,7 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href="/auth" className="w-full">
+                  <Link href="/pricing" className="w-full">
                     <Button variant="outline" className="w-full">Get Started</Button>
                   </Link>
                 </CardFooter>

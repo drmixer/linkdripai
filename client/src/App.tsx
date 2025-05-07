@@ -20,6 +20,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
+      <Route path="/pricing" component={PricingPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/opportunities" component={Opportunities} />
       <ProtectedRoute path="/saved-prospects" component={SavedProspects} />

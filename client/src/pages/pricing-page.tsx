@@ -63,7 +63,7 @@ const pricingPlans = [
 export default function PricingPage() {
   const { user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<string>("Free Trial");
-  const navigate = useNavigate();
+  const [_, navigate] = useLocation();
   
   // Redirect to dashboard if already logged in
   if (user) {
