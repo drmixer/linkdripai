@@ -13,6 +13,7 @@ import SavedProspects from "@/pages/saved-prospects";
 import EmailOutreach from "@/pages/email-outreach";
 import Analytics from "@/pages/analytics";
 import LandingPage from "@/pages/landing-page";
+import PricingPage from "@/pages/pricing-page";
 import Onboarding from "@/pages/onboarding-new";
 
 function Router() {
