@@ -183,7 +183,7 @@ export default function OpportunityCard({
             id={`prospect-grid-${prospect.id}`}
             checked={selected}
             onCheckedChange={handleSelectChange} 
-            className="border-2 h-5 w-5 rounded-sm bg-white data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
+            className="focus:ring-0"
           />
         </div>
       )}
@@ -322,7 +322,7 @@ export default function OpportunityCard({
             id={`prospect-list-${prospect.id}`}
             checked={selected}
             onCheckedChange={handleSelectChange} 
-            className="border-2 h-5 w-5 rounded-sm bg-white data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
+            className="focus:ring-0"
           />
         </div>
       )}
