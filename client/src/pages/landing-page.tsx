@@ -24,7 +24,7 @@ export default function LandingPage() {
             <div className="rounded-md bg-primary p-1.5">
               <Link2 className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">LinkSyncOS</span>
+            <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Features</a>
@@ -58,7 +58,7 @@ export default function LandingPage() {
                   Discover, Manage & <span className="text-primary">Reach Out</span> to High-Quality Backlink Opportunities
                 </h1>
                 <p className="text-lg text-gray-600 max-w-2xl">
-                  LinkSyncOS helps you find relevant backlink prospects, manage your outreach, and secure high-authority links with AI-powered email sequences. Boost your SEO results with less effort.
+                  LinkDripAI helps you find relevant backlink prospects, manage your outreach, and secure high-authority links with AI-powered email sequences. Boost your SEO results with less effort.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link href="/auth?tab=register&plan=Free+Trial">
@@ -88,7 +88,7 @@ export default function LandingPage() {
                 <div className="rounded-xl border bg-white shadow-lg overflow-hidden">
                   <img
                     src="https://i.imgur.com/r9UPSWq.png"
-                    alt="LinkSyncOS Dashboard"
+                    alt="LinkDripAI Dashboard"
                     className="w-full rounded-lg"
                   />
                 </div>
@@ -297,7 +297,7 @@ export default function LandingPage() {
         <section id="how-it-works" className="py-20 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">How LinkSyncOS Works</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">How LinkDripAI Works</h2>
               <p className="text-lg text-gray-600">
                 A simple, effective process to help you secure high-quality backlinks with minimal effort
               </p>
