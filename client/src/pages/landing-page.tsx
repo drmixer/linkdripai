@@ -80,7 +80,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    <span>14-day free trial</span>
+                    <span>7-day free trial</span>
                   </div>
                 </div>
               </div>
@@ -369,9 +369,52 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Starter Plan */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {/* Free Trial */}
               <Card className="relative border-gray-200">
+                <CardContent className="pt-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Free Trial</h3>
+                  <p className="text-gray-600 mb-6">Try our platform with no commitment</p>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-gray-900">$0</span>
+                    <span className="text-gray-600">/7 days</span>
+                  </div>
+
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">5 opportunities/day drip</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">Max 10 total credits</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">Max 2 credits per day</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">AI email generation</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">No rollover</span>
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Link href="/auth" className="w-full">
+                    <Button variant="outline" className="w-full">Get Started</Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+
+              {/* Starter Plan */}
+              <Card className="relative border-primary">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-4 py-1 rounded-full">
+                  Most Popular
+                </div>
                 <CardContent className="pt-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Starter</h3>
                   <p className="text-gray-600 mb-6">Perfect for small businesses starting with link building</p>
@@ -384,71 +427,27 @@ export default function LandingPage() {
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">50 daily prospects</span>
+                      <span className="text-sm text-gray-600">1 website</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">100 credits per month</span>
+                      <span className="text-sm text-gray-600">10 opportunities/day drip</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">AI email generation</span>
+                      <span className="text-sm text-gray-600">50 credits/month</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Basic analytics</span>
+                      <span className="text-sm text-gray-600">1-month credit rollover</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Email integration</span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Link href="/auth" className="w-full">
-                    <Button variant="outline" className="w-full">Get Started</Button>
-                  </Link>
-                </CardFooter>
-              </Card>
-
-              {/* Growth Plan */}
-              <Card className="relative border-primary">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-4 py-1 rounded-full">
-                  Most Popular
-                </div>
-                <CardContent className="pt-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Growth</h3>
-                  <p className="text-gray-600 mb-6">For growing businesses with active link building campaigns</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "89" : "71"}</span>
-                    <span className="text-gray-600">/month</span>
-                    {pricingInterval === "annual" && <span className="ml-2 text-xs text-primary">billed annually</span>}
-                  </div>
-
-                  <ul className="space-y-3 mb-6">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">150 daily prospects</span>
+                      <span className="text-sm text-gray-600">Basic AI Fit Scoring</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">300 credits per month</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Advanced AI personalization</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Full analytics suite</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Auto follow-up sequences</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Priority support</span>
+                      <span className="text-sm text-gray-600">Free email generation</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -459,13 +458,13 @@ export default function LandingPage() {
                 </CardFooter>
               </Card>
 
-              {/* Pro Plan */}
+              {/* Grow Plan */}
               <Card className="relative border-gray-200">
                 <CardContent className="pt-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
-                  <p className="text-gray-600 mb-6">For agencies and businesses with serious link building needs</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Grow</h3>
+                  <p className="text-gray-600 mb-6">For growing businesses with active link building</p>
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "199" : "159"}</span>
+                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "69" : "55"}</span>
                     <span className="text-gray-600">/month</span>
                     {pricingInterval === "annual" && <span className="ml-2 text-xs text-primary">billed annually</span>}
                   </div>
@@ -473,31 +472,72 @@ export default function LandingPage() {
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Unlimited daily prospects</span>
+                      <span className="text-sm text-gray-600">Up to 2 websites</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">1000 credits per month</span>
+                      <span className="text-sm text-gray-600">20 opportunities/day drip</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Advanced AI with custom training</span>
+                      <span className="text-sm text-gray-600">150 credits/month</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">White-labeled reports</span>
+                      <span className="text-sm text-gray-600">1-month credit rollover</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Team collaboration features</span>
+                      <span className="text-sm text-gray-600">Advanced AI recommendations</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">API access</span>
+                      <span className="text-sm text-gray-600">Multi-site dashboard</span>
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Link href="/auth" className="w-full">
+                    <Button variant="outline" className="w-full">Get Started</Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+              
+              {/* Pro Plan */}
+              <Card className="relative border-gray-200">
+                <CardContent className="pt-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
+                  <p className="text-gray-600 mb-6">For agencies and serious link builders</p>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "129" : "103"}</span>
+                    <span className="text-gray-600">/month</span>
+                    {pricingInterval === "annual" && <span className="ml-2 text-xs text-primary">billed annually</span>}
+                  </div>
+
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">Up to 5 websites</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Dedicated account manager</span>
+                      <span className="text-sm text-gray-600">30 opportunities/day drip</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">300 credits/month</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">1-month credit rollover</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">Advanced AI recommendations</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600">Priority support</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -525,7 +565,7 @@ export default function LandingPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <p className="mt-4 text-sm text-white/80">No credit card required. 14-day free trial.</p>
+              <p className="mt-4 text-sm text-white/80">No credit card required. 7-day free trial.</p>
             </div>
           </div>
         </section>
