@@ -13,6 +13,21 @@ import { insertUserSchema } from "@shared/schema";
 import { Link } from "wouter";
 import { Loader2, Link as LinkIcon } from "lucide-react";
 
+// Helper function to parse URL search parameters
+function useSearchParams() {
+  const isBrowser = typeof window !== "undefined";
+  if (!isBrowser) return {};
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const params: Record<string, string> = {};
+  
+  // Get specific params we need
+  params.tab = searchParams.get("tab") || "";
+  params.plan = searchParams.get("plan") || "";
+  
+  return params;
+}
+
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -29,8 +44,12 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.tab === "register" ? "register" : "login";
+  const selectedPlan = searchParams.plan || "Free Trial";
+  
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("login");
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const { user, loginMutation, registerMutation } = useAuth();
   const [_, navigate] = useLocation();
 
@@ -173,7 +192,9 @@ export default function AuthPage() {
               <CardHeader>
                 <CardTitle>Create Account</CardTitle>
                 <CardDescription>
-                  Register to access LinkSyncOS
+                  {selectedPlan !== "Free Trial" 
+                    ? `Register to start your ${selectedPlan} plan`
+                    : `Register to start your 7-day Free Trial`}
                 </CardDescription>
               </CardHeader>
               <CardContent>

@@ -542,7 +542,7 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href="/auth" className="w-full">
+                  <Link href="/pricing" className="w-full">
                     <Button variant="outline" className="w-full">Get Started</Button>
                   </Link>
                 </CardFooter>
@@ -559,7 +559,7 @@ export default function LandingPage() {
               <p className="text-xl text-white/90 mb-8">
                 Join thousands of satisfied users who are building high-quality backlinks faster and more efficiently than ever before.
               </p>
-              <Link href="/auth">
+              <Link href="/pricing">
                 <Button size="lg" variant="secondary" className="px-10 py-6">
                   Start Your Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
