@@ -106,7 +106,7 @@ export default function OpportunityCard({
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
       toast({
         title: "Opportunity hidden",
         description: "You can find this in your hidden opportunities filter.",

@@ -234,7 +234,11 @@ export default function Dashboard() {
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
+      toast({
+        title: "Prospects hidden",
+        description: `Successfully hid ${selectedItems.length} prospect${selectedItems.length > 1 ? 's' : ''}.`,
+      });
       setSelectedItems([]);
     }
   });
