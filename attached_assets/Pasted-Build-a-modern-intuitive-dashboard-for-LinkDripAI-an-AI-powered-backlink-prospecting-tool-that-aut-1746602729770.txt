@@ -1,0 +1,155 @@
+Build a modern, intuitive dashboard for LinkDripAI, an AI‑powered backlink prospecting tool that automatically “drips” new link opportunities each day. Users unlock opportunities with credits, generate AI emails, and track outreach—all in one place. The dashboard must feel light, responsive, and guide users to action.
+
+1. Top Navigation
+Left: Logo + “LinkDripAI”
+
+Center: Website selector dropdown (Starter=1 site, Grow=2, Pro=5)
+
+Right:
+
+Credit balance (“150 credits”) + “Buy Credits”
+
+“New Today” count (e.g. “12 new opps”)
+
+Next‑drip countdown timer
+
+User menu (Settings, Billing, Help, Logout)
+
+2. Sidebar (Collapsible)
+
+
+Icons + labels for:
+
+Dashboard
+
+Opportunities
+
+Outreach
+
+Sites
+
+Billing & Add‑Ons
+
+Help Center
+
+3. Main Feed (Per‑Site)
+
+
+A. Site Summary Bar
+Site name + niche tag
+
+“Credits this month: X / Y”
+
+“Opportunities today: Y”
+
+Buttons: Edit Site • Add Site (if eligible)
+
+
+
+B. AI Insight Banner
+One‑line AI tip, e.g. “Unlock 3 guest‑post opps for quick wins.”
+
+
+
+C. Opportunities Feed
+
+
+Automatically dripped each day (Starter 10, Grow 20, Pro 30). Split into:
+
+New Today (highlighted cards)
+
+Earlier (muted cards)
+
+
+
+Opportunity Card (Locked)
+DA (large)
+
+Category (icon + text)
+
+Niche tag
+
+Fit Score (0–100) with tooltip
+
+Status: 🔒 Locked / ⭐ Starred / 📧 Contacted
+
+Actions:
+
+Unlock (1 credit)
+
+Star (save for later)
+
+Hide (temporarily remove from view)
+
+
+
+Hidden cards are not deleted—they move to a “Hidden” filter and can be toggled back on.
+
+
+
+Bulk Controls
+Checkboxes on cards
+
+Buttons: Unlock Selected • Hide Selected • Star Selected
+
+
+
+View Options
+Grid vs List toggle
+
+Density: Compact vs Comfortable
+
+4. Unlock & Outreach Panel
+
+
+When unlocked:
+
+Reveal domain, URL, contact info
+
+“Generate Email” opens AI draft (editable)
+
+“Send” via integrated SMTP/Gmail or mark manually
+
+Track status in Outreach tab (To Send, Sent, Replied, Link Acquired)
+
+Add private notes
+
+5. Filters & Presets
+
+
+Persistent filter bar:
+
+DA slider
+
+Fit Score slider
+
+Category checkboxes
+
+Link type dropdown
+
+Starred / Hidden toggles
+
+Save current filters as “My Preset”
+
+6. Multi‑Site Workflow
+Switch sites via header dropdown
+
+Each site has independent feed, filters, and outreach history
+
+Credits and drip counts shared across sites
+
+7. Help & Guidance
+First‑use coach marks on Unlock, Hide, Filters
+
+Inline tooltips on hover (Fit Score, credits, hide feature)
+
+Keyboard shortcuts: U=Unlock, H=Hide, S=Star, ←/→ navigate
+
+8. Visual & Interaction Design
+Clean, minimalist style with brand accent colors
+
+Smooth card animations on drip arrival
+
+Skeleton placeholders during load
+
+Responsive for desktop and tablet
