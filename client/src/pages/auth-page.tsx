@@ -100,7 +100,12 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       // Store the selected plan in localStorage for the onboarding page
-      localStorage.setItem('selectedPlan', selectedPlan);
+      const planToStore = selectedPlan === "Free Trial" || 
+                          selectedPlan === "Starter" || 
+                          selectedPlan === "Grow" || 
+                          selectedPlan === "Pro" 
+                        ? selectedPlan : "Free Trial";
+      localStorage.setItem('selectedPlan', planToStore);
       
       const { confirmPassword, ...registerData } = data;
       await registerMutation.mutateAsync(registerData);

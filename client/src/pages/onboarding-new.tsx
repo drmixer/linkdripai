@@ -141,6 +141,11 @@ export default function Onboarding() {
       plan: selectedPlan,
     },
   });
+  
+  // Effect to update form when selectedPlan changes
+  useEffect(() => {
+    subscriptionForm.setValue('plan', selectedPlan);
+  }, [selectedPlan, subscriptionForm]);
 
   // Initialize website form
   const websiteForm = useForm<WebsiteFormValues>({
