@@ -497,7 +497,7 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href="/pricing" className="w-full">
+                  <Link href="/auth?tab=register&plan=Grow" className="w-full">
                     <Button variant="outline" className="w-full">Get Started</Button>
                   </Link>
                 </CardFooter>
@@ -542,7 +542,7 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href="/pricing" className="w-full">
+                  <Link href="/auth?tab=register&plan=Pro" className="w-full">
                     <Button variant="outline" className="w-full">Get Started</Button>
                   </Link>
                 </CardFooter>
