@@ -129,10 +129,12 @@ export default function Onboarding() {
     try {
       setIsLoading(true);
       
-      // In a real implementation, we would save the website to the database
-      // For now, we'll just add it to our local state
+      // Save websites to user record
       const newWebsites = [...websites, data];
       setWebsites(newWebsites);
+      
+      // Save to the database
+      await apiRequest("POST", "/api/onboarding/websites", { websites: newWebsites });
       
       if (newWebsites.length < maxWebsites) {
         // If user can add more websites, ask if they want to
@@ -161,12 +163,18 @@ export default function Onboarding() {
       // Store preferences for the current website
       const websitePreference = {
         ...data,
-        websiteId: currentWebsiteIndex + 1,
+        websiteId: currentWebsiteIndex,
       };
       
       const newPreferences = [...preferences];
       newPreferences[currentWebsiteIndex] = websitePreference;
       setPreferences(newPreferences);
+      
+      // Save preference to the database
+      await apiRequest("POST", `/api/onboarding/preferences`, {
+        websiteIndex: currentWebsiteIndex,
+        preferences: data,
+      });
       
       if (currentWebsiteIndex < websites.length - 1) {
         // Move to next website's preferences
@@ -202,11 +210,14 @@ export default function Onboarding() {
     try {
       setIsLoading(true);
       
-      // In a real implementation, we would save all the user preferences to the database
-      // For this demo, we'll just navigate to the dashboard
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1000);
+      // Mark onboarding as completed in the database
+      await apiRequest("POST", "/api/onboarding/complete", {});
+      
+      // Update cached user data
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Navigate to the dashboard
+      navigate("/dashboard");
     } catch (error) {
       console.error("Error completing onboarding:", error);
     } finally {
