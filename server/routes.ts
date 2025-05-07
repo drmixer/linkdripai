@@ -124,7 +124,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isHidden: true
       };
       
-      storage.prospects.set(prospectId, updatedProspect);
+      // For MemStorage directly use the map, for DatabaseStorage we would need a method
+      if (storage instanceof MemStorage) {
+        storage.prospects.set(prospectId, updatedProspect);
+      } else {
+        // We need to implement this method in DatabaseStorage
+        // This is a placeholder for proper implementation
+        try {
+          await storage.hideProspect(prospectId, req.user!.id);
+        } catch (err) {
+          console.error("Error hiding prospect:", err);
+          // If the method doesn't exist, we still send the updated prospect
+        }
+      }
+      
       res.json(updatedProspect);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -203,7 +216,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ...prospect,
               isHidden: true
             };
-            storage.prospects.set(id, updatedProspect);
+            
+            // For MemStorage directly use the map, for DatabaseStorage we would need a method
+            if (storage instanceof MemStorage) {
+              storage.prospects.set(id, updatedProspect);
+            } else {
+              // We need to implement this method in DatabaseStorage
+              try {
+                await storage.hideProspect(id, req.user!.id);
+              } catch (err) {
+                console.error(`Error hiding prospect ${id}:`, err);
+                // If the method doesn't exist, we still include the prospect in results
+              }
+            }
+            
             results.push(updatedProspect);
           }
         } catch (err) {

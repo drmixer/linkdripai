@@ -264,8 +264,9 @@ export class MemStorage implements IStorage {
 
   async getAllProspects(userId: number): Promise<Prospect[]> {
     // Return all prospects that are either not unlocked or unlocked by this user
+    // and not hidden
     return Array.from(this.prospects.values()).filter(
-      (prospect) => !prospect.unlockedBy || prospect.unlockedBy === userId
+      (prospect) => (!prospect.unlockedBy || prospect.unlockedBy === userId) && !prospect.isHidden
     );
   }
 

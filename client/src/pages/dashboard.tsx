@@ -264,6 +264,13 @@ export default function Dashboard() {
         description: `Successfully hid ${selectedItems.length} prospect${selectedItems.length > 1 ? 's' : ''}.`,
       });
       setSelectedItems([]);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to hide prospects",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
   
