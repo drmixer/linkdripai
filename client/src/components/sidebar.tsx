@@ -72,7 +72,7 @@ export default function Sidebar() {
           <div className="rounded-md bg-primary p-1.5 mr-2">
             <Link2Icon className="h-6 w-6 text-white" />
           </div>
-          <span className="text-xl font-bold text-gray-900">LinkSyncOS</span>
+          <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
         </div>
       </div>
             
@@ -166,7 +166,7 @@ export default function Sidebar() {
           <div className="rounded-md bg-primary p-1 mr-2">
             <Link2Icon className="h-5 w-5 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">LinkSyncOS</span>
+          <span className="text-lg font-bold text-gray-900">LinkDripAI</span>
         </div>
       </div>
       
