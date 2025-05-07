@@ -140,8 +140,8 @@ export default function OpportunityCard({
     // No need to call onHide here, it's already called in onSuccess
   };
 
-  const handleSelectChange = (checked: boolean | "indeterminate") => {
-    if (onSelectChange && typeof checked === "boolean") {
+  const handleSelectChange = (checked: boolean) => {
+    if (onSelectChange) {
       onSelectChange(checked);
     }
   };

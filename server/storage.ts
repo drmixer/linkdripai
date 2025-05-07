@@ -251,9 +251,9 @@ export class MemStorage implements IStorage {
     const dailyLimit = user.dailyOpportunitiesLimit;
     const allProspects = Array.from(this.prospects.values());
     
-    // Filter out already unlocked prospects for this user
+    // Filter out already unlocked prospects for this user and hidden prospects
     const availableProspects = allProspects.filter(
-      (prospect) => !prospect.unlockedBy || prospect.unlockedBy !== userId
+      (prospect) => (!prospect.unlockedBy || prospect.unlockedBy !== userId) && !prospect.isHidden
     );
     
     // Sort by fit score and take the top ones based on daily limit

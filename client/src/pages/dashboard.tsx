@@ -323,6 +323,13 @@ export default function Dashboard() {
   const totalCredits = stats?.credits?.total || 0;
   const availableCredits = stats?.credits?.available || 0;
   
+  // Debug log to confirm selections are working properly
+  useEffect(() => {
+    if (selectedItems.length > 0) {
+      console.log("Selected items:", selectedItems);
+    }
+  }, [selectedItems]);
+
   return (
     <Layout>
       {/* Opportunities feed */}
