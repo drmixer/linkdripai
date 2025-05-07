@@ -1,0 +1,122 @@
+Platform Name: LinkSyncOS
+
+Business Type: SaaS platform for discovering, managing, and reaching out to backlink opportunities.
+
+Audience: Bloggers, SEO agencies, marketers, and small business owners seeking high-quality link-building opportunities.
+
+Platform Overview:
+
+
+LinkSyncOS is a backlink outreach platform that helps users discover high-quality link-building opportunities tailored to their niche. The platform provides smart, AI-curated daily backlink prospect “drips” based on user-defined filters and content, allows unlocking specific opportunities using credits, and streamlines outreach with built-in AI email writing and sending.
+
+
+
+Users receive a steady flow of relevant link prospects daily, with a limited number of credits to unlock the full contact details and reach out to them. Higher-tier plans offer more opportunities, more monthly credits, the ability to manage outreach for multiple websites, and enhanced AI recommendations.
+
+Key Platform Features:
+Smart Daily Drip Feed of link opportunities based on user profile, site URL, content, and preferences.
+
+Credit System: Credits are used to unlock a prospect’s full identity and contact details.
+
+Prospect Preview Panel: Users can preview each opportunity before unlocking (more below).
+
+AI Email Generator with editable, tailored outreach messages.
+
+Email Sending via SMTP or Gmail integration (no additional credit cost).
+
+Multi-site management (for Grow and Pro plans).
+
+Filter and search opportunities by category, DA range, type, niche, etc.
+
+Saved prospects, unlocked history, and campaign tracking dashboard.
+
+Buy extra credits or opportunities on demand.
+
+1-month credit rollover.
+
+Prospect Preview System:
+
+
+Each prospect in the daily drip feed shows a preview of key attributes before using credits, including:
+
+Niche or topic
+
+Domain Authority (DA) range
+
+Type of site (e.g., blog, media outlet, directory)
+
+AI-generated Fit Score (how relevant it is to the user’s niche/needs)
+
+
+
+To unlock the full opportunity (site name, contact info, and ability to reach out), the user spends 1 credit.
+
+Plans & Pricing:
+
+
+Free Trial Tier
+7-day trial
+
+5 opportunities/day drip
+
+Max 10 total credits
+
+Max 2 credits can be used per day
+
+AI email generation + sending: FREE
+
+No rollover
+
+Starter Plan – $39/month
+1 website
+
+10 opportunities/day drip
+
+50 credits/month
+
+1-month credit rollover
+
+Basic AI Fit Scoring
+
+AI email generation + sending: FREE
+
+Multi-site: Not included
+
+Grow Plan – $69/month
+Up to 2 websites (shared credits/opportunities)
+
+20 opportunities/day drip (per account)
+
+150 credits/month
+
+1-month credit rollover
+
+Advanced Fit Scoring + AI recommendations
+
+AI email generation + sending: FREE
+
+Multi-site dashboard switching
+
+Pro Plan – $129/month
+Up to 5 websites (shared credits/opportunities)
+
+30 opportunities/day drip (per account)
+
+300 credits/month
+
+1-month credit rollover
+
+Advanced Fit Scoring + AI recommendations
+
+AI email generation + sending: FREE
+
+Multi-site dashboard switching
+
+Priority support + early feature access
+
+Add-ons and Upgrades:
+Extra Credits: $10 = 25 credits, $25 = 75 credits
+
+Extra Daily Opportunities: $10 = 10 more daily drip opps (resets monthly)
+
+All paid plans can purchase add-ons anytime.
