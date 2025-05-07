@@ -388,14 +388,6 @@ export default function Dashboard() {
         </div>
       )}
       
-      {/* AI insight banner */}
-      <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 mb-6 flex items-center">
-        <LightbulbIcon className="h-5 w-5 text-primary-500 mr-2 flex-shrink-0" />
-        <p className="text-sm text-primary-700">
-          <strong>AI Insight:</strong> You have 3 high-quality guest post opportunities with DA 50+ that match your site content. Consider unlocking them first.
-        </p>
-      </div>
-      
       {/* Opportunities feed */}
       <div>
         {/* Tabs and bulk actions */}
