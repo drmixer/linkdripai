@@ -94,7 +94,7 @@ export default function Opportunities() {
           return true;
         })
         // Sort opportunities with newest at the top (based on ID for now)
-        .sort((a, b) => b.id - a.id)
+        .sort((a: Prospect, b: Prospect) => b.id - a.id)
     : [];
 
   return (

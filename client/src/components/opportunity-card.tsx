@@ -141,8 +141,10 @@ export default function OpportunityCard({
     if (onHide) onHide();
   };
 
-  const handleSelectChange = (checked: boolean) => {
-    if (onSelectChange) onSelectChange(checked);
+  const handleSelectChange = (checked: boolean | "indeterminate") => {
+    if (onSelectChange && typeof checked === "boolean") {
+      onSelectChange(checked);
+    }
   };
 
   const getStatusIcon = () => {
@@ -180,9 +182,8 @@ export default function OpportunityCard({
           <Checkbox 
             id={`prospect-grid-${prospect.id}`}
             checked={selected}
-            defaultChecked={selected}
             onCheckedChange={handleSelectChange} 
-            className="border-2 data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
+            className="border-2 h-5 w-5 rounded-sm bg-white data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
           />
         </div>
       )}
@@ -320,9 +321,8 @@ export default function OpportunityCard({
           <Checkbox 
             id={`prospect-list-${prospect.id}`}
             checked={selected}
-            defaultChecked={selected}
             onCheckedChange={handleSelectChange} 
-            className="border-2 data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
+            className="border-2 h-5 w-5 rounded-sm bg-white data-[state=checked]:bg-primary-600 data-[state=checked]:text-white"
           />
         </div>
       )}

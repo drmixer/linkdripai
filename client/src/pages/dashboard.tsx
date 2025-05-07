@@ -246,8 +246,12 @@ export default function Dashboard() {
   
   const handleItemSelect = (id: number, selected: boolean) => {
     if (selected) {
-      setSelectedItems([...selectedItems, id]);
+      // Add the item to the selected items if it's not already there
+      if (!selectedItems.includes(id)) {
+        setSelectedItems([...selectedItems, id]);
+      }
     } else {
+      // Remove the item from selected items
       setSelectedItems(selectedItems.filter(itemId => itemId !== id));
     }
   };
@@ -300,7 +304,7 @@ export default function Dashboard() {
     });
     
     // Sort opportunities with newest at the top (based on ID for now, can be changed to createdAt if available)
-    return filtered.sort((a, b) => b.id - a.id);
+    return filtered.sort((a: Prospect, b: Prospect) => b.id - a.id);
   };
   
   // Split opportunities into new and earlier
