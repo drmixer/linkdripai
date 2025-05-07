@@ -113,32 +113,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid prospect ID" });
       }
 
-      const prospect = await storage.getProspectById(prospectId);
-      if (!prospect) {
-        return res.status(404).json({ message: "Prospect not found" });
-      }
-      
-      // Update prospect to be hidden
-      const updatedProspect = {
-        ...prospect,
-        isHidden: true
-      };
-      
-      // For MemStorage directly use the map, for DatabaseStorage we would need a method
-      if (storage instanceof MemStorage) {
-        storage.prospects.set(prospectId, updatedProspect);
-      } else {
-        // We need to implement this method in DatabaseStorage
-        // This is a placeholder for proper implementation
-        try {
-          await storage.hideProspect(prospectId, req.user!.id);
-        } catch (err) {
-          console.error("Error hiding prospect:", err);
-          // If the method doesn't exist, we still send the updated prospect
-        }
-      }
-      
-      res.json(updatedProspect);
+      const prospect = await storage.hideProspect(prospectId, req.user!.id);
+      res.json(prospect);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -210,28 +186,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const results = [];
       for (const id of ids) {
         try {
-          const prospect = await storage.getProspectById(id);
-          if (prospect) {
-            const updatedProspect = {
-              ...prospect,
-              isHidden: true
-            };
-            
-            // For MemStorage directly use the map, for DatabaseStorage we would need a method
-            if (storage instanceof MemStorage) {
-              storage.prospects.set(id, updatedProspect);
-            } else {
-              // We need to implement this method in DatabaseStorage
-              try {
-                await storage.hideProspect(id, req.user!.id);
-              } catch (err) {
-                console.error(`Error hiding prospect ${id}:`, err);
-                // If the method doesn't exist, we still include the prospect in results
-              }
-            }
-            
-            results.push(updatedProspect);
-          }
+          const hiddenProspect = await storage.hideProspect(id, req.user!.id);
+          results.push(hiddenProspect);
         } catch (err) {
           console.error(`Error hiding prospect ${id}:`, err);
         }
