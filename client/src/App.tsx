@@ -12,11 +12,13 @@ import Opportunities from "@/pages/opportunities";
 import SavedProspects from "@/pages/saved-prospects";
 import EmailOutreach from "@/pages/email-outreach";
 import Analytics from "@/pages/analytics";
+import LandingPage from "@/pages/landing-page";
 
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={Dashboard} />
+      <Route path="/" component={LandingPage} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/opportunities" component={Opportunities} />
       <ProtectedRoute path="/saved-prospects" component={SavedProspects} />
       <ProtectedRoute path="/email-outreach" component={EmailOutreach} />

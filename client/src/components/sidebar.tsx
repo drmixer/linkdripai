@@ -18,7 +18,7 @@ export default function Sidebar() {
     {
       label: "Dashboard",
       icon: HomeIcon,
-      href: "/",
+      href: "/dashboard",
     },
     {
       label: "Daily Opportunities",
