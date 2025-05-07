@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -25,7 +25,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link } from "wouter";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Link2Icon, ArrowRight, Check } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -308,10 +307,12 @@ export default function Onboarding() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="container mx-auto flex items-center">
-          <div className="rounded-md bg-primary p-1.5 mr-2">
-            <Link2Icon className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-xl font-bold text-gray-900">LinkSyncOS</span>
+          <Link to="/" className="flex items-center cursor-pointer hover:opacity-90 transition-opacity">
+            <div className="rounded-md bg-primary p-1.5 mr-2">
+              <Link2Icon className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-xl font-bold text-gray-900">LinkSyncOS</span>
+          </Link>
         </div>
       </header>
       

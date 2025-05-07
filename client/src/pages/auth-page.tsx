@@ -118,12 +118,12 @@ export default function AuthPage() {
     <div className="flex min-h-screen">
       {/* Left side - Auth forms */}
       <div className="flex flex-col justify-center w-full max-w-md p-8 bg-white">
-        <div className="flex items-center mb-8">
+        <Link to="/" className="flex items-center mb-8 cursor-pointer hover:opacity-90 transition-opacity">
           <div className="rounded-md bg-primary p-1.5 mr-2">
             <LinkIcon className="h-6 w-6 text-white" />
           </div>
           <span className="text-xl font-bold text-gray-900">LinkSyncOS</span>
-        </div>
+        </Link>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
