@@ -122,7 +122,7 @@ export default function AuthPage() {
           <div className="rounded-md bg-primary p-1.5 mr-2">
             <LinkIcon className="h-6 w-6 text-white" />
           </div>
-          <span className="text-xl font-bold text-gray-900">LinkSyncOS</span>
+          <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
         </Link>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -324,7 +324,7 @@ export default function AuthPage() {
             Discover High-Quality Backlink Opportunities
           </h1>
           <p className="text-xl text-gray-700 mb-8">
-            LinkSyncOS helps you discover, manage, and reach out to backlink prospects that are tailored to your niche.
+            LinkDripAI helps you discover, manage, and reach out to backlink prospects that are tailored to your niche.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">

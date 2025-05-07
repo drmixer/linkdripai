@@ -311,7 +311,7 @@ export default function Onboarding() {
             <div className="rounded-md bg-primary p-1.5 mr-2">
               <Link2Icon className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">LinkSyncOS</span>
+            <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
           </Link>
         </div>
       </header>
