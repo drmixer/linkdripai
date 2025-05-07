@@ -74,6 +74,7 @@ export interface IStorage {
   getProspectById(id: number): Promise<Prospect | undefined>;
   unlockProspect(id: number, userId: number): Promise<Prospect>;
   saveProspect(id: number, userId: number): Promise<Prospect>;
+  hideProspect(id: number, userId: number): Promise<Prospect>;
   
   // Email methods
   generateEmail(prospect: Prospect, template: string): Promise<EmailTemplate>;
@@ -345,6 +346,21 @@ export class MemStorage implements IStorage {
     const updatedProspect: Prospect = {
       ...prospect,
       isSaved: true,
+    };
+    
+    this.prospects.set(id, updatedProspect);
+    return updatedProspect;
+  }
+  
+  async hideProspect(id: number, userId: number): Promise<Prospect> {
+    const prospect = await this.getProspectById(id);
+    if (!prospect) {
+      throw new Error("Prospect not found");
+    }
+    
+    const updatedProspect: Prospect = {
+      ...prospect,
+      isHidden: true,
     };
     
     this.prospects.set(id, updatedProspect);
@@ -920,6 +936,20 @@ export class DatabaseStorage implements IStorage {
     
     const [updatedProspect] = await db.update(prospects)
       .set({ isSaved: true })
+      .where(eq(prospects.id, id))
+      .returning();
+    
+    return updatedProspect;
+  }
+  
+  async hideProspect(id: number, userId: number): Promise<Prospect> {
+    const prospect = await this.getProspectById(id);
+    if (!prospect) {
+      throw new Error("Prospect not found");
+    }
+    
+    const [updatedProspect] = await db.update(prospects)
+      .set({ isHidden: true })
       .where(eq(prospects.id, id))
       .returning();
     
