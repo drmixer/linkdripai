@@ -274,7 +274,8 @@ export default function Dashboard() {
   const filterOpportunities = (opportunities: Prospect[] | undefined) => {
     if (!opportunities) return [];
     
-    return opportunities.filter(opp => {
+    // Filter the opportunities first
+    const filtered = opportunities.filter(opp => {
       // Filter by search query
       const searchMatch = searchQuery === "" || 
         (opp.siteName && opp.siteName.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -297,6 +298,9 @@ export default function Dashboard() {
       
       return searchMatch && daMatch && fitMatch && tabMatch;
     });
+    
+    // Sort opportunities with newest at the top (based on ID for now, can be changed to createdAt if available)
+    return filtered.sort((a, b) => b.id - a.id);
   };
   
   // Split opportunities into new and earlier

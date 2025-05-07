@@ -55,43 +55,46 @@ export default function Opportunities() {
   };
 
   const filteredOpportunities = opportunities
-    ? opportunities.filter((prospect: Prospect) => {
-        // Search term filter
-        if (
-          searchTerm &&
-          !(
-            prospect.siteName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            prospect.siteType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            prospect.niche.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-        ) {
-          return false;
-        }
+    ? opportunities
+        .filter((prospect: Prospect) => {
+          // Search term filter
+          if (
+            searchTerm &&
+            !(
+              prospect.siteName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              prospect.siteType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              prospect.niche.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+          ) {
+            return false;
+          }
 
-        // Niche filter
-        if (filters.nicheFilter !== "all" && prospect.niche !== filters.nicheFilter) {
-          return false;
-        }
+          // Niche filter
+          if (filters.nicheFilter !== "all" && prospect.niche !== filters.nicheFilter) {
+            return false;
+          }
 
-        // DA Range filter
-        if (filters.daRangeFilter !== "all") {
-          const da = typeof prospect.domainAuthority === 'string' 
-            ? parseInt(prospect.domainAuthority.split('-')[0]) 
-            : prospect.domainAuthority;
-          
-          if (filters.daRangeFilter === "0-30" && da > 30) return false;
-          if (filters.daRangeFilter === "31-50" && (da < 31 || da > 50)) return false;
-          if (filters.daRangeFilter === "51-70" && (da < 51 || da > 70)) return false;
-          if (filters.daRangeFilter === "71+" && da < 71) return false;
-        }
+          // DA Range filter
+          if (filters.daRangeFilter !== "all") {
+            const da = typeof prospect.domainAuthority === 'string' 
+              ? parseInt(prospect.domainAuthority.split('-')[0]) 
+              : prospect.domainAuthority;
+            
+            if (filters.daRangeFilter === "0-30" && da > 30) return false;
+            if (filters.daRangeFilter === "31-50" && (da < 31 || da > 50)) return false;
+            if (filters.daRangeFilter === "51-70" && (da < 51 || da > 70)) return false;
+            if (filters.daRangeFilter === "71+" && da < 71) return false;
+          }
 
-        // Type filter
-        if (filters.typeFilter !== "all" && prospect.siteType !== filters.typeFilter) {
-          return false;
-        }
+          // Type filter
+          if (filters.typeFilter !== "all" && prospect.siteType !== filters.typeFilter) {
+            return false;
+          }
 
-        return true;
-      })
+          return true;
+        })
+        // Sort opportunities with newest at the top (based on ID for now)
+        .sort((a, b) => b.id - a.id)
     : [];
 
   return (
