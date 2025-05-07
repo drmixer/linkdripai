@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
+import { useToast, toast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import {
   Card,
@@ -284,6 +285,9 @@ export default function Dashboard() {
     
     // Filter the opportunities first
     const filtered = opportunities.filter(opp => {
+      // Filter out hidden opportunities
+      if (opp.isHidden) return false;
+      
       // Filter by search query
       const searchMatch = searchQuery === "" || 
         (opp.siteName && opp.siteName.toLowerCase().includes(searchQuery.toLowerCase())) ||

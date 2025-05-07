@@ -81,6 +81,7 @@ export const insertProspectSchema = createInsertSchema(prospects).omit({
   id: true,
   isUnlocked: true,
   isSaved: true,
+  isHidden: true,
   unlockedBy: true,
   unlockedAt: true,
   createdAt: true,
@@ -104,7 +105,7 @@ export const outreachEmails = pgTable(outreachEmailsTable, {
   sentAt: timestamp("sentAt").defaultNow(),
   responseAt: timestamp("responseAt"),
   isFollowUp: boolean("isFollowUp").default(false),
-  parentEmailId: integer("parentEmailId").references((): ReturnType<typeof integer> => outreachEmails.id),
+  parentEmailId: integer("parentEmailId").references(() => outreachEmails.id),
 });
 
 export const insertEmailSchema = createInsertSchema(outreachEmails).omit({

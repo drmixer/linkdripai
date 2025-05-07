@@ -137,8 +137,7 @@ export default function OpportunityCard({
   const handleHide = () => {
     if (hideMutation.isPending) return;
     hideMutation.mutate();
-    // Call the parent component's onHide callback if provided
-    if (onHide) onHide();
+    // No need to call onHide here, it's already called in onSuccess
   };
 
   const handleSelectChange = (checked: boolean | "indeterminate") => {
