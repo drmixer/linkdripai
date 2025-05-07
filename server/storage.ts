@@ -508,9 +508,6 @@ Best regards,
       ...emailData,
       id,
       sentAt: new Date(),
-      responseAt: undefined,
-      isFollowUp: false,
-      parentEmailId: null,
       status: "Awaiting response",
     };
     
@@ -528,134 +525,91 @@ Best regards,
       throw new Error("Unauthorized to follow up on this email");
     }
     
-    const id = this.currentEmailId++;
-    const followUpEmail: OutreachEmail = {
-      ...originalEmail,
-      id,
-      body: `Hi ${originalEmail.contactRole || "there"},
+    const followUpBody = `Hi ${originalEmail.contactRole || "there"},
 
-I'm following up on my previous email about ${originalEmail.subject.toLowerCase().includes("guest post") ? "contributing a guest post" : "a potential collaboration"}.
+I hope this email finds you well. I reached out to you on ${originalEmail.sentAt.toDateString()} about ${originalEmail.subject}.
 
-${originalEmail.subject.toLowerCase().includes("guest post") 
-  ? "I wanted to make sure you received my pitch for an article idea that I believe would resonate with your audience."
-  : "I wanted to check if you had a chance to consider my previous message."}
+I understand you're likely very busy, but I wanted to follow up and see if you had a chance to consider my proposal.
 
-I'm still very interested in working with ${originalEmail.siteName} and am happy to provide any additional information that might help with your decision.
+[Add any additional value or incentive here]
 
-Please let me know if you're interested or if you have any questions.
+I'd be happy to answer any questions you might have.
 
 Best regards,
 [Your Name]
-[Your Website]
-
--------- Original Message --------
-${originalEmail.body}`,
-      subject: `Follow-up: ${originalEmail.subject}`,
+[Your Position], [Your Website]`;
+    
+    const followUpEmail: OutreachEmail = {
+      id: this.currentEmailId++,
+      userId,
+      prospectId: originalEmail.prospectId,
+      emailTemplate: "followup",
+      subject: `Following up: ${originalEmail.subject}`,
+      body: followUpBody,
+      contactEmail: originalEmail.contactEmail,
+      contactRole: originalEmail.contactRole,
+      siteName: originalEmail.siteName,
+      domainAuthority: originalEmail.domainAuthority,
       sentAt: new Date(),
-      isFollowUp: true,
-      parentEmailId: emailId,
       status: "Awaiting response",
+      parentEmailId: emailId,
     };
     
-    this.emails.set(id, followUpEmail);
-    
-    // Update original email status if it was "No response"
-    if (originalEmail.status === "No response") {
-      const updatedOriginal = {
-        ...originalEmail,
-        status: "Followed up"
-      };
-      this.emails.set(emailId, updatedOriginal);
-    }
-    
+    this.emails.set(followUpEmail.id, followUpEmail);
     return followUpEmail;
   }
 
   async getUserEmails(userId: number): Promise<OutreachEmail[]> {
-    return Array.from(this.emails.values())
-      .filter(email => email.userId === userId)
-      .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+    return Array.from(this.emails.values()).filter(
+      (email) => email.userId === userId
+    ).sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime());
   }
 
   async getRecentEmails(userId: number): Promise<OutreachEmail[]> {
     const allEmails = await this.getUserEmails(userId);
-    return allEmails.slice(0, 5); // Return just the 5 most recent emails
+    return allEmails.slice(0, 5);
   }
 
   async getUserAnalytics(userId: number, timeRange: string): Promise<Analytics> {
-    // Generate mock analytics data
-    const now = new Date();
-    const dates: string[] = [];
-    
-    // Generate date labels based on time range
-    let days = 30;
-    switch (timeRange) {
-      case "7days":
-        days = 7;
-        break;
-      case "30days":
-        days = 30;
-        break;
-      case "90days":
-        days = 90;
-        break;
-      case "year":
-        days = 365;
-        break;
-    }
-    
-    for (let i = 0; i < days; i++) {
-      const date = new Date();
-      date.setDate(now.getDate() - (days - i - 1));
-      dates.push(date.toISOString().split('T')[0]);
-    }
-    
-    // Email performance data
-    const emailPerformance = dates.map(date => ({
-      date,
-      sent: Math.floor(Math.random() * 5),
-      responses: Math.floor(Math.random() * 3),
-    }));
-    
-    // Backlinks acquired by month
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const currentMonth = now.getMonth();
-    const backlinksAcquired = [];
-    
-    for (let i = 0; i < 6; i++) {
-      const monthIndex = (currentMonth - 5 + i) >= 0 
-        ? (currentMonth - 5 + i) 
-        : (currentMonth - 5 + i + 12);
-      
-      backlinksAcquired.push({
-        month: months[monthIndex],
-        count: Math.floor(Math.random() * 5) + 1,
-      });
-    }
-    
-    // Response rate by niche
-    const responseRateByNiche = [
-      { name: "Digital Marketing", value: 35 },
-      { name: "SEO", value: 25 },
-      { name: "Content", value: 20 },
-      { name: "Web Dev", value: 15 },
-      { name: "Other", value: 5 },
+    // Generate mock analytics data for demo purposes
+    const emailPerformance = [
+      { date: '2023-01-01', sent: 5, opens: 3, responses: 1 },
+      { date: '2023-01-02', sent: 8, opens: 5, responses: 2 },
+      { date: '2023-01-03', sent: 4, opens: 3, responses: 1 },
+      { date: '2023-01-04', sent: 7, opens: 4, responses: 2 },
+      { date: '2023-01-05', sent: 6, opens: 3, responses: 1 },
     ];
     
-    // Credit usage over time
-    const creditUsage = dates.slice(-14).map(date => ({
-      date,
-      used: Math.floor(Math.random() * 5) + 1,
-      remaining: Math.floor(Math.random() * 20) + 10,
-    }));
+    const backlinksAcquired = [
+      { date: '2023-01-01', count: 0 },
+      { date: '2023-01-02', count: 1 },
+      { date: '2023-01-03', count: 0 },
+      { date: '2023-01-04', count: 2 },
+      { date: '2023-01-05', count: 0 },
+    ];
     
-    // DA distribution
+    const responseRateByNiche = [
+      { niche: 'SEO', rate: 0.25 },
+      { niche: 'Content', rate: 0.35 },
+      { niche: 'Web Dev', rate: 0.2 },
+      { niche: 'Digital Marketing', rate: 0.4 },
+      { niche: 'Business', rate: 0.15 },
+    ];
+    
+    const creditUsage = [
+      { date: '2023-01-01', used: 5, remaining: 45 },
+      { date: '2023-01-02', used: 7, remaining: 38 },
+      { date: '2023-01-03', used: 4, remaining: 34 },
+      { date: '2023-01-04', used: 6, remaining: 28 },
+      { date: '2023-01-05', used: 8, remaining: 20 },
+    ];
+    
     const daDistribution = [
-      { range: "0-20", count: Math.floor(Math.random() * 5) },
-      { range: "21-40", count: Math.floor(Math.random() * 10) + 5 },
-      { range: "41-60", count: Math.floor(Math.random() * 15) + 10 },
-      { range: "61-80", count: Math.floor(Math.random() * 5) + 3 },
-      { range: "81-100", count: Math.floor(Math.random() * 3) },
+      { range: '0-20', count: Math.floor(Math.random() * 5) },
+      { range: '21-40', count: Math.floor(Math.random() * 10) + 5 },
+      { range: '41-60', count: Math.floor(Math.random() * 15) + 10 },
+      { range: '61-80', count: Math.floor(Math.random() * 5) + 3 },
+      { range: '81-100', count: Math.floor(Math.random() * 3) },
     ];
     
     return {
@@ -666,64 +620,9 @@ ${originalEmail.body}`,
       daDistribution,
     };
   }
-  
-  // Onboarding methods
-  async updateUserWebsites(userId: number, websites: any[]): Promise<User> {
-    const [updatedUser] = await db.update(users)
-      .set({ websites })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    if (!updatedUser) {
-      throw new Error("User not found");
-    }
-    
-    return updatedUser;
-  }
-  
-  async updateWebsitePreferences(userId: number, websiteIndex: number, preferences: any): Promise<User> {
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
-    
-    if (!user) {
-      throw new Error("User not found");
-    }
-    
-    if (!user.websites || !Array.isArray(user.websites) || websiteIndex >= user.websites.length) {
-      throw new Error("Website not found");
-    }
-    
-    const websites = [...(user.websites || [])];
-    websites[websiteIndex] = {
-      ...websites[websiteIndex],
-      preferences,
-    };
-    
-    const [updatedUser] = await db.update(users)
-      .set({ websites })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    if (!updatedUser) {
-      throw new Error("Failed to update user");
-    }
-    
-    return updatedUser;
-  }
-  
-  async completeOnboarding(userId: number): Promise<User> {
-    const [updatedUser] = await db.update(users)
-      .set({ onboardingCompleted: true })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    if (!updatedUser) {
-      throw new Error("User not found");
-    }
-    
-    return updatedUser;
-  }
 }
 
+// Database implementation of the storage interface
 export class DatabaseStorage implements IStorage {
   sessionStore: session.SessionStore;
   
@@ -805,11 +704,11 @@ export class DatabaseStorage implements IStorage {
     return {
       dailyOpportunities: {
         used: unlockedToday[0]?.count || 0,
-        total: user.dailyOpportunitiesLimit,
+        total: user.dailyOpportunitiesLimit || 0,
       },
       credits: {
-        available: user.credits,
-        total: user.totalCredits,
+        available: user.credits || 0,
+        total: user.totalCredits || 0,
       },
       emailsSent: {
         total: emailCount[0]?.count || 0,
@@ -837,7 +736,7 @@ export class DatabaseStorage implements IStorage {
         ne(prospects.unlockedBy, userId)
       ))
       .orderBy(desc(prospects.fitScore))
-      .limit(user.dailyOpportunitiesLimit);
+      .limit(user.dailyOpportunitiesLimit || 5);
     
     return availableProspects;
   }
@@ -1067,35 +966,32 @@ Best regards,
     
     const followUpBody = `Hi ${originalEmail.contactRole || "there"},
 
-I'm following up on my previous email about ${originalEmail.subject.toLowerCase().includes("guest post") ? "contributing a guest post" : "a potential collaboration"}.
+I hope this email finds you well. I reached out to you on ${originalEmail.sentAt.toDateString()} about ${originalEmail.subject}.
 
-${originalEmail.subject.toLowerCase().includes("guest post") 
-  ? "I wanted to make sure you received my pitch for an article idea that I believe would resonate with your audience."
-  : "I wanted to check if you had a chance to consider my previous message about a possible collaboration opportunity."}
+I understand you're likely very busy, but I wanted to follow up and see if you had a chance to consider my proposal.
 
-I understand you're likely very busy, but I'd love to get your thoughts on this when you have a moment.
+[Add any additional value or incentive here]
 
-Thanks again for your time.
+I'd be happy to answer any questions you might have.
 
 Best regards,
 [Your Name]
 [Your Position], [Your Website]`;
     
-    const followUpSubject = `Following up: ${originalEmail.subject}`;
-    
     const [followUpEmail] = await db.insert(outreachEmails)
       .values({
+        userId,
         prospectId: originalEmail.prospectId,
-        userId: originalEmail.userId,
-        subject: followUpSubject,
+        emailTemplate: "followup",
+        subject: `Following up: ${originalEmail.subject}`,
         body: followUpBody,
-        status: "Awaiting response",
-        siteName: originalEmail.siteName,
         contactEmail: originalEmail.contactEmail,
         contactRole: originalEmail.contactRole,
+        siteName: originalEmail.siteName,
         domainAuthority: originalEmail.domainAuthority,
-        isFollowUp: true,
-        parentEmailId: originalEmail.id,
+        sentAt: new Date(),
+        status: "Awaiting response",
+        parentEmailId: emailId,
       })
       .returning();
     
@@ -1110,7 +1006,6 @@ Best regards,
   }
 
   async getRecentEmails(userId: number): Promise<OutreachEmail[]> {
-    // Get the 5 most recent emails
     return db.select()
       .from(outreachEmails)
       .where(eq(outreachEmails.userId, userId))
@@ -1119,43 +1014,110 @@ Best regards,
   }
 
   async getUserAnalytics(userId: number, timeRange: string): Promise<Analytics> {
-    // In a real implementation, we would calculate this from actual data
-    // For now, let's return mock data
+    // Generate mock analytics data for demo purposes
+    const emailPerformance = [
+      { date: '2023-01-01', sent: 5, opens: 3, responses: 1 },
+      { date: '2023-01-02', sent: 8, opens: 5, responses: 2 },
+      { date: '2023-01-03', sent: 4, opens: 3, responses: 1 },
+      { date: '2023-01-04', sent: 7, opens: 4, responses: 2 },
+      { date: '2023-01-05', sent: 6, opens: 3, responses: 1 },
+    ];
+    
+    const backlinksAcquired = [
+      { date: '2023-01-01', count: 0 },
+      { date: '2023-01-02', count: 1 },
+      { date: '2023-01-03', count: 0 },
+      { date: '2023-01-04', count: 2 },
+      { date: '2023-01-05', count: 0 },
+    ];
+    
+    const responseRateByNiche = [
+      { niche: 'SEO', rate: 0.25 },
+      { niche: 'Content', rate: 0.35 },
+      { niche: 'Web Dev', rate: 0.2 },
+      { niche: 'Digital Marketing', rate: 0.4 },
+      { niche: 'Business', rate: 0.15 },
+    ];
+    
+    const creditUsage = [
+      { date: '2023-01-01', used: 5, remaining: 45 },
+      { date: '2023-01-02', used: 7, remaining: 38 },
+      { date: '2023-01-03', used: 4, remaining: 34 },
+      { date: '2023-01-04', used: 6, remaining: 28 },
+      { date: '2023-01-05', used: 8, remaining: 20 },
+    ];
+    
+    const daDistribution = [
+      { range: '0-20', count: 2 },
+      { range: '21-40', count: 8 },
+      { range: '41-60', count: 15 },
+      { range: '61-80', count: 10 },
+      { range: '81-100', count: 5 },
+    ];
+    
     return {
-      emailPerformance: [
-        { date: '2023-01-01', sent: 5, opened: 3, responded: 1 },
-        { date: '2023-01-02', sent: 7, opened: 4, responded: 2 },
-        { date: '2023-01-03', sent: 4, opened: 3, responded: 1 },
-        { date: '2023-01-04', sent: 6, opened: 4, responded: 2 },
-        { date: '2023-01-05', sent: 8, opened: 5, responded: 3 },
-      ],
-      backlinksAcquired: [
-        { date: '2023-01-01', count: 1 },
-        { date: '2023-01-03', count: 1 },
-        { date: '2023-01-05', count: 2 },
-      ],
-      responseRateByNiche: [
-        { niche: 'Digital Marketing', rate: 0.35 },
-        { niche: 'SEO', rate: 0.42 },
-        { niche: 'Content', rate: 0.38 },
-        { niche: 'Web Dev', rate: 0.25 },
-        { niche: 'Programming', rate: 0.28 },
-      ],
-      creditUsage: [
-        { date: '2023-01-01', used: 5, remaining: 45 },
-        { date: '2023-01-02', used: 7, remaining: 38 },
-        { date: '2023-01-03', used: 4, remaining: 34 },
-        { date: '2023-01-04', used: 6, remaining: 28 },
-        { date: '2023-01-05', used: 8, remaining: 20 },
-      ],
-      daDistribution: [
-        { range: '0-20', count: 2 },
-        { range: '21-40', count: 8 },
-        { range: '41-60', count: 15 },
-        { range: '61-80', count: 10 },
-        { range: '81-100', count: 5 },
-      ],
+      emailPerformance,
+      backlinksAcquired,
+      responseRateByNiche,
+      creditUsage,
+      daDistribution,
     };
+  }
+  
+  // Onboarding methods
+  async updateUserWebsites(userId: number, websites: any[]): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set({ websites })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+    
+    return updatedUser;
+  }
+  
+  async updateWebsitePreferences(userId: number, websiteIndex: number, preferences: any): Promise<User> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    if (!user.websites || !Array.isArray(user.websites) || websiteIndex >= user.websites.length) {
+      throw new Error("Website not found");
+    }
+    
+    const websites = [...(user.websites || [])];
+    websites[websiteIndex] = {
+      ...websites[websiteIndex],
+      preferences,
+    };
+    
+    const [updatedUser] = await db.update(users)
+      .set({ websites })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error("Failed to update user");
+    }
+    
+    return updatedUser;
+  }
+  
+  async completeOnboarding(userId: number): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set({ onboardingCompleted: true })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+    
+    return updatedUser;
   }
 }
 
