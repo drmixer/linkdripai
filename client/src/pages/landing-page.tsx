@@ -35,7 +35,7 @@ export default function LandingPage() {
             <Link href="/auth?tab=login">
               <Button variant="ghost" size="sm">Log in</Button>
             </Link>
-            <Link href="/pricing">
+            <Link href="/auth?tab=register&plan=Free+Trial">
               <Button size="sm">Get Started</Button>
             </Link>
           </div>
@@ -61,7 +61,7 @@ export default function LandingPage() {
                   LinkSyncOS helps you find relevant backlink prospects, manage your outreach, and secure high-authority links with AI-powered email sequences. Boost your SEO results with less effort.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/pricing">
+                  <Link href="/auth?tab=register&plan=Free+Trial">
                     <Button size="lg" className="px-8 py-6">
                       Start Free Trial
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -559,7 +559,7 @@ export default function LandingPage() {
               <p className="text-xl text-white/90 mb-8">
                 Join thousands of satisfied users who are building high-quality backlinks faster and more efficiently than ever before.
               </p>
-              <Link href="/pricing">
+              <Link href="/auth?tab=register&plan=Free+Trial">
                 <Button size="lg" variant="secondary" className="px-10 py-6">
                   Start Your Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
