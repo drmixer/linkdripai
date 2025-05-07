@@ -9,8 +9,10 @@ import {
   prospects, 
   outreachEmails 
 } from "@shared/schema";
-import session from "express-session";
+import * as session from "express-session";
 import createMemoryStore from "memorystore";
+import { eq, ne, and, or, isNull, gte, desc, sql } from "drizzle-orm";
+import { db } from "./db";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -605,4 +607,440 @@ ${originalEmail.body}`,
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.SessionStore;
+  
+  constructor() {
+    // Use MemoryStore for simplicity to get the app running
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    });
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values({
+      ...insertUser,
+      subscription: "Free Trial",
+      credits: 10,
+      totalCredits: 10,
+      dailyOpportunitiesLimit: 5,
+    }).returning();
+    return user;
+  }
+
+  async updateUserCredits(userId: number, credits: number): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ credits })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    return user;
+  }
+
+  async getUserStats(userId: number): Promise<Stats> {
+    // Get user data
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Count unlocked prospects for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const unlockedToday = await db.select({ count: sql<number>`count(*)` })
+      .from(prospects)
+      .where(and(
+        eq(prospects.unlockedBy, userId),
+        gte(prospects.unlockedAt, today)
+      ));
+    
+    // Count emails sent
+    const emailCount = await db.select({ count: sql<number>`count(*)` })
+      .from(outreachEmails)
+      .where(eq(outreachEmails.userId, userId));
+    
+    // Count backlinks secured (emails with "Responded" status)
+    const backlinks = await db.select({ 
+        count: sql<number>`count(*)`,
+        avgDa: sql<number>`avg(cast(domain_authority as integer))`
+      })
+      .from(outreachEmails)
+      .where(and(
+        eq(outreachEmails.userId, userId),
+        eq(outreachEmails.status, "Responded")
+      ));
+    
+    return {
+      dailyOpportunities: {
+        used: unlockedToday[0]?.count || 0,
+        total: user.dailyOpportunitiesLimit,
+      },
+      credits: {
+        available: user.credits,
+        total: user.totalCredits,
+      },
+      emailsSent: {
+        total: emailCount[0]?.count || 0,
+        changePercentage: 12, // Mocked for demo
+      },
+      backlinksSecured: {
+        total: backlinks[0]?.count || 0,
+        new: 3, // Mocked for demo
+        averageDA: Math.round(backlinks[0]?.avgDa || 0),
+      },
+    };
+  }
+
+  async getDailyProspects(userId: number): Promise<Prospect[]> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Get prospects that aren't unlocked by this user
+    const availableProspects = await db.select()
+      .from(prospects)
+      .where(or(
+        isNull(prospects.unlockedBy),
+        ne(prospects.unlockedBy, userId)
+      ))
+      .orderBy(desc(prospects.fitScore))
+      .limit(user.dailyOpportunitiesLimit);
+    
+    return availableProspects;
+  }
+
+  async getAllProspects(userId: number): Promise<Prospect[]> {
+    // Return all prospects that are either not unlocked or unlocked by this user
+    return db.select()
+      .from(prospects)
+      .where(or(
+        isNull(prospects.unlockedBy),
+        eq(prospects.unlockedBy, userId)
+      ));
+  }
+
+  async getSavedProspects(userId: number): Promise<Prospect[]> {
+    return db.select()
+      .from(prospects)
+      .where(and(
+        eq(prospects.isSaved, true),
+        eq(prospects.unlockedBy, userId)
+      ));
+  }
+
+  async getUnlockedProspects(userId: number): Promise<Prospect[]> {
+    return db.select()
+      .from(prospects)
+      .where(and(
+        eq(prospects.isUnlocked, true),
+        eq(prospects.unlockedBy, userId)
+      ));
+  }
+
+  async getProspectById(id: number): Promise<Prospect | undefined> {
+    const [prospect] = await db.select()
+      .from(prospects)
+      .where(eq(prospects.id, id));
+    
+    return prospect;
+  }
+
+  async unlockProspect(id: number, userId: number): Promise<Prospect> {
+    const prospect = await this.getProspectById(id);
+    if (!prospect) {
+      throw new Error("Prospect not found");
+    }
+    
+    if (prospect.isUnlocked && prospect.unlockedBy !== userId) {
+      throw new Error("This prospect has been unlocked by another user");
+    }
+    
+    // Generate contact details when unlocking
+    const domains = ["gmail.com", "outlook.com", "company.com", "site.com", "domain.com"];
+    const roles = ["Editor", "Content Manager", "Webmaster", "Marketing Lead", "Partnerships", "SEO Manager"];
+    const siteNames = [
+      "Digital Marketer Blog", "SEO Guide", "Content Masters", 
+      "Web Dev Journal", "Marketing Brew", "Tech Insights",
+      "Business Daily", "Growth Hackers", "Coding Resources"
+    ];
+    
+    const siteName = siteNames[Math.floor(Math.random() * siteNames.length)];
+    const domain = domains[Math.floor(Math.random() * domains.length)];
+    const role = roles[Math.floor(Math.random() * roles.length)];
+    
+    // Create an email based on the site name
+    const nameWords = siteName.toLowerCase().split(' ');
+    let email = "";
+    if (nameWords.length > 1) {
+      email = `${nameWords[0]}.${nameWords[1]}@${domain}`;
+    } else {
+      email = `contact@${nameWords[0]}.${domain}`;
+    }
+    
+    const [updatedProspect] = await db.update(prospects)
+      .set({
+        isUnlocked: true,
+        unlockedBy: userId,
+        unlockedAt: new Date(),
+        siteName,
+        contactEmail: email,
+        contactRole: role,
+      })
+      .where(eq(prospects.id, id))
+      .returning();
+    
+    return updatedProspect;
+  }
+
+  async saveProspect(id: number, userId: number): Promise<Prospect> {
+    const prospect = await this.getProspectById(id);
+    if (!prospect) {
+      throw new Error("Prospect not found");
+    }
+    
+    if (!prospect.isUnlocked || prospect.unlockedBy !== userId) {
+      throw new Error("You must unlock this prospect before saving it");
+    }
+    
+    const [updatedProspect] = await db.update(prospects)
+      .set({ isSaved: true })
+      .where(eq(prospects.id, id))
+      .returning();
+    
+    return updatedProspect;
+  }
+
+  async generateEmail(prospect: Prospect, template: string): Promise<EmailTemplate> {
+    // Generate email templates based on the selected template and prospect data
+    const siteName = prospect.siteName || "the website";
+    const niche = prospect.niche;
+    
+    let subject = "";
+    let body = "";
+    
+    switch (template) {
+      case "guest-post":
+        subject = `Guest post opportunity for ${siteName}`;
+        body = `Hi ${prospect.contactRole || "there"},
+
+I'm [Your Name] from [Your Website], and I've been following ${siteName} for quite some time now. I particularly enjoy your content about ${niche} and how you provide valuable insights to your audience.
+
+I notice you publish guest posts on ${niche} topics, and I'd love to contribute an article for your readers. Based on your site's content, I think your audience would find value in an article titled:
+
+"7 Advanced ${niche} Strategies That Boosted Our Results by 156% in 6 Months"
+
+This would be a detailed, actionable case study with real data from our own efforts. I'd include specific tactics, screenshots, and results that your audience could implement right away.
+
+Would this be something your readers would find valuable? I'm happy to tailor the topic or approach to better fit your content guidelines.
+
+Looking forward to potentially collaborating!
+
+Best regards,
+[Your Name]
+[Your Position], [Your Website]`;
+        break;
+        
+      case "resource-mention":
+        subject = `Resource for your ${niche} article on ${siteName}`;
+        body = `Hi ${prospect.contactRole || "there"},
+
+I recently came across your excellent article about ${niche} on ${siteName}. The insights you shared about [specific topic] were particularly helpful, and I've already implemented some of your suggestions.
+
+I wanted to reach out because I've created a comprehensive resource that complements the information in your article perfectly. It's a [resource type - guide/tool/template] that helps users [benefit].
+
+You can check it out here: [Resource URL]
+
+I thought this might be a valuable addition to your article, providing your readers with an actionable resource to implement what they've learned. If you find it helpful, perhaps you could consider mentioning or linking to it in your post.
+
+Either way, I wanted to thank you for your excellent content and let you know how much value it's provided.
+
+Best regards,
+[Your Name]
+[Your Position], [Your Website]`;
+        break;
+        
+      case "collaboration":
+        subject = `Collaboration opportunity with ${siteName}`;
+        body = `Hi ${prospect.contactRole || "there"},
+
+My name is [Your Name] from [Your Website], a platform focused on ${niche}. I've been following ${siteName} for a while and really appreciate your expertise in the field.
+
+I'm reaching out because I see some great potential for collaboration between our platforms. We serve similar audiences but have complementary offerings that could benefit both our reader bases.
+
+Some potential collaboration ideas:
+- Co-creating content that leverages both our expertise
+- Cross-promotion to our respective audiences
+- Webinar or workshop partnership
+- Joint research project on industry trends
+
+Would you be open to discussing these possibilities? I'd love to schedule a quick call to explore how we might work together to provide even more value to our audiences.
+
+Looking forward to your thoughts!
+
+Best regards,
+[Your Name]
+[Your Position], [Your Website]
+[Your Contact Info]`;
+        break;
+        
+      default: // Custom template or fallback
+        subject = `Reaching out from [Your Website] about ${niche}`;
+        body = `Hi ${prospect.contactRole || "there"},
+
+I'm [Your Name] from [Your Website]. I came across ${siteName} while researching ${niche} resources and was impressed with your content.
+
+[Personalized comment about their website or recent content]
+
+I'm reaching out because [reason for contact/value proposition].
+
+[Additional context, details, or questions]
+
+Would you be interested in discussing this further? I'm available for a call or can provide more information via email.
+
+Thank you for your time and consideration.
+
+Best regards,
+[Your Name]
+[Your Position], [Your Website]`;
+    }
+    
+    return { subject, body };
+  }
+
+  async sendEmail(emailData: InsertEmail): Promise<OutreachEmail> {
+    const [email] = await db.insert(outreachEmails)
+      .values({
+        ...emailData,
+        sentAt: new Date(),
+        status: "Awaiting response",
+      })
+      .returning();
+    
+    return email;
+  }
+
+  async createFollowUpEmail(emailId: number, userId: number): Promise<OutreachEmail> {
+    const [originalEmail] = await db.select()
+      .from(outreachEmails)
+      .where(eq(outreachEmails.id, emailId));
+    
+    if (!originalEmail) {
+      throw new Error("Email not found");
+    }
+    
+    if (originalEmail.userId !== userId) {
+      throw new Error("Unauthorized to follow up on this email");
+    }
+    
+    const followUpBody = `Hi ${originalEmail.contactRole || "there"},
+
+I'm following up on my previous email about ${originalEmail.subject.toLowerCase().includes("guest post") ? "contributing a guest post" : "a potential collaboration"}.
+
+${originalEmail.subject.toLowerCase().includes("guest post") 
+  ? "I wanted to make sure you received my pitch for an article idea that I believe would resonate with your audience."
+  : "I wanted to check if you had a chance to consider my previous message about a possible collaboration opportunity."}
+
+I understand you're likely very busy, but I'd love to get your thoughts on this when you have a moment.
+
+Thanks again for your time.
+
+Best regards,
+[Your Name]
+[Your Position], [Your Website]`;
+    
+    const followUpSubject = `Following up: ${originalEmail.subject}`;
+    
+    const [followUpEmail] = await db.insert(outreachEmails)
+      .values({
+        prospectId: originalEmail.prospectId,
+        userId: originalEmail.userId,
+        subject: followUpSubject,
+        body: followUpBody,
+        status: "Awaiting response",
+        siteName: originalEmail.siteName,
+        contactEmail: originalEmail.contactEmail,
+        contactRole: originalEmail.contactRole,
+        domainAuthority: originalEmail.domainAuthority,
+        isFollowUp: true,
+        parentEmailId: originalEmail.id,
+      })
+      .returning();
+    
+    return followUpEmail;
+  }
+
+  async getUserEmails(userId: number): Promise<OutreachEmail[]> {
+    return db.select()
+      .from(outreachEmails)
+      .where(eq(outreachEmails.userId, userId))
+      .orderBy(desc(outreachEmails.sentAt));
+  }
+
+  async getRecentEmails(userId: number): Promise<OutreachEmail[]> {
+    // Get the 5 most recent emails
+    return db.select()
+      .from(outreachEmails)
+      .where(eq(outreachEmails.userId, userId))
+      .orderBy(desc(outreachEmails.sentAt))
+      .limit(5);
+  }
+
+  async getUserAnalytics(userId: number, timeRange: string): Promise<Analytics> {
+    // In a real implementation, we would calculate this from actual data
+    // For now, let's return mock data
+    return {
+      emailPerformance: [
+        { date: '2023-01-01', sent: 5, opened: 3, responded: 1 },
+        { date: '2023-01-02', sent: 7, opened: 4, responded: 2 },
+        { date: '2023-01-03', sent: 4, opened: 3, responded: 1 },
+        { date: '2023-01-04', sent: 6, opened: 4, responded: 2 },
+        { date: '2023-01-05', sent: 8, opened: 5, responded: 3 },
+      ],
+      backlinksAcquired: [
+        { date: '2023-01-01', count: 1 },
+        { date: '2023-01-03', count: 1 },
+        { date: '2023-01-05', count: 2 },
+      ],
+      responseRateByNiche: [
+        { niche: 'Digital Marketing', rate: 0.35 },
+        { niche: 'SEO', rate: 0.42 },
+        { niche: 'Content', rate: 0.38 },
+        { niche: 'Web Dev', rate: 0.25 },
+        { niche: 'Programming', rate: 0.28 },
+      ],
+      creditUsage: [
+        { date: '2023-01-01', used: 5, remaining: 45 },
+        { date: '2023-01-02', used: 7, remaining: 38 },
+        { date: '2023-01-03', used: 4, remaining: 34 },
+        { date: '2023-01-04', used: 6, remaining: 28 },
+        { date: '2023-01-05', used: 8, remaining: 20 },
+      ],
+      daDistribution: [
+        { range: '0-20', count: 2 },
+        { range: '21-40', count: 8 },
+        { range: '41-60', count: 15 },
+        { range: '61-80', count: 10 },
+        { range: '81-100', count: 5 },
+      ],
+    };
+  }
+}
+
+// Use the database storage implementation
+export const storage = new DatabaseStorage();
