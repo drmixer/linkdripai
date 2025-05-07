@@ -104,6 +104,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+  
+  // Hide prospect
+  app.post("/api/prospects/:id/hide", isAuthenticated, async (req, res) => {
+    try {
+      const prospectId = parseInt(req.params.id);
+      if (isNaN(prospectId)) {
+        return res.status(400).json({ message: "Invalid prospect ID" });
+      }
+
+      const prospect = await storage.getProspectById(prospectId);
+      if (!prospect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+      
+      // Update prospect to be hidden
+      const updatedProspect = {
+        ...prospect,
+        isHidden: true
+      };
+      
+      storage.prospects.set(prospectId, updatedProspect);
+      res.json(updatedProspect);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Bulk operations
+  app.post("/api/prospects/bulk-unlock", isAuthenticated, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Valid prospect IDs are required" });
+      }
+      
+      const user = req.user!;
+      // Check if user has enough credits
+      if (user.credits < ids.length) {
+        return res.status(400).json({ message: "Not enough credits" });
+      }
+      
+      const results = [];
+      for (const id of ids) {
+        try {
+          const prospect = await storage.unlockProspect(id, user.id);
+          results.push(prospect);
+        } catch (err) {
+          console.error(`Error unlocking prospect ${id}:`, err);
+        }
+      }
+      
+      // Update user credits
+      const updatedUser = await storage.updateUserCredits(user.id, user.credits - results.length);
+      
+      res.json({ prospects: results, user: updatedUser });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.post("/api/prospects/bulk-star", isAuthenticated, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Valid prospect IDs are required" });
+      }
+      
+      const results = [];
+      for (const id of ids) {
+        try {
+          const prospect = await storage.saveProspect(id, req.user!.id);
+          results.push(prospect);
+        } catch (err) {
+          console.error(`Error starring prospect ${id}:`, err);
+        }
+      }
+      
+      res.json(results);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.post("/api/prospects/bulk-hide", isAuthenticated, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Valid prospect IDs are required" });
+      }
+      
+      const results = [];
+      for (const id of ids) {
+        try {
+          const prospect = await storage.getProspectById(id);
+          if (prospect) {
+            const updatedProspect = {
+              ...prospect,
+              isHidden: true
+            };
+            storage.prospects.set(id, updatedProspect);
+            results.push(updatedProspect);
+          }
+        } catch (err) {
+          console.error(`Error hiding prospect ${id}:`, err);
+        }
+      }
+      
+      res.json(results);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   // Email API
   // Generate email

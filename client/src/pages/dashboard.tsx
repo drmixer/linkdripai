@@ -212,9 +212,20 @@ export default function Dashboard() {
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Prospects unlocked",
+        description: `Successfully unlocked ${selectedItems.length} prospect${selectedItems.length > 1 ? 's' : ''}.`,
+      });
       setSelectedItems([]);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to unlock prospects",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
   
@@ -224,8 +235,20 @@ export default function Dashboard() {
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/saved"] });
+      toast({
+        title: "Prospects starred",
+        description: `Successfully starred ${selectedItems.length} prospect${selectedItems.length > 1 ? 's' : ''}.`,
+      });
       setSelectedItems([]);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to star prospects",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
   
