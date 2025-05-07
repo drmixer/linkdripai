@@ -29,6 +29,7 @@ import { Link } from "wouter";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Link2Icon, ArrowRight, Check } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 // Subscription plan schema
@@ -339,10 +340,14 @@ export default function Onboarding() {
                               className="grid grid-cols-1 md:grid-cols-2 gap-4"
                             >
                               {pricingPlans.map((plan) => (
-                                <div key={plan.id} className={`
-                                  flex flex-col p-4 border rounded-lg cursor-pointer transition-all
-                                  ${field.value === plan.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}
-                                `}>
+                                <Label
+                                  htmlFor={plan.id}
+                                  key={plan.id}
+                                  className={`
+                                    flex flex-col p-4 border rounded-lg cursor-pointer transition-all
+                                    ${field.value === plan.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}
+                                  `}
+                                >
                                   <RadioGroupItem 
                                     value={plan.id} 
                                     id={plan.id} 
@@ -369,7 +374,7 @@ export default function Onboarding() {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
+                                </Label>
                               ))}
                             </RadioGroup>
                           </FormControl>
