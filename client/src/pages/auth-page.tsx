@@ -56,9 +56,17 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      // For existing users, go straight to dashboard
+      // For new users who just registered, go to onboarding
+      if (loginMutation.data) {
+        navigate("/dashboard");
+      } else if (registerMutation.data) {
+        navigate("/onboarding");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, loginMutation.data, registerMutation.data]);
 
   async function onLoginSubmit(data: LoginFormValues) {
     setIsLoading(true);

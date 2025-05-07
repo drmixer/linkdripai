@@ -1,0 +1,112 @@
+Here is the fully updated onboarding prompt for your AI builder, incorporating:
+
+Multi-site support by plan
+
+Site-specific dashboards
+
+Drip opportunity delivery
+
+Credit usage rules
+
+Clear user guidance
+
+Prompt: Onboarding Process for LinkSyncOS
+
+
+Overview:
+
+Design an intuitive onboarding flow for LinkSyncOS, a SaaS platform that helps users discover, evaluate, and contact backlink opportunities using AI. Users may manage one or multiple websites depending on their subscription tier, and each site receives tailored link opportunity recommendations daily. The platform uses a credit system to unlock contact details and send outreach emails, and each site has its own dashboard and filters.
+
+Key Concepts for the Flow:
+Users can manage 1 site on the Starter plan, 2 on Grow, and up to 5 on Pro.
+
+Each site receives its own dashboard, feed, and AI outreach tools.
+
+Opportunities are “dripped” daily based on user preferences.
+
+Opportunities display key data (DA, Niche, Category, Fit Score), but contact info is hidden until unlocked with a credit.
+
+Users can purchase additional credits or add-on sites if they want more.
+
+AI-generated emails are free and unlimited on all paid plans.
+
+Step-by-Step Onboarding Process:
+
+
+Step 1: Welcome Screen
+
+Greet the user by name.
+
+Brief overview:
+
+“Welcome to LinkSyncOS — your AI-powered backlink assistant. We’ll help you discover and connect with high-quality link opportunities for your site(s). Let’s set you up in just a few quick steps.”
+
+Step 2: Website Setup (Multi-Site Aware)
+
+Prompt: “Enter your first website URL to get started.”
+
+Ask:
+
+Website URL
+
+Niche or topic
+
+Brief description of your audience and link goals
+
+Save site as Site 1.
+
+
+
+If on Grow or Pro Plan:
+
+After entering the first site, show this message:
+
+“Your plan allows you to manage more than one site. Would you like to add another now?”
+
+Repeat the setup up to their plan’s site limit (2 for Grow, 5 for Pro).
+
+Step 3: Per-Site Target Preferences
+
+For each site, ask:
+
+What types of backlinks are you interested in? (Guest posts, link inserts, directories, roundups, etc.)
+
+Any niches or domains to avoid?
+
+Drip priorities: Pick top 3 backlink types to receive more often.
+
+
+
+This data powers smart daily opportunity delivery.
+
+Step 4: Dashboard Preview
+
+Show the user what they’ll see each day:
+
+“Your dashboard will display new link opportunities daily, tailored to your site(s). Each shows:
+
+Niche, Domain Authority (DA), Category, and Fit Score
+
+You’ll need to use 1 credit to unlock contact info and send an outreach email.
+
+You can use credits on any site you’ve added.”
+
+Step 5: Credit and Opportunity Summary
+
+Remind user of their daily drip and monthly credits:
+
+“You’ll receive [10, 20, or 30] opportunities per day, and [50, 150, or 300] credits per month, depending on your plan. Unused credits roll over for 1 month.”
+
+“AI-generated emails and sending are unlimited and free on all paid plans.”
+
+Offer upsell:
+
+“Need more power? You can buy more credits or add-on sites anytime.”
+
+Step 6: Ready to Go
+
+Final message:
+
+“That’s it! We’ll start delivering personalized opportunities to your dashboard. You can always adjust your site preferences, add more sites (if eligible), or upgrade as you grow.”
+
+Call to action: [Go to Dashboard]

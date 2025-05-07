@@ -13,6 +13,7 @@ import SavedProspects from "@/pages/saved-prospects";
 import EmailOutreach from "@/pages/email-outreach";
 import Analytics from "@/pages/analytics";
 import LandingPage from "@/pages/landing-page";
+import Onboarding from "@/pages/onboarding";
 
 function Router() {
   return (
@@ -23,6 +24,7 @@ function Router() {
       <ProtectedRoute path="/saved-prospects" component={SavedProspects} />
       <ProtectedRoute path="/email-outreach" component={EmailOutreach} />
       <ProtectedRoute path="/analytics" component={Analytics} />
+      <ProtectedRoute path="/onboarding" component={Onboarding} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

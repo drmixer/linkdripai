@@ -15,6 +15,17 @@ export const users = pgTable("users", {
   totalCredits: integer("totalCredits").default(10),
   dailyOpportunitiesLimit: integer("dailyOpportunitiesLimit").default(5),
   createdAt: timestamp("createdAt").defaultNow(),
+  websites: json("websites").$type<{
+    url: string;
+    niche: string;
+    description: string;
+    preferences?: {
+      linkTypes: string[];
+      avoidNiches?: string;
+      dripPriorities: string[];
+    };
+  }[]>().default([]),
+  onboardingCompleted: boolean("onboardingCompleted").default(false),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -24,6 +35,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
   credits: true,
   totalCredits: true,
   dailyOpportunitiesLimit: true,
+  websites: true,
+  onboardingCompleted: true,
 });
 
 // Websites table - for users to manage multiple websites
