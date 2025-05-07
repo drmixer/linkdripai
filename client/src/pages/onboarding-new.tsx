@@ -309,8 +309,87 @@ export default function Onboarding() {
       {/* Onboarding Content */}
       <div className="container mx-auto px-4 py-6 flex-1 flex items-center justify-center">
         <div className="w-full max-w-3xl">
-          {/* Step 1: Website Setup */}
+          {/* Step 1: Choose Subscription Plan */}
           {step === 1 && (
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle className="text-2xl">Choose Your Plan</CardTitle>
+                <CardDescription>
+                  Select the plan that best fits your needs. You can upgrade or downgrade at any time.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...subscriptionForm}>
+                  <form onSubmit={subscriptionForm.handleSubmit(onSubscriptionSubmit)} className="space-y-6">
+                    <FormField
+                      control={subscriptionForm.control}
+                      name="plan"
+                      render={({ field }) => (
+                        <FormItem className="space-y-4">
+                          <FormLabel>Subscription Plan</FormLabel>
+                          <FormControl>
+                            <RadioGroup 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                            >
+                              {pricingPlans.map((plan) => (
+                                <div key={plan.id} className={`
+                                  flex flex-col p-4 border rounded-lg cursor-pointer transition-all
+                                  ${field.value === plan.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}
+                                `}>
+                                  <RadioGroupItem 
+                                    value={plan.id} 
+                                    id={plan.id} 
+                                    className="sr-only" 
+                                  />
+                                  <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                      <h3 className="font-medium text-lg">{plan.name}</h3>
+                                      <p className="text-sm text-gray-500">{plan.description}</p>
+                                    </div>
+                                    {field.value === plan.id && (
+                                      <Check className="h-5 w-5 text-primary" />
+                                    )}
+                                  </div>
+                                  <div className="mt-2 mb-4">
+                                    <span className="text-2xl font-bold">{plan.price}</span>
+                                    {plan.id !== "Free Trial" && <span className="text-sm text-gray-500">/month</span>}
+                                  </div>
+                                  <ul className="space-y-2 mt-auto">
+                                    {plan.features.map((feature, index) => (
+                                      <li key={index} className="flex items-center text-sm">
+                                        <Check className="h-4 w-4 mr-2 text-green-500" />
+                                        {feature}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
+                      Continue
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Step 2: Website Setup */}
+          {step === 2 && (
             <Card className="w-full">
               <CardHeader>
                 <CardTitle className="text-2xl">Website Setup</CardTitle>
@@ -398,13 +477,13 @@ export default function Onboarding() {
             </Card>
           )}
           
-          {/* Step 2: Add Another Website? */}
-          {step === 2 && (
+          {/* Step 3: Add Another Website? */}
+          {step === 3 && (
             <Card className="w-full">
               <CardHeader>
                 <CardTitle className="text-2xl">Add Another Website?</CardTitle>
                 <CardDescription>
-                  Your plan allows you to manage {maxWebsites} {maxWebsites === 1 ? "website" : "websites"}. 
+                  Your {selectedPlan} plan allows you to manage {maxWebsites} {maxWebsites === 1 ? "website" : "websites"}. 
                   You've added {websites.length} so far.
                 </CardDescription>
               </CardHeader>
@@ -439,8 +518,8 @@ export default function Onboarding() {
             </Card>
           )}
           
-          {/* Step 3: Target Preferences */}
-          {step === 3 && (
+          {/* Step 4: Target Preferences */}
+          {step === 4 && (
             <Card className="w-full">
               <CardHeader>
                 <CardTitle className="text-2xl">Target Preferences</CardTitle>
@@ -459,7 +538,7 @@ export default function Onboarding() {
                           <div className="mb-4">
                             <FormLabel>What types of backlinks are you interested in?</FormLabel>
                             <FormDescription>
-                              Select all that apply
+                              Select all that apply. These will be prioritized in your daily opportunities.
                             </FormDescription>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -507,58 +586,16 @@ export default function Onboarding() {
                       name="avoidNiches"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Any niches or domains to avoid?</FormLabel>
+                          <FormLabel>Niches to avoid (optional)</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="E.g., gambling, adult content, competitor domains" 
-                              className="min-h-[80px]"
+                            <Input 
+                              placeholder="E.g., Gambling, Adult content" 
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={preferencesForm.control}
-                      name="dripPriorities"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Drip Priorities</FormLabel>
                           <FormDescription>
-                            Pick up to 3 backlink types to receive more often
+                            We'll avoid finding opportunities from these niches
                           </FormDescription>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
-                            {linkTypeOptions.map((option) => (
-                              <FormItem
-                                key={option.id}
-                                className="flex flex-row items-start space-x-3 space-y-0 border rounded-md p-3"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    disabled={
-                                      !field.value?.includes(option.id) &&
-                                      field.value?.length >= 3
-                                    }
-                                    checked={field.value?.includes(option.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, option.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== option.id
-                                            )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal cursor-pointer">
-                                  {option.label}
-                                </FormLabel>
-                              </FormItem>
-                            ))}
-                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -572,141 +609,10 @@ export default function Onboarding() {
                       {isLoading ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : null}
-                      Save & Continue
+                      Complete Setup
                     </Button>
                   </form>
                 </Form>
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Step 4: Dashboard Preview */}
-          {step === 4 && (
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle className="text-2xl">Dashboard Preview</CardTitle>
-                <CardDescription>
-                  Here's what you'll see each day in your dashboard
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="border rounded-lg p-6 bg-white">
-                  <h3 className="text-lg font-medium mb-4">Daily Opportunities</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="border rounded-md p-4 bg-gray-50">
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium">Guest Post Opportunity</span>
-                        <span className="text-sm bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">92% Fit</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                        <div>
-                          <span className="text-gray-500">Niche:</span> Digital Marketing
-                        </div>
-                        <div>
-                          <span className="text-gray-500">DA:</span> 54
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Category:</span> SaaS
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Traffic:</span> 80K/mo
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-center p-3 border border-dashed rounded-md bg-gray-100 mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        <span className="text-sm text-gray-500">Unlock with 1 credit to reveal contact details</span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="w-full">Save for Later</Button>
-                        <Button size="sm" className="w-full">Unlock (1 Credit)</Button>
-                      </div>
-                    </div>
-                    
-                    <div className="text-center text-gray-500 text-sm">
-                      <p>You'll receive {getDailyOpportunities()} fresh opportunities like this every day</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-primary-50 border border-primary-100 rounded-lg p-4">
-                  <h3 className="font-medium text-primary-800 mb-2">Using Your Credits</h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Each opportunity requires 1 credit to unlock contact details. Your {user?.subscription || "Free Trial"} plan includes:
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
-                    <li>{getDailyOpportunities()} opportunities per day</li>
-                    <li>{getMonthlyCredits()} credits per month</li>
-                    <li>Unlimited AI-generated emails</li>
-                    <li>Unused credits roll over for 1 month</li>
-                  </ul>
-                </div>
-                
-                <Button 
-                  onClick={() => setStep(5)}
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  Continue to Final Step
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Step 5: Ready to Go */}
-          {step === 5 && (
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle className="text-2xl">You're All Set!</CardTitle>
-                <CardDescription>
-                  Your LinkSyncOS account is now fully configured
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="bg-green-50 border border-green-100 rounded-lg p-6 text-center">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-4">
-                    <Check className="h-6 w-6 text-green-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Congratulations, {user?.firstName}!</h3>
-                  <p className="text-gray-600 mb-4">
-                    We'll start delivering personalized opportunities to your dashboard right away.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <div className="border rounded-md p-3 bg-white">
-                      <div className="text-2xl font-bold text-primary-600 mb-1">{websites.length}</div>
-                      <div className="text-sm text-gray-500">Websites Added</div>
-                    </div>
-                    <div className="border rounded-md p-3 bg-white">
-                      <div className="text-2xl font-bold text-primary-600 mb-1">{getDailyOpportunities()}</div>
-                      <div className="text-sm text-gray-500">Daily Opportunities</div>
-                    </div>
-                    <div className="border rounded-md p-3 bg-white">
-                      <div className="text-2xl font-bold text-primary-600 mb-1">{getMonthlyCredits()}</div>
-                      <div className="text-sm text-gray-500">Monthly Credits</div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-sm text-gray-500">
-                    You can always adjust your site preferences, add more sites (if eligible), or upgrade as you grow.
-                  </p>
-                </div>
-                
-                <Button 
-                  onClick={finishOnboarding}
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
               </CardContent>
             </Card>
           )}

@@ -212,6 +212,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Onboarding API endpoints
+  app.post("/api/onboarding/subscription", isAuthenticated, async (req, res) => {
+    try {
+      const { plan } = req.body;
+      
+      if (!plan || typeof plan !== 'string') {
+        return res.status(400).json({ message: "Valid subscription plan is required" });
+      }
+      
+      // Update user's subscription plan
+      const updatedUser = await storage.updateUserSubscription(req.user!.id, plan);
+      res.json(updatedUser);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   app.post("/api/onboarding/websites", isAuthenticated, async (req, res) => {
     try {
       const { websites } = req.body;

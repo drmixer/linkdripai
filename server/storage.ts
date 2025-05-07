@@ -61,6 +61,7 @@ export interface IStorage {
   getUserStats(userId: number): Promise<Stats>;
   
   // Onboarding methods
+  updateUserSubscription(userId: number, plan: string): Promise<User>;
   updateUserWebsites(userId: number, websites: any[]): Promise<User>;
   updateWebsitePreferences(userId: number, websiteIndex: number, preferences: any): Promise<User>;
   completeOnboarding(userId: number): Promise<User>;
