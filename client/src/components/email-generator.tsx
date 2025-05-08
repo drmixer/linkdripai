@@ -4,39 +4,30 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { Prospect } from "@shared/schema";
-import { Loader2, RefreshCw, Send } from "lucide-react";
+import { Loader2, RefreshCw, Send, X } from "lucide-react";
 
 interface EmailGeneratorProps {
   prospect: Prospect;
+  onClose?: () => void;
 }
 
-export default function EmailGenerator({ prospect }: EmailGeneratorProps) {
+export default function EmailGenerator({ prospect, onClose }: EmailGeneratorProps) {
   const { toast } = useToast();
-  const [subject, setSubject] = useState(`Guest post opportunity for ${prospect.siteName || 'your blog'}`);
+  const [subject, setSubject] = useState(`Guest Post Opportunity for ${prospect.siteName || 'E-commerce Blog'}`);
   const [emailBody, setEmailBody] = useState('');
-  const [template, setTemplate] = useState('guest-post');
   
   const generateEmailMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/email/generate", {
         prospectId: prospect.id,
-        template,
       });
       return await res.json();
     },
     onSuccess: (data) => {
-      setSubject(data.subject);
-      setEmailBody(data.body);
+      setSubject(data.subject || subject);
+      setEmailBody(data.body || '');
       toast({
         title: "Email generated",
         description: "Your email has been generated successfully.",
@@ -65,6 +56,7 @@ export default function EmailGenerator({ prospect }: EmailGeneratorProps) {
         title: "Email sent",
         description: "Your email has been sent successfully.",
       });
+      if (onClose) onClose();
     },
     onError: (error: Error) => {
       toast({
@@ -83,90 +75,93 @@ export default function EmailGenerator({ prospect }: EmailGeneratorProps) {
     sendEmailMutation.mutate();
   };
   
+  const handleRefreshEmail = () => {
+    handleGenerateEmail();
+  };
+  
   // Generate email on component mount if email body is empty
   if (!emailBody && !generateEmailMutation.isPending) {
     handleGenerateEmail();
   }
   
   return (
-    <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-md font-medium text-gray-900">Generate outreach email for:</h3>
-            <div className="mt-1 flex items-center">
-              <div className="flex-shrink-0 h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium">
-                {prospect.siteName ? prospect.siteName.substring(0, 2).toUpperCase() : 'SP'}
-              </div>
-              <div className="ml-3">
-                <span className="text-sm font-medium text-gray-900 truncate">
-                  {prospect.siteName} ({prospect.contactEmail})
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 md:mt-0 md:ml-4 flex items-center space-x-3">
-            <Select
-              value={template}
-              onValueChange={setTemplate}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a template" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="guest-post">Guest Post Template</SelectItem>
-                <SelectItem value="resource-mention">Resource Mention</SelectItem>
-                <SelectItem value="collaboration">Collaboration Request</SelectItem>
-                <SelectItem value="custom">Custom Template</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="bg-white rounded-md overflow-hidden relative">
+      <div className="p-4 border-b flex justify-between items-center">
+        <h3 className="text-lg font-medium">Generate AI Email</h3>
+        {onClose && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8" 
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      
+      <div className="p-4">
+        <p className="text-sm text-gray-600 mb-4">
+          AI-powered outreach for {prospect.siteName || 'sample-opportunity-16.com'}. Review and send.
+        </p>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Subject:</label>
+          <Input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        
+        <div className="mb-4">
+          <Textarea
+            value={emailBody}
+            onChange={(e) => setEmailBody(e.target.value)}
+            placeholder="Hi there, I noticed you're looking for guest post submissions..."
+            rows={8}
+            className="w-full resize-none"
+          />
         </div>
       </div>
       
-      <div className="px-6 py-4">
-        <div className="mb-4">
-          <Label htmlFor="email-subject">Subject Line</Label>
-          <Input
-            id="email-subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="mt-1"
-          />
-        </div>
+      <div className="flex justify-between p-4 border-t bg-gray-50">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefreshEmail}
+          disabled={generateEmailMutation.isPending}
+        >
+          {generateEmailMutation.isPending ? (
+            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4 mr-1.5" />
+          )}
+          Refresh Email
+        </Button>
         
-        <div>
-          <Label htmlFor="email-body">Email Body</Label>
-          <Textarea
-            id="email-body"
-            value={emailBody}
-            onChange={(e) => setEmailBody(e.target.value)}
-            rows={12}
-            className="mt-1"
-          />
-        </div>
-        
-        <div className="mt-4 flex justify-between">
+        <div className="flex gap-2">
+          {onClose && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+            >
+              Close
+            </Button>
+          )}
+          
           <Button
-            variant="outline"
-            onClick={handleGenerateEmail}
-            disabled={generateEmailMutation.isPending}
-          >
-            {generateEmailMutation.isPending ? (
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-5 w-5 mr-2" />
-            )}
-            Regenerate
-          </Button>
-          <Button
+            variant="default"
+            size="sm"
             onClick={handleSendEmail}
             disabled={sendEmailMutation.isPending || !emailBody}
+            className="bg-blue-600 hover:bg-blue-700"
           >
             {sendEmailMutation.isPending ? (
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
             ) : (
-              <Send className="h-5 w-5 mr-2" />
+              <Send className="h-4 w-4 mr-1.5" />
             )}
             Send Email
           </Button>
