@@ -206,6 +206,71 @@ export default function AuthPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Selected Plan Card */}
+                <div className="mb-6 p-4 border rounded-lg bg-blue-50 border-blue-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium text-blue-800">Selected Plan: {selectedPlan}</h3>
+                    {selectedPlan === "Free Trial" && (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-200 text-blue-800">
+                        7 days
+                      </span>
+                    )}
+                    {selectedPlan === "Starter" && (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800">
+                        $39/month
+                      </span>
+                    )}
+                    {selectedPlan === "Grow" && (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-200 text-purple-800">
+                        $69/month
+                      </span>
+                    )}
+                    {selectedPlan === "Pro" && (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-indigo-200 text-indigo-800">
+                        $129/month
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-1 text-sm text-blue-700">
+                    {selectedPlan === "Free Trial" && (
+                      <>
+                        <p>• 5 opportunities per day</p>
+                        <p>• 10 total credits</p>
+                        <p>• Basic AI email templates</p>
+                        <p className="mt-2 font-medium text-blue-800">Free for 7 days, no credit card required</p>
+                      </>
+                    )}
+                    {selectedPlan === "Starter" && (
+                      <>
+                        <p>• 10 opportunities per day</p>
+                        <p>• 50 credits per month</p>
+                        <p>• 1 website</p>
+                        <p>• Advanced AI email templates</p>
+                        <p className="mt-2 font-medium text-green-800">Perfect for individual bloggers and content creators</p>
+                      </>
+                    )}
+                    {selectedPlan === "Grow" && (
+                      <>
+                        <p>• 20 opportunities per day</p>
+                        <p>• 150 credits per month</p>
+                        <p>• 2 websites</p>
+                        <p>• Priority support</p>
+                        <p className="mt-2 font-medium text-purple-800">Ideal for growing businesses and small agencies</p>
+                      </>
+                    )}
+                    {selectedPlan === "Pro" && (
+                      <>
+                        <p>• 30 opportunities per day</p>
+                        <p>• 300 credits per month</p>
+                        <p>• 5 websites</p>
+                        <p>• Premium analytics and reporting</p>
+                        <p className="mt-2 font-medium text-indigo-800">Best for agencies and professional SEO teams</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+                
                 <Form {...registerForm}>
                   <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
