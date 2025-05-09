@@ -6,8 +6,12 @@ import { z } from "zod";
 import { insertProspectSchema, insertEmailSchema } from "@shared/schema";
 import { db } from "./db";
 import * as schema from "@shared/schema";
-import { desc, sql } from "drizzle-orm";
+import { desc, sql, eq, and } from "drizzle-orm";
 import { getMozApiService } from "./services/moz";
+import { getOpportunityCrawler } from "./services/crawler";
+import { getWebsiteAnalyzer } from "./services/website-analyzer";
+import { getOpportunityMatcher } from "./services/opportunity-matcher";
+import { getDiscoveryScheduler } from "./services/discovery-scheduler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -514,6 +518,261 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== Automated Opportunity Discovery System API Endpoints =====
+  
+  // Get website profile
+  app.get("/api/websites/:id/profile", isAuthenticated, async (req, res) => {
+    try {
+      const websiteId = parseInt(req.params.id);
+      if (isNaN(websiteId)) {
+        return res.status(400).json({ message: "Invalid website ID" });
+      }
+
+      // Check if website belongs to user
+      const websites = await db.select()
+        .from(schema.websites)
+        .where(and(
+          eq(schema.websites.id, websiteId),
+          eq(schema.websites.userId, req.user!.id)
+        ));
+        
+      if (websites.length === 0) {
+        return res.status(404).json({ message: "Website not found" });
+      }
+
+      // Get or create website profile
+      const analyzer = getWebsiteAnalyzer();
+      const profile = await analyzer.getProfile(websiteId);
+      
+      if (!profile) {
+        // Process website to create profile
+        const newProfile = await analyzer.processWebsite(websites[0]);
+        res.json(newProfile);
+      } else {
+        res.json(profile);
+      }
+    } catch (error: any) {
+      console.error('Get website profile error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Analyze website
+  app.post("/api/websites/:id/analyze", isAuthenticated, async (req, res) => {
+    try {
+      const websiteId = parseInt(req.params.id);
+      if (isNaN(websiteId)) {
+        return res.status(400).json({ message: "Invalid website ID" });
+      }
+
+      // Check if website belongs to user
+      const websites = await db.select()
+        .from(schema.websites)
+        .where(and(
+          eq(schema.websites.id, websiteId),
+          eq(schema.websites.userId, req.user!.id)
+        ));
+        
+      if (websites.length === 0) {
+        return res.status(404).json({ message: "Website not found" });
+      }
+
+      // Process website
+      const analyzer = getWebsiteAnalyzer();
+      const profile = await analyzer.processWebsite(websites[0]);
+      
+      res.json(profile);
+    } catch (error: any) {
+      console.error('Analyze website error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Start opportunity discovery (admin only)
+  app.post("/api/admin/discovery/start", isAuthenticated, async (req, res) => {
+    try {
+      // In production, this would check for admin privileges
+      // For now, anyone can trigger it for testing
+      
+      const { type, urls } = req.body;
+      
+      if (!type || !Array.isArray(urls) || urls.length === 0) {
+        return res.status(400).json({ 
+          message: "Valid discovery type and URLs array required" 
+        });
+      }
+      
+      const crawler = getOpportunityCrawler();
+      const job = await crawler.startDiscoveryCrawl(type, urls);
+      
+      res.json(job);
+    } catch (error: any) {
+      console.error('Start discovery error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Process discovered opportunities (admin only)
+  app.post("/api/admin/discovery/process", isAuthenticated, async (req, res) => {
+    try {
+      // In production, this would check for admin privileges
+      
+      const crawler = getOpportunityCrawler();
+      await crawler.processDiscoveredBatch([]);
+      
+      const matcher = getOpportunityMatcher();
+      const matchesCreated = await matcher.processNewOpportunities();
+      
+      res.json({ matchesCreated });
+    } catch (error: any) {
+      console.error('Process opportunities error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Assign daily drips to all users (admin only)
+  app.post("/api/admin/drips/assign", isAuthenticated, async (req, res) => {
+    try {
+      // In production, this would check for admin privileges
+      
+      const matcher = getOpportunityMatcher();
+      const assignedCount = await matcher.assignDailyOpportunities();
+      
+      res.json({ assignedCount });
+    } catch (error: any) {
+      console.error('Assign drips error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get AI-matched daily opportunities
+  app.get("/api/drips/opportunities", isAuthenticated, async (req, res) => {
+    try {
+      const websiteId = req.query.websiteId ? parseInt(req.query.websiteId as string) : undefined;
+      
+      if (websiteId && isNaN(websiteId)) {
+        return res.status(400).json({ message: "Invalid website ID" });
+      }
+      
+      // If websiteId provided, check if it belongs to user
+      if (websiteId) {
+        const websites = await db.select()
+          .from(schema.websites)
+          .where(and(
+            eq(schema.websites.id, websiteId),
+            eq(schema.websites.userId, req.user!.id)
+          ));
+          
+        if (websites.length === 0) {
+          return res.status(404).json({ message: "Website not found" });
+        }
+      }
+      
+      // Get matched opportunities
+      const matcher = getOpportunityMatcher();
+      const opportunities = await matcher.getUserDailyOpportunities(req.user!.id, websiteId);
+      
+      res.json(opportunities);
+    } catch (error: any) {
+      console.error('Get daily drips error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Run the entire discovery pipeline (admin only)
+  app.post("/api/admin/discovery/pipeline", isAuthenticated, async (req, res) => {
+    try {
+      // In production, this would check for admin privileges
+      
+      const scheduler = getDiscoveryScheduler();
+      const result = await scheduler.runDiscoveryPipeline();
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('Run discovery pipeline error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Buy additional drips
+  app.post("/api/drips/purchase", isAuthenticated, async (req, res) => {
+    try {
+      const { quantity } = req.body;
+      
+      if (!quantity || typeof quantity !== 'number' || quantity <= 0) {
+        return res.status(400).json({ message: "Valid quantity required" });
+      }
+      
+      // In a real implementation, this would process payment via Stripe
+      // For now, just update the user's credits and return success
+      
+      // Get today's date (without time)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Add extra drips to each website (this is a simplified implementation)
+      const userWebsites = await db.select()
+        .from(schema.websites)
+        .where(eq(schema.websites.userId, req.user!.id));
+        
+      if (userWebsites.length === 0) {
+        return res.status(400).json({ message: "User has no websites" });
+      }
+      
+      // For now just take the first website
+      const websiteId = userWebsites[0].id;
+      
+      // Create or update daily drip with extra opportunities
+      const drips = await db.select()
+        .from(schema.dailyDrips)
+        .where(and(
+          eq(schema.dailyDrips.userId, req.user!.id),
+          eq(schema.dailyDrips.websiteId, websiteId),
+          eq(schema.dailyDrips.date, today)
+        ));
+        
+      if (drips.length === 0) {
+        // Create new drip
+        await db.insert(schema.dailyDrips)
+          .values({
+            userId: req.user!.id,
+            websiteId: websiteId,
+            date: today,
+            opportunitiesLimit: quantity,
+            opportunitiesDelivered: 0,
+            isPurchasedExtra: true,
+            matches: []
+          });
+      } else {
+        // Update existing drip
+        await db.update(schema.dailyDrips)
+          .set({
+            opportunitiesLimit: drips[0].opportunitiesLimit + quantity,
+            isPurchasedExtra: true
+          })
+          .where(eq(schema.dailyDrips.id, drips[0].id));
+      }
+      
+      // Assign new opportunities
+      const matcher = getOpportunityMatcher();
+      await matcher.assignDailyOpportunities();
+      
+      res.json({ success: true, quantity });
+    } catch (error: any) {
+      console.error('Purchase drips error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
+  
+  // Start the opportunity discovery scheduler in development
+  // In production, this would be a separate process or cron job
+  if (process.env.NODE_ENV === 'development') {
+    // Initialize the scheduler but don't start it automatically
+    getDiscoveryScheduler();
+    console.log('[Discovery] Scheduler initialized');
+  }
+  
   return httpServer;
 }
