@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { 
-  Clock,
   CreditCard, 
   BellIcon, 
   Sparkles, 
@@ -30,8 +29,6 @@ export default function Header() {
   const { user, logoutMutation } = useAuth();
   const [selectedWebsite, setSelectedWebsite] = useState<string>("");
   const [websites, setWebsites] = useState<Array<{id: number, name: string, url: string}>>([]);
-  const [nextDripTime, setNextDripTime] = useState<Date>(new Date(Date.now() + 24 * 60 * 60 * 1000));
-  const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [newOpportunitiesCount, setNewOpportunitiesCount] = useState<number>(0);
   
   // Effects for simulation - would be replaced with real data
@@ -65,27 +62,7 @@ export default function Header() {
     setNewOpportunitiesCount(Math.floor(Math.random() * 10) + 5);
   }, [user]);
   
-  // Countdown timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const diff = nextDripTime.getTime() - now.getTime();
-      
-      if (diff <= 0) {
-        // Reset for next day
-        setNextDripTime(new Date(now.getTime() + 24 * 60 * 60 * 1000));
-        return;
-      }
-      
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      
-      setTimeRemaining(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, [nextDripTime]);
+
   
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -113,8 +90,8 @@ export default function Header() {
         </Link>
       </div>
       
-      {/* Center: Website selector */}
-      <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
+      {/* Center section */}
+      <div className="flex items-center justify-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="h-9 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
@@ -191,20 +168,7 @@ export default function Header() {
           </Tooltip>
         </TooltipProvider>
         
-        {/* Timer */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="hidden md:flex items-center px-3 py-1.5 bg-gray-100 rounded-lg">
-                <Clock className="h-4 w-4 text-gray-500 mr-1.5" />
-                <span className="text-sm font-medium text-gray-900">{timeRemaining}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Time until next opportunities</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+
         
         {/* User menu */}
         <DropdownMenu>
