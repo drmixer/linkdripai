@@ -235,25 +235,45 @@ export default function Onboarding() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="container mx-auto flex items-center">
+      {/* Header with modern design */}
+      <header className="bg-white border-b border-gray-200 px-4 py-4 shadow-sm">
+        <div className="container mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center cursor-pointer hover:opacity-90 transition-opacity">
-            <div className="rounded-md bg-primary p-1.5 mr-2">
-              <Globe className="h-6 w-6 text-white" />
+            <div className="rounded-md bg-primary p-1.5 mr-2.5">
+              <Link2 className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
           </Link>
+          
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">Need help?</span>
+            <Button variant="outline" size="sm" className="border-gray-200 gap-1.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13M12 17H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Support
+            </Button>
+          </div>
         </div>
       </header>
       
-      {/* Progress Bar */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-500">Step {step} of {totalSteps}</span>
-          <span className="text-sm font-medium text-gray-500">{Math.round((step / totalSteps) * 100)}% Complete</span>
+      {/* Progress Bar with enhanced visual style */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium">
+              {step}
+            </div>
+            <span className="text-sm font-medium text-gray-700">Step {step} of {totalSteps}</span>
+          </div>
+          <span className="text-sm font-medium text-primary">{Math.round((step / totalSteps) * 100)}% Complete</span>
         </div>
-        <Progress value={(step / totalSteps) * 100} className="h-2" />
+        <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div 
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary-light transition-all duration-300"
+            style={{ width: `${(step / totalSteps) * 100}%` }}
+          ></div>
+        </div>
       </div>
       
       {/* Onboarding Content */}

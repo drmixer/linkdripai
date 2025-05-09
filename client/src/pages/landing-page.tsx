@@ -18,93 +18,140 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <header className="w-full border-b bg-white sticky top-0 z-50">
+      <header className="w-full border-b bg-white sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center">
             <Link href="/">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-primary mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 9L12 5M12 5L16 9M12 5V15M8 19H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="text-xl font-bold text-primary">LinkDripAI</span>
+              <div className="flex items-center cursor-pointer">
+                <div className="rounded-md bg-primary p-1.5 mr-2.5">
+                  <Link2 className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
               </div>
             </Link>
           </div>
-          <nav className="flex items-center gap-4">
-            <Link href="/pricing">
-              <span className="text-sm text-gray-600 hover:text-primary transition-colors">Pricing</span>
-            </Link>
-            <Link href="/blog">
-              <span className="text-sm text-gray-600 hover:text-primary transition-colors">Blog</span>
-            </Link>
-            <Link href="/contact">
-              <span className="text-sm text-gray-600 hover:text-primary transition-colors">Contact</span>
-            </Link>
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm" className="text-gray-600">Dashboard</Button>
-            </Link>
+          <nav className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
+              Features
+            </a>
+            <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
+              How It Works
+            </a>
+            <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
+              Pricing
+            </a>
             <Link href="/auth?tab=login">
-              <Button variant="ghost" size="sm" className="text-gray-600">Settings</Button>
+              <span className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Login</span>
             </Link>
-            <Link href="/auth?tab=login">
-              <Button variant="ghost" size="sm" className="text-gray-600">Logout</Button>
+            <Link href="/auth?tab=register&plan=Free+Trial">
+              <Button size="sm" className="font-medium px-4">
+                Start Free Trial
+              </Button>
             </Link>
           </nav>
+          
+          {/* Mobile menu button - would implement full mobile menu in production */}
+          <div className="md:hidden">
+            <Button variant="ghost" size="icon" className="text-gray-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="py-20 lg:py-32 overflow-hidden bg-gray-50">
+        {/* Hero Section with Modern Gradient Background */}
+        <section className="relative py-24 lg:py-32 overflow-hidden">
+          {/* Background with gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50 to-primary/5 -z-10"></div>
+          <div className="absolute top-1/4 right-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl -z-10"></div>
+          <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -z-10"></div>
+          
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row items-center gap-12">
               <div className="lg:w-1/2 space-y-8">
                 <div>
-                  <div className="inline-flex items-center px-3 py-1 rounded-full gap-x-2 text-sm bg-primary/10 text-primary mb-4">
+                  <div className="inline-flex items-center px-3 py-1 rounded-full gap-x-2 text-sm font-medium bg-primary/10 text-primary mb-4">
                     <span className="h-2 w-2 rounded-full bg-primary"></span>
-                    <span>Backlink Opportunities & AI Email Outreach</span>
+                    <span>AI-Powered Backlink Prospecting</span>
                   </div>
                 </div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900">
-                  Discover, Manage & <span className="text-primary">Reach Out</span> to High-Quality Backlink Opportunities
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 leading-tight">
+                  Discover & secure <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">high-quality backlinks</span> on autopilot
                 </h1>
                 <p className="text-lg text-gray-600 max-w-2xl">
-                  LinkDripAI helps you find relevant backlink prospects, manage your outreach, and secure high-authority links with AI-powered email sequences. Boost your SEO results with less effort.
+                  LinkDripAI delivers fresh backlink opportunities daily and helps you reach out with personalized AI-generated emails. Save time, increase response rates, and grow your authority.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link href="/auth?tab=register&plan=Free+Trial">
-                    <Button size="lg" className="px-8 py-6 shadow-md hover:shadow-lg transition-all duration-200">
-                      Start Free Trial
+                    <Button size="lg" className="px-8 py-6 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500 shadow-md hover:shadow-lg transition-all duration-200">
+                      Start 7-Day Free Trial
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                   <a href="#pricing">
                     <Button variant="outline" size="lg" className="px-8 py-6 border-primary text-primary hover:bg-primary/5">
-                      View Pricing
+                      View Pricing Plans
                     </Button>
                   </a>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4 text-primary" />
+                <div className="flex flex-col sm:flex-row items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+                      <Check className="h-3 w-3 text-green-600" />
+                    </div>
                     <span>No credit card required</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    <span>7-day free trial</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+                      <Check className="h-3 w-3 text-green-600" />
+                    </div>
+                    <span>Cancel anytime</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+                      <Check className="h-3 w-3 text-green-600" />
+                    </div>
+                    <span>5 free opportunities/day</span>
                   </div>
                 </div>
               </div>
+              
+              {/* Hero image with floating elements */}
               <div className="lg:w-1/2 relative">
-                <div className="rounded-xl border bg-white shadow-lg overflow-hidden">
-                  <img
-                    src="https://i.imgur.com/r9UPSWq.png"
-                    alt="LinkDripAI Dashboard"
-                    className="w-full rounded-lg"
-                  />
+                <div className="relative rounded-xl overflow-hidden shadow-xl">
+                  {/* Gradient border effect */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-primary/30 via-purple-500/20 to-blue-400/30 rounded-xl p-0.5">
+                    <div className="rounded-[0.7rem] overflow-hidden">
+                      <img
+                        src="https://i.imgur.com/r9UPSWq.png"
+                        alt="LinkDripAI Dashboard"
+                        className="w-full rounded-lg bg-white"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Floating elements */}
+                  <div className="absolute -top-4 -right-4 bg-white p-3 rounded-lg shadow-lg flex items-center gap-2 border border-gray-100">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium">Response Rate</div>
+                      <div className="text-sm font-bold text-gray-900">+42% Increase</div>
+                    </div>
+                  </div>
+                  
+                  <div className="absolute -bottom-4 -left-4 bg-white p-3 rounded-lg shadow-lg flex items-center gap-2 border border-gray-100">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                      <Link2 className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium">New Backlinks</div>
+                      <div className="text-sm font-bold text-gray-900">12 this week</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-primary/10 rounded-full"></div>
-                <div className="absolute -top-6 -right-6 w-32 h-32 bg-primary/10 rounded-full"></div>
               </div>
             </div>
           </div>
@@ -350,24 +397,29 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="py-20 bg-gray-50">
+        <section id="pricing" className="py-20 relative overflow-hidden">
+          {/* Background with gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-primary/5 -z-10"></div>
+          <div className="absolute top-0 left-1/3 w-96 h-96 bg-blue-100/20 rounded-full blur-3xl -z-10"></div>
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-100/30 rounded-full blur-3xl -z-10"></div>
+          
           <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full gap-x-2 text-sm bg-primary/10 text-primary mb-4">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full gap-x-2 text-sm font-medium bg-primary/10 text-primary mb-4">
                 <span className="h-2 w-2 rounded-full bg-primary"></span>
-                <span>Plans & Pricing</span>
+                <span>Simple, Transparent Pricing</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Choose Your Perfect Plan</h2>
               <p className="text-lg text-gray-600">
-                Choose the right plan for your link building needs with flexible options to scale
+                Start with a free trial, then pick the package that works best for your backlink building needs
               </p>
             </div>
 
-            <div className="flex justify-center mb-12">
-              <div className="inline-flex items-center p-1 bg-white rounded-lg border shadow-sm">
+            <div className="flex justify-center mb-16">
+              <div className="inline-flex items-center p-1.5 bg-white rounded-full border shadow-sm">
                 <button
                   onClick={() => setPricingInterval("monthly")}
-                  className={`px-6 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                  className={`px-8 py-2.5 text-sm font-medium rounded-full transition-all duration-200 ${
                     pricingInterval === "monthly" ? "bg-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
@@ -375,115 +427,130 @@ export default function LandingPage() {
                 </button>
                 <button
                   onClick={() => setPricingInterval("annual")}
-                  className={`px-6 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                  className={`flex items-center px-8 py-2.5 text-sm font-medium rounded-full transition-all duration-200 ${
                     pricingInterval === "annual" ? "bg-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  Annual <span className="ml-1 text-xs font-bold">{pricingInterval === "annual" ? "" : "Save 20%"}</span>
+                  Annual
+                  {pricingInterval !== "annual" && (
+                    <span className="ml-2 text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Save 20%</span>
+                  )}
                 </button>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
               {/* Free Trial */}
-              <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
-                <div className="absolute inset-x-0 top-0 h-2 bg-gray-200"></div>
+              <Card className="relative border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 bg-white">
+                <div className="absolute inset-x-0 top-0 h-1.5 bg-gray-200"></div>
                 <CardContent className="pt-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Free Trial</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Free Trial</h3>
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">7 Days</span>
+                  </div>
                   <p className="text-gray-500 mb-6 text-sm">Try our platform with no commitment</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">$0</span>
-                    <span className="text-gray-600 ml-1">/7 days</span>
+                  <div className="mb-8">
+                    <div className="flex items-baseline">
+                      <span className="text-4xl font-bold text-gray-900">$0</span>
+                      <span className="text-gray-500 ml-1 text-sm">/7 days</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">No credit card required</p>
                   </div>
 
-                  <ul className="space-y-3 mb-6">
-                    <li className="flex items-start gap-2.5">
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Check className="h-3.5 w-3.5 text-primary" />
+                        <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
-                      <span className="text-sm text-gray-600">5 opportunities/day drip</span>
+                      <span className="text-sm text-gray-600">5 opportunities/day</span>
                     </li>
-                    <li className="flex items-start gap-2.5">
+                    <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Check className="h-3.5 w-3.5 text-primary" />
+                        <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
-                      <span className="text-sm text-gray-600">Max 10 total credits</span>
+                      <span className="text-sm text-gray-600">10 total credits</span>
                     </li>
-                    <li className="flex items-start gap-2.5">
+                    <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Check className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <span className="text-sm text-gray-600">Max 2 credits per day</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Check className="h-3.5 w-3.5 text-primary" />
+                        <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
                       <span className="text-sm text-gray-600">AI email generation</span>
                     </li>
-                    <li className="flex items-start gap-2.5">
+                    <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Check className="h-3.5 w-3.5 text-primary" />
+                        <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
-                      <span className="text-sm text-gray-600">No rollover</span>
+                      <span className="text-sm text-gray-600">1 website</span>
                     </li>
                   </ul>
                 </CardContent>
                 <CardFooter className="px-6 pb-6 pt-0">
                   <Link href="/auth?tab=register&plan=Free+Trial" className="w-full">
-                    <Button variant="outline" className="w-full h-11 font-medium">Start Free Trial</Button>
+                    <Button variant="outline" className="w-full h-11 font-medium border-gray-300">
+                      Start Free Trial
+                    </Button>
                   </Link>
                 </CardFooter>
               </Card>
 
               {/* Starter Plan */}
-              <Card className="relative border-primary-200 overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 scale-105 z-10 bg-white">
-                <div className="absolute inset-x-0 top-0 h-2 bg-primary"></div>
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-4 py-1 rounded-full font-medium">
+              <Card className="relative border-primary rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 scale-105 z-10 bg-white">
+                <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary to-primary-light"></div>
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-primary to-primary-light text-white text-xs px-4 py-1 rounded-full font-medium">
                   Most Popular
                 </div>
                 <CardContent className="pt-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Starter</h3>
-                  <p className="text-gray-500 mb-6 text-sm">Perfect for small businesses starting with link building</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "39" : "31"}</span>
-                    <span className="text-gray-600 ml-1">/month</span>
-                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${31*12}/year)</div>}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Starter</h3>
+                    <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">Best Value</span>
+                  </div>
+                  <p className="text-gray-500 mb-6 text-sm">Perfect for small businesses and bloggers</p>
+                  <div className="mb-8">
+                    <div className="flex items-baseline">
+                      <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "39" : "31"}</span>
+                      <span className="text-gray-500 ml-1 text-sm">/month</span>
+                    </div>
+                    {pricingInterval === "annual" && (
+                      <div className="flex items-center mt-1">
+                        <span className="text-xs text-green-600 font-medium">Save $96/year</span>
+                        <span className="text-xs text-gray-500 ml-1">($372 billed annually)</span>
+                      </div>
+                    )}
                   </div>
 
-                  <ul className="space-y-3 mb-6">
-                    <li className="flex items-start gap-2.5">
-                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
                       <span className="text-sm text-gray-600">1 website</span>
                     </li>
-                    <li className="flex items-start gap-2.5">
-                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
-                      <span className="text-sm text-gray-600">10 opportunities/day drip</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">10 opportunities</span>/day</span>
                     </li>
-                    <li className="flex items-start gap-2.5">
-                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
-                      <span className="text-sm text-gray-600">50 credits/month</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">50 credits</span>/month</span>
                     </li>
-                    <li className="flex items-start gap-2.5">
-                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
                       <span className="text-sm text-gray-600">1-month credit rollover</span>
                     </li>
-                    <li className="flex items-start gap-2.5">
-                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
                       <span className="text-sm text-gray-600">Basic AI Fit Scoring</span>
                     </li>
-                    <li className="flex items-start gap-2.5">
-                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
                       <span className="text-sm text-gray-600">Free email generation</span>
@@ -492,7 +559,9 @@ export default function LandingPage() {
                 </CardContent>
                 <CardFooter className="px-6 pb-6 pt-0">
                   <Link href="/auth?tab=register&plan=Starter" className="w-full">
-                    <Button className="w-full h-11 shadow-sm font-medium">Get Started</Button>
+                    <Button className="w-full h-11 font-medium bg-gradient-to-r from-primary to-primary-light hover:from-primary/90 hover:to-primary-light/90 shadow-sm">
+                      Get Started
+                    </Button>
                   </Link>
                 </CardFooter>
               </Card>
