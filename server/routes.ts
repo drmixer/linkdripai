@@ -474,8 +474,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const testProspects = [];
       
       // Take first 5 prospects with complete data
+      // Type assertion to avoid import errors
       const filteredProspects = allProspects
-        .filter((p: Prospect) => p.pageAuthority && p.domain && p.siteName)
+        .filter((p: any) => p.pageAuthority && p.domain && p.siteName)
         .slice(0, 5);
       
       for (const prospect of filteredProspects) {

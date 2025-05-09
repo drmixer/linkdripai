@@ -250,55 +250,59 @@ export default function OpportunityCard({
             </Badge>
           </div>
           
-          {prospect.isUnlocked ? (
-            <div className="text-xs text-gray-500 space-y-1">
-              <div className="flex items-center">
-                <Globe className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
-                <span className="truncate">{prospect.domain || (prospect.siteName && `${prospect.siteName.toLowerCase().replace(/\s+/g, '')}.com`)}</span>
-              </div>
-              {prospect.contactEmail && (
+          <div className="text-xs text-gray-500 space-y-1">
+            {/* Only shown when unlocked: Domain and contact info */}
+            {prospect.isUnlocked && (
+              <>
                 <div className="flex items-center">
-                  <Mail className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
-                  <span className="truncate">{prospect.contactEmail}</span>
+                  <Globe className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
+                  <span className="truncate">{prospect.domain || (prospect.siteName && `${prospect.siteName.toLowerCase().replace(/\s+/g, '')}.com`)}</span>
                 </div>
-              )}
-              
-              {/* Moz Metrics Section */}
-              <div className="mt-2 pt-2 border-t border-gray-100">
-                <h4 className="text-xs font-medium mb-1.5">SEO Metrics</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {prospect.pageAuthority && (
-                    <div className="flex items-center">
-                      <Activity className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
-                      <span>PA: {prospect.pageAuthority}</span>
-                    </div>
-                  )}
-                  {prospect.spamScore && (
-                    <div className="flex items-center">
-                      <Shield className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
-                      <span>Spam: {prospect.spamScore}</span>
-                    </div>
-                  )}
-                  {prospect.rootDomainsLinking && (
-                    <div className="flex items-center">
-                      <Link2 className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
-                      <span>Domains: {prospect.rootDomainsLinking}</span>
-                    </div>
-                  )}
-                  {prospect.totalLinks && (
-                    <div className="flex items-center">
-                      <ExternalLink className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
-                      <span>Links: {prospect.totalLinks}</span>
-                    </div>
-                  )}
-                </div>
+                {prospect.contactEmail && (
+                  <div className="flex items-center">
+                    <Mail className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
+                    <span className="truncate">{prospect.contactEmail}</span>
+                  </div>
+                )}
+              </>
+            )}
+            
+            {/* Show a message when locked */}
+            {!prospect.isUnlocked && (
+              <div className="mb-2">Unlock to view domain and contact details</div>
+            )}
+            
+            {/* Moz Metrics Section - Always visible */}
+            <div className={cn("pt-1", !prospect.isUnlocked ? "mt-1" : "mt-2 pt-1 border-t border-gray-100")}>
+              <h4 className="text-xs font-medium mb-1.5">SEO Metrics</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {prospect.pageAuthority && (
+                  <div className="flex items-center">
+                    <Activity className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
+                    <span>PA: {prospect.pageAuthority}</span>
+                  </div>
+                )}
+                {prospect.spamScore && (
+                  <div className="flex items-center">
+                    <Shield className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
+                    <span>Spam: {prospect.spamScore}</span>
+                  </div>
+                )}
+                {prospect.rootDomainsLinking && (
+                  <div className="flex items-center">
+                    <Link2 className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
+                    <span>Domains: {prospect.rootDomainsLinking}</span>
+                  </div>
+                )}
+                {prospect.totalLinks && (
+                  <div className="flex items-center">
+                    <ExternalLink className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
+                    <span>Links: {prospect.totalLinks}</span>
+                  </div>
+                )}
               </div>
             </div>
-          ) : (
-            <div className="text-xs text-gray-500">
-              Unlock to view domain and contact details
-            </div>
-          )}
+          </div>
         </div>
       </CardContent>
 
@@ -396,40 +400,42 @@ export default function OpportunityCard({
           </Badge>
         </div>
         
-        {prospect.isUnlocked ? (
-          <>
-            <div className="text-xs text-gray-500 flex items-center gap-2">
-              <Globe className="h-3 w-3 text-gray-400" />
-              <span className="truncate">{prospect.domain || (prospect.siteName && `${prospect.siteName.toLowerCase().replace(/\s+/g, '')}.com`)}</span>
-            </div>
-            
-            {/* Moz Metrics Tags - Only on medium screens and up */}
-            <div className="hidden md:flex mt-1.5 flex-wrap gap-2 text-[10px]">
-              {prospect.pageAuthority && (
-                <Badge variant="outline" className="py-0 h-4 bg-blue-50 text-blue-700 border-blue-200">
-                  <Activity className="h-2.5 w-2.5 mr-1" />
-                  PA: {prospect.pageAuthority}
-                </Badge>
-              )}
-              {prospect.spamScore && (
-                <Badge variant="outline" className="py-0 h-4 bg-red-50 text-red-700 border-red-200">
-                  <Shield className="h-2.5 w-2.5 mr-1" />
-                  Spam: {prospect.spamScore}
-                </Badge>
-              )}
-              {prospect.rootDomainsLinking && (
-                <Badge variant="outline" className="py-0 h-4 bg-green-50 text-green-700 border-green-200">
-                  <Link2 className="h-2.5 w-2.5 mr-1" />
-                  RD: {prospect.rootDomainsLinking}
-                </Badge>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="text-xs text-gray-500">
+        {/* Site domain is only shown when unlocked */}
+        {prospect.isUnlocked && (
+          <div className="text-xs text-gray-500 flex items-center gap-2">
+            <Globe className="h-3 w-3 text-gray-400" />
+            <span className="truncate">{prospect.domain || (prospect.siteName && `${prospect.siteName.toLowerCase().replace(/\s+/g, '')}.com`)}</span>
+          </div>
+        )}
+        
+        {/* Lock status message - show when locked */}
+        {!prospect.isUnlocked && (
+          <div className="text-xs text-gray-500 mb-1">
             Unlock to view domain and contact details
           </div>
         )}
+        
+        {/* Moz Metrics Tags - Always visible, only on medium screens and up */}
+        <div className="hidden md:flex mt-1 flex-wrap gap-2 text-[10px]">
+          {prospect.pageAuthority && (
+            <Badge variant="outline" className="py-0 h-4 bg-blue-50 text-blue-700 border-blue-200">
+              <Activity className="h-2.5 w-2.5 mr-1" />
+              PA: {prospect.pageAuthority}
+            </Badge>
+          )}
+          {prospect.spamScore && (
+            <Badge variant="outline" className="py-0 h-4 bg-red-50 text-red-700 border-red-200">
+              <Shield className="h-2.5 w-2.5 mr-1" />
+              Spam: {prospect.spamScore}
+            </Badge>
+          )}
+          {prospect.rootDomainsLinking && (
+            <Badge variant="outline" className="py-0 h-4 bg-green-50 text-green-700 border-green-200">
+              <Link2 className="h-2.5 w-2.5 mr-1" />
+              RD: {prospect.rootDomainsLinking}
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Fit Score */}
