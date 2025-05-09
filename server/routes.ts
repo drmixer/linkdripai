@@ -77,14 +77,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = req.user!;
-      if (user.credits < 1) {
+      if (user.credits === null || user.credits < 1) {
         return res.status(400).json({ message: "Not enough credits" });
       }
 
       const prospect = await storage.unlockProspect(prospectId, user.id);
-      const updatedUser = await storage.updateUserCredits(user.id, user.credits - 1);
+      const updatedUser = await storage.updateUserCredits(user.id, (user.credits || 0) - 1);
       
-      res.json({ prospect, user: updatedUser });
+      // Update the session with the new user data to prevent onboarding redirection
+      req.login(updatedUser, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error updating session" });
+        }
+        res.json({ prospect, user: updatedUser });
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -130,11 +136,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const user = req.user!;
       // Check if user has enough credits
-      if (user.credits < ids.length) {
+      if (user.credits === null || user.credits < ids.length) {
         return res.status(400).json({ message: "Not enough credits" });
       }
       
-      const results = [];
+      const results: any[] = [];
       for (const id of ids) {
         try {
           const prospect = await storage.unlockProspect(id, user.id);
@@ -145,9 +151,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update user credits
-      const updatedUser = await storage.updateUserCredits(user.id, user.credits - results.length);
+      const updatedUser = await storage.updateUserCredits(user.id, (user.credits || 0) - results.length);
       
-      res.json({ prospects: results, user: updatedUser });
+      // Update the session with the new user data to prevent onboarding redirection
+      req.login(updatedUser, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error updating session" });
+        }
+        res.json({ prospects: results, user: updatedUser });
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -355,7 +367,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/onboarding/complete", isAuthenticated, async (req, res) => {
     try {
       const updatedUser = await storage.completeOnboarding(req.user!.id);
-      res.json(updatedUser);
+      
+      // Update session with onboarding completed flag
+      req.login(updatedUser, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error updating session" });
+        }
+        res.json(updatedUser);
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
