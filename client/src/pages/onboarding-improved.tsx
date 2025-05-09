@@ -182,24 +182,33 @@ export default function Onboarding() {
   };
 
   const addAnotherWebsite = () => {
+    // Get the actual plan from localStorage or state
+    const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+    
     // Check if user can add more websites based on their plan
     let maxWebsites = 1; // Default for Starter plan
     
-    if (selectedPlan === "Grow") {
+    if (actualPlan === "Grow") {
       maxWebsites = 2;
-    } else if (selectedPlan === "Pro") {
+    } else if (actualPlan === "Pro") {
       maxWebsites = 5;
-    } else if (selectedPlan === "Free Trial") {
+    } else if (actualPlan === "Free Trial") {
       maxWebsites = 1;
     }
     
     if (websites.length >= maxWebsites) {
       toast({
         title: "Plan Limit Reached",
-        description: `Your ${selectedPlan} plan supports up to ${maxWebsites} websites. Upgrade to add more.`,
+        description: `Your ${actualPlan} plan supports up to ${maxWebsites} websites. Upgrade to add more.`,
         variant: "destructive",
       });
       return;
+    }
+    
+    // Update selected plan from localStorage if needed
+    const storedPlan = localStorage.getItem('selectedPlan');
+    if (storedPlan && (storedPlan === "Grow" || storedPlan === "Pro" || storedPlan === "Starter")) {
+      setSelectedPlan(storedPlan);
     }
     
     // Reset the website form
@@ -753,7 +762,13 @@ export default function Onboarding() {
                                     </div>
                                     
                                     {/* Show competitor tracking section for Grow and Pro plans */}
-                                    {(selectedPlan === "Grow" || selectedPlan === "Pro") && sitePrefs.competitors && sitePrefs.competitors.length > 0 && sitePrefs.competitors.some(c => c) && (
+                                    {(() => {
+                                      const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                                      return (actualPlan === "Grow" || actualPlan === "Pro") && 
+                                        sitePrefs.competitors && 
+                                        sitePrefs.competitors.length > 0 && 
+                                        sitePrefs.competitors.some(c => c);
+                                    })() && (
                                       <div className="mt-4">
                                         <div className="flex items-center gap-2 mb-2">
                                           <div className="p-1 rounded-full bg-primary/10">
