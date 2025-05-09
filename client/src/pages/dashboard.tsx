@@ -528,7 +528,7 @@ export default function Dashboard() {
       
       {/* Email dialog */}
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden max-h-[90vh]">
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
           <DialogHeader className="p-4 pb-2 flex flex-row justify-between items-center border-b">
             <DialogTitle>Email Outreach</DialogTitle>
             <Button 
@@ -540,14 +540,12 @@ export default function Dashboard() {
               <X className="h-4 w-4" />
             </Button>
           </DialogHeader>
-          <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
-            {selectedProspect && (
-              <EmailGenerator 
-                prospect={selectedProspect}
-                onClose={() => setEmailDialogOpen(false)}
-              />
-            )}
-          </div>
+          {selectedProspect && (
+            <EmailGenerator 
+              prospect={selectedProspect}
+              onClose={() => setEmailDialogOpen(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </Layout>
