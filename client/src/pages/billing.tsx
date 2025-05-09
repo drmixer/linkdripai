@@ -910,7 +910,7 @@ export default function BillingPage() {
               <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4 text-yellow-800 text-sm flex items-start mt-4">
                 <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
                 <div>
-                  This is a one-time purchase. Your daily opportunity limit will be immediately increased.
+                  This is a one-time purchase. Your extra drips will begin trickling in shortly after purchase.
                 </div>
               </div>
             </div>
