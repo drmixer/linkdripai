@@ -508,12 +508,13 @@ export default function Onboarding() {
                           <h3 className="text-lg font-medium">Competitor Tracking</h3>
                         </div>
                         <p className="text-sm text-gray-500 mb-4">
-                          Your {localStorage.getItem('selectedPlan') || selectedPlan} plan includes competitor tracking. Add 
+                          Your {localStorage.getItem('selectedPlan') || selectedPlan} plan includes competitor tracking. 
                           {(() => {
                             const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
-                            return actualPlan === "Grow" ? " 1 competitor" : " up to 3 competitors";
+                            return actualPlan === "Grow" ? 
+                              " You can track 1 competitor website to analyze their backlink profile." : 
+                              " You can track up to 3 competitor websites to analyze their backlink profiles.";
                           })()}
-                          to analyze their backlink profiles.
                         </p>
                         
                         <FormField
@@ -576,8 +577,8 @@ export default function Onboarding() {
                               <FormDescription>
                                 {(() => {
                                   const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
-                                  if (actualPlan === "Grow") return "Enter 1 competitor website to track their backlink strategies";
-                                  if (actualPlan === "Pro") return "Enter up to 3 competitor websites to track their backlink strategies";
+                                  if (actualPlan === "Grow") return "Your Grow plan allows tracking 1 competitor website";
+                                  if (actualPlan === "Pro") return "Your Pro plan allows tracking up to 3 competitor websites";
                                   return ""; // Default shouldn't happen
                                 })()}
                               </FormDescription>
