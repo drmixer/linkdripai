@@ -81,6 +81,7 @@ export const prospects = pgTable("prospects", {
   contactName: text("contactName"),
   targetUrl: text("targetUrl"),
   fitScore: integer("fitScore").notNull(),
+  matchReasons: json("matchReasons").$type<string[]>().default([]),
   isUnlocked: boolean("isUnlocked").default(false),
   isSaved: boolean("isSaved").default(false),
   isNew: boolean("isNew").default(true),
@@ -98,6 +99,7 @@ export const insertProspectSchema = createInsertSchema(prospects).omit({
   unlockedBy: true,
   unlockedAt: true,
   createdAt: true,
+  matchReasons: true,
 });
 
 // Outreach emails table without circular references

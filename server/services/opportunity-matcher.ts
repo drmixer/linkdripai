@@ -95,6 +95,33 @@ export class OpportunityMatcher {
     const rawData = opportunity.rawData as any || {};
     const mozMetrics = rawData.mozMetrics || {};
     
+    // Generate some general reasons for this opportunity
+    const matchReasons: string[] = [];
+    
+    // Add reasons based on metrics
+    if (mozMetrics?.domain_authority?.score >= 40) {
+      matchReasons.push(`Strong domain authority (${mozMetrics.domain_authority.score})`);
+    }
+    
+    if (mozMetrics?.spam_score <= 5) {
+      matchReasons.push('Low spam score (good quality)');
+    }
+    
+    if (rawData.traffic && parseInt(rawData.traffic) > 5000) {
+      matchReasons.push(`High monthly traffic (${rawData.traffic})`);
+    }
+    
+    if (opportunity.sourceType === 'resource_page') {
+      matchReasons.push('High-value resource page opportunity');
+    } else if (opportunity.sourceType === 'guest_post') {
+      matchReasons.push('Guest posting opportunity');
+    }
+    
+    // Add a default reason if no others apply
+    if (matchReasons.length === 0) {
+      matchReasons.push('Relevant site in your target niche');
+    }
+    
     // Create prospect record
     const [prospect] = await db.insert(prospects)
       .values({
@@ -114,6 +141,7 @@ export class OpportunityMatcher {
         contactName: null,
         targetUrl: opportunity.url,
         fitScore: 70, // Default fit score, will be updated per user
+        matchReasons: matchReasons,
         isUnlocked: false,
         isSaved: false,
         isNew: true,

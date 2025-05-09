@@ -221,8 +221,17 @@ export default function OpportunityCard({
                         <span className="text-xs font-medium">{prospect.fitScore}%</span>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      <p>AI-calculated relevance score based on your site</p>
+                    <TooltipContent side="bottom" sideOffset={5} className="max-w-[250px]">
+                      <p>AI-calculated relevance score based on your website's niche, content, and preferences</p>
+                      <div className="text-xs mt-1 opacity-80">
+                        {prospect.matchReasons && prospect.matchReasons.length > 0 && 
+                          <ul className="list-disc list-inside">
+                            {prospect.matchReasons.map((reason, idx) => (
+                              <li key={idx}>{reason}</li>
+                            ))}
+                          </ul>
+                        }
+                      </div>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -459,8 +468,17 @@ export default function OpportunityCard({
                 <span className="ml-2 text-xs font-medium">{prospect.fitScore}%</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent>
-              <p>AI-calculated relevance score based on your site</p>
+            <TooltipContent side="bottom" sideOffset={5} className="max-w-[250px]">
+              <p>AI-calculated relevance score based on your website's niche, content, and preferences</p>
+              <div className="text-xs mt-1 opacity-80">
+                {prospect.matchReasons && prospect.matchReasons.length > 0 && 
+                  <ul className="list-disc list-inside">
+                    {prospect.matchReasons.map((reason, idx) => (
+                      <li key={idx}>{reason}</li>
+                    ))}
+                  </ul>
+                }
+              </div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
