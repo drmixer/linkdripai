@@ -54,6 +54,37 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// For small icons within buttons (Plus and Minus)
+const Plus = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M12 5v14M5 12h14"/>
+  </svg>
+);
+
+const Minus = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M5 12h14"/>
+  </svg>
+);
+
 export default function BillingPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -734,43 +765,62 @@ export default function BillingPage() {
           
           <div className="py-4">
             <div className="space-y-4">
-              <Label>Select Credit Package</Label>
-              <div className="grid grid-cols-1 gap-3">
-                {creditPackages.map((pkg) => (
-                  <div 
-                    key={pkg.value}
-                    className={cn(
-                      "border rounded-lg p-4 cursor-pointer transition-colors",
-                      selectedCredits === pkg.value 
-                        ? "border-primary bg-primary-50" 
-                        : "border-border hover:border-primary/50"
-                    )}
-                    onClick={() => setSelectedCredits(pkg.value)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className={cn(
-                          "w-5 h-5 rounded-full border flex items-center justify-center mr-3",
-                          selectedCredits === pkg.value 
-                            ? "border-primary bg-primary text-white" 
-                            : "border-gray-300"
-                        )}>
-                          {selectedCredits === pkg.value && <Check className="h-3 w-3" />}
-                        </div>
-                        <div>
-                          <div className="font-medium">{pkg.label}</div>
-                          <div className="text-sm text-gray-500">One-time purchase</div>
-                        </div>
-                      </div>
-                      <div className="font-medium">{pkg.price}</div>
-                    </div>
+              <div className="flex flex-col space-y-4">
+                <Label htmlFor="credit-amount">Select Credit Amount</Label>
+                <div className="flex items-center justify-between rounded-md border p-4">
+                  <div>
+                    <div className="font-medium text-lg">Credits</div>
+                    <div className="text-sm text-gray-500">$1 per credit</div>
                   </div>
-                ))}
+                  <div className="flex items-center space-x-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        const currentValue = parseInt(selectedCredits);
+                        if (currentValue > 1) {
+                          setSelectedCredits((currentValue - 1).toString());
+                        }
+                      }}
+                      disabled={parseInt(selectedCredits) <= 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Input 
+                      id="credit-amount"
+                      type="number" 
+                      className="w-16 text-center" 
+                      value={selectedCredits}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value >= 1) {
+                          setSelectedCredits(value.toString());
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        const currentValue = parseInt(selectedCredits);
+                        setSelectedCredits((currentValue + 1).toString());
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex justify-between font-medium mt-2">
+                  <span>Total:</span>
+                  <span>${parseInt(selectedCredits) || 0}.00</span>
+                </div>
               </div>
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex justify-between sm:justify-between">
             <Button 
               type="button" 
               variant="outline" 
@@ -796,46 +846,65 @@ export default function BillingPage() {
       <Dialog open={isAddDripsDialogOpen} onOpenChange={setIsAddDripsDialogOpen}>
         <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
-            <DialogTitle>Add Daily Opportunities</DialogTitle>
+            <DialogTitle>Add Daily Drips</DialogTitle>
             <DialogDescription>
-              Increase your daily opportunity limit with add-on packages.
+              Increase your daily opportunity limit with additional drips.
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
             <div className="space-y-4">
-              <Label>Select Opportunities Package</Label>
-              <div className="grid grid-cols-1 gap-3">
-                {dripPackages.map((pkg) => (
-                  <div 
-                    key={pkg.value}
-                    className={cn(
-                      "border rounded-lg p-4 cursor-pointer transition-colors",
-                      selectedDrips === pkg.value 
-                        ? "border-primary bg-primary-50" 
-                        : "border-border hover:border-primary/50"
-                    )}
-                    onClick={() => setSelectedDrips(pkg.value)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className={cn(
-                          "w-5 h-5 rounded-full border flex items-center justify-center mr-3",
-                          selectedDrips === pkg.value 
-                            ? "border-primary bg-primary text-white" 
-                            : "border-gray-300"
-                        )}>
-                          {selectedDrips === pkg.value && <Check className="h-3 w-3" />}
-                        </div>
-                        <div>
-                          <div className="font-medium">{pkg.label}</div>
-                          <div className="text-sm text-gray-500">Additional daily limit</div>
-                        </div>
-                      </div>
-                      <div className="font-medium">{pkg.price}</div>
-                    </div>
+              <div className="flex flex-col space-y-4">
+                <Label htmlFor="drip-amount">Select Drip Amount</Label>
+                <div className="flex items-center justify-between rounded-md border p-4">
+                  <div>
+                    <div className="font-medium text-lg">Daily Drips</div>
+                    <div className="text-sm text-gray-500">$0.50 per drip per month</div>
                   </div>
-                ))}
+                  <div className="flex items-center space-x-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        const currentValue = parseInt(selectedDrips);
+                        if (currentValue > 1) {
+                          setSelectedDrips((currentValue - 1).toString());
+                        }
+                      }}
+                      disabled={parseInt(selectedDrips) <= 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Input 
+                      id="drip-amount"
+                      type="number" 
+                      className="w-16 text-center" 
+                      value={selectedDrips}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value >= 1) {
+                          setSelectedDrips(value.toString());
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        const currentValue = parseInt(selectedDrips);
+                        setSelectedDrips((currentValue + 1).toString());
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex justify-between font-medium mt-2">
+                  <span>Monthly Cost:</span>
+                  <span>${(parseInt(selectedDrips) * 0.5).toFixed(2)}/month</span>
+                </div>
               </div>
               
               <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4 text-yellow-800 text-sm flex items-start mt-4">
@@ -847,7 +916,7 @@ export default function BillingPage() {
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex justify-between sm:justify-between">
             <Button 
               type="button" 
               variant="outline" 
@@ -863,7 +932,7 @@ export default function BillingPage() {
               {addDripsMutation.isPending && (
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
               )}
-              Add Opportunities
+              Add Drips
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -871,19 +940,3 @@ export default function BillingPage() {
     </Layout>
   );
 }
-
-// For small icon within button (Plus)
-const Plus = ({ className }: { className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="M12 5v14M5 12h14"/>
-  </svg>
-);
