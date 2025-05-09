@@ -428,6 +428,202 @@ export class OpportunityMatcher {
       return [];
     }
   }
+  
+  /**
+   * Generate immediate opportunities for Splash feature
+   * This method assigns additional opportunities when a user uses a Splash
+   */
+  async assignImmediateOpportunities(userId: number, websiteId?: number): Promise<Prospect[]> {
+    try {
+      // Determine how many opportunities to assign for a Splash
+      const SPLASH_OPPORTUNITY_COUNT = 5; // Default number of opportunities per Splash
+      
+      // Get all user's websites if no specific websiteId is provided
+      let websiteIds: number[] = [];
+      if (websiteId) {
+        websiteIds = [websiteId];
+      } else {
+        const userWebsites = await db.select()
+          .from(websites)
+          .where(eq(websites.userId, userId));
+        websiteIds = userWebsites.map(web => web.id);
+      }
+      
+      if (websiteIds.length === 0) {
+        return [];
+      }
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      let assignedProspects: Prospect[] = [];
+      
+      // For each website, assign additional opportunities
+      for (const webId of websiteIds) {
+        try {
+          // Get website profile
+          const [profile] = await db.select()
+            .from(websiteProfiles)
+            .where(eq(websiteProfiles.websiteId, webId));
+          
+          if (!profile) {
+            console.warn(`No profile found for website ${webId}`);
+            continue;
+          }
+          
+          // Find existing drip for today or create a new one
+          let drip = await db.select()
+            .from(dailyDrips)
+            .where(
+              and(
+                eq(dailyDrips.userId, userId),
+                eq(dailyDrips.websiteId, webId),
+                gte(dailyDrips.date, today),
+                lt(dailyDrips.date, tomorrow)
+              )
+            )
+            .then(results => results[0]);
+          
+          if (!drip) {
+            // Create daily drip record if none exists
+            [drip] = await db.insert(dailyDrips)
+              .values({
+                userId,
+                websiteId: webId,
+                date: today,
+                opportunitiesLimit: SPLASH_OPPORTUNITY_COUNT,
+                opportunitiesDelivered: 0,
+                isPurchasedExtra: true, // Mark this as a purchased/splash extra
+                matches: []
+              })
+              .returning();
+          }
+          
+          // Get pending matches that haven't been assigned yet
+          const pendingMatches = await db.select()
+            .from(opportunityMatches)
+            .where(
+              and(
+                eq(opportunityMatches.websiteId, webId),
+                eq(opportunityMatches.status, 'pending')
+              )
+            )
+            .orderBy(desc(opportunityMatches.matchScore))
+            .limit(SPLASH_OPPORTUNITY_COUNT);
+          
+          // If we don't have enough pending matches, attempt to find new opportunities
+          if (pendingMatches.length < SPLASH_OPPORTUNITY_COUNT) {
+            // Get analyzed opportunities that might not have been matched yet
+            const additionalOpportunities = await db.select()
+              .from(discoveredOpportunities)
+              .where(eq(discoveredOpportunities.status, 'analyzed'))
+              .limit(SPLASH_OPPORTUNITY_COUNT - pendingMatches.length);
+            
+            // Process additional opportunities
+            for (const opportunity of additionalOpportunities) {
+              try {
+                // Convert to prospect if not already done
+                const prospect = await this.convertToProspect(opportunity);
+                
+                // Calculate match score
+                const { score, reasons } = this.calculateMatchScore(
+                  profile, 
+                  opportunity, 
+                  opportunity.rawData
+                );
+                
+                // Create match even with a lower threshold for splash
+                if (score >= 30) { // Lower threshold for splash compared to regular matching
+                  const match = await this.createMatch(webId, prospect.id, score, reasons);
+                  
+                  // Update opportunity status to matched
+                  await db.update(discoveredOpportunities)
+                    .set({ status: 'matched' })
+                    .where(eq(discoveredOpportunities.id, opportunity.id));
+                  
+                  // Add to pending matches
+                  pendingMatches.push(match);
+                  
+                  // Stop if we have enough
+                  if (pendingMatches.length >= SPLASH_OPPORTUNITY_COUNT) {
+                    break;
+                  }
+                }
+              } catch (error) {
+                console.error(`Error processing additional opportunity ${opportunity.id}:`, error);
+              }
+            }
+          }
+          
+          // Get current matches
+          const currentMatches = drip.matches || [];
+          
+          // Add new matches to the list
+          const matchesToAdd = pendingMatches.map(m => m.id);
+          const updatedMatches = [...currentMatches, ...matchesToAdd];
+          
+          // Update the drip record with new matches
+          await db.update(dailyDrips)
+            .set({ 
+              matches: updatedMatches,
+              opportunitiesDelivered: updatedMatches.length
+            })
+            .where(eq(dailyDrips.id, drip.id));
+          
+          // Update match records to 'assigned'
+          for (const match of pendingMatches) {
+            await db.update(opportunityMatches)
+              .set({ 
+                status: 'assigned',
+                showDate: today
+              })
+              .where(eq(opportunityMatches.id, match.id));
+              
+            // Update prospect with fit score from match
+            await db.update(prospects)
+              .set({ fitScore: match.matchScore })
+              .where(eq(prospects.id, match.prospectId));
+          }
+          
+          // Get prospect IDs
+          const prospectIds = pendingMatches.map(m => m.prospectId);
+          
+          // Get the actual prospects for the newly assigned matches
+          const newProspects = await db.select()
+            .from(prospects)
+            .where(sql`${prospects.id} IN (${prospectIds.join(',')})`);
+          
+          // Enhance prospects with match reasons
+          const enhancedProspects = newProspects.map(prospect => {
+            // Find the match for this prospect
+            const prospectMatch = pendingMatches.find(m => m.prospectId === prospect.id);
+            
+            return {
+              ...prospect,
+              matchReasons: (prospectMatch && prospectMatch.matchReason) || []
+            };
+          });
+          
+          // Add to our result list
+          assignedProspects = [
+            ...assignedProspects,
+            ...enhancedProspects
+          ];
+          
+        } catch (error) {
+          console.error(`Error assigning splash opportunities for website ${webId}:`, error);
+        }
+      }
+      
+      return assignedProspects;
+    } catch (error) {
+      console.error(`Error assigning immediate opportunities for user ${userId}:`, error);
+      return [];
+    }
+  }
 }
 
 // Singleton instance

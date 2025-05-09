@@ -325,7 +325,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Onboarding API endpoints
+  // Splash feature - get additional opportunities immediately
+  app.post("/api/splash", isAuthenticated, async (req, res) => {
+    try {
+      const { websiteId } = req.body;
+      
+      // Check if the user has Splashes available
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!user.splashesAllowed || user.splashesUsed >= user.splashesAllowed) {
+        return res.status(400).json({ 
+          message: "No Splashes available. Upgrade your plan or wait until next billing cycle." 
+        });
+      }
+      
+      // Record the Splash usage
+      await db.insert(schema.splashUsage).values({
+        userId: user.id,
+        websiteId: websiteId || null,
+        usedAt: new Date(),
+        source: "monthly_allowance"
+      });
+      
+      // Increment the user's splash usage count
+      const [updatedUser] = await db.update(schema.users)
+        .set({ splashesUsed: (user.splashesUsed || 0) + 1 })
+        .where(eq(schema.users.id, user.id))
+        .returning();
+      
+      // Update the session
+      req.login(updatedUser, async (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error updating session" });
+        }
+        
+        // Get fresh opportunities for the user
+        const matcher = getOpportunityMatcher();
+        const newOpportunities = await matcher.assignImmediateOpportunities(req.user!.id, websiteId);
+        
+        res.json({
+          success: true,
+          opportunities: newOpportunities,
+          splashesRemaining: (updatedUser.splashesAllowed || 0) - (updatedUser.splashesUsed || 0)
+        });
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+// Onboarding API endpoints
   app.post("/api/onboarding/subscription", isAuthenticated, async (req, res) => {
     try {
       const { plan } = req.body;

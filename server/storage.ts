@@ -21,9 +21,10 @@ interface Stats {
     used: number;
     total: number;
   };
-  credits: {
+  splashes: {
     available: number;
     total: number;
+    nextReset: Date;
   };
   emailsSent: {
     total: number;
@@ -947,14 +948,21 @@ export class DatabaseStorage implements IStorage {
         eq(outreachEmails.status, "Responded")
       ));
     
+    // Calculate splash information
+    const splashesRemaining = (user.splashesAllowed || 0) - (user.splashesUsed || 0);
+    
+    // Get next reset date for splashes (billing anniversary)
+    const nextResetDate = user.billingAnniversary || new Date();
+    
     return {
       dailyOpportunities: {
         used: unlockedToday[0]?.count || 0,
         total: user.dailyOpportunitiesLimit || 0,
       },
-      credits: {
-        available: user.credits || 0,
-        total: user.totalCredits || 0,
+      splashes: {
+        available: splashesRemaining,
+        total: user.splashesAllowed || 0,
+        nextReset: nextResetDate
       },
       emailsSent: {
         total: emailCount[0]?.count || 0,
