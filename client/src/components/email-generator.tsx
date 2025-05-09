@@ -10,7 +10,6 @@ import {
   CardContent,
   CardHeader
 } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Prospect } from "@shared/schema";
 import { 
   Loader2, 
@@ -38,14 +37,13 @@ export default function EmailGenerator({ prospect, onClose }: EmailGeneratorProp
   const { toast } = useToast();
   const [subject, setSubject] = useState(`Guest Post Opportunity for ${prospect.siteName || 'your site'}`);
   const [emailBody, setEmailBody] = useState('');
-  const [emailTemplate, setEmailTemplate] = useState<'ai' | 'template1' | 'template2'>('ai');
   const [copied, setCopied] = useState(false);
   
   const generateEmailMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/email/generate", {
         prospectId: prospect.id,
-        template: emailTemplate
+        template: 'ai'
       });
       return await res.json();
     },
@@ -123,9 +121,9 @@ export default function EmailGenerator({ prospect, onClose }: EmailGeneratorProp
   }
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 overflow-visible">
+    <div className="grid grid-cols-1 md:grid-cols-5 overflow-auto max-h-[80vh]">
       {/* Left sidebar with prospect info */}
-      <div className="md:col-span-2 bg-gray-50 border-r p-4 overflow-y-auto max-h-[70vh]">
+      <div className="md:col-span-2 bg-gray-50 border-r p-4 overflow-y-auto">
         <div className="mb-4">
           <h3 className="text-lg font-medium text-gray-800">Prospect Details</h3>
         </div>
@@ -223,7 +221,7 @@ export default function EmailGenerator({ prospect, onClose }: EmailGeneratorProp
       
       {/* Right side with email editor */}
       <div className="md:col-span-3 flex flex-col">
-        <div className="overflow-y-auto p-4 max-h-[65vh]">
+        <div className="p-4 overflow-y-auto h-full">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium flex items-center text-gray-800">
               <Mail className="h-5 w-5 mr-2 text-primary-600" />
@@ -246,20 +244,15 @@ export default function EmailGenerator({ prospect, onClose }: EmailGeneratorProp
                 Regenerate
               </Button>
               
-              <Tabs value={emailTemplate} onValueChange={(v) => setEmailTemplate(v as any)}>
-                <TabsList className="h-8">
-                  <TabsTrigger value="ai" className="text-xs px-3">
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                    AI
-                  </TabsTrigger>
-                  <TabsTrigger value="template1" className="text-xs px-3">
-                    T1
-                  </TabsTrigger>
-                  <TabsTrigger value="template2" className="text-xs px-3">
-                    T2
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs"
+                disabled={true}
+              >
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                AI Generated
+              </Button>
             </div>
           </div>
           
