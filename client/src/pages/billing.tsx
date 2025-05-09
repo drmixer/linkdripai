@@ -509,7 +509,7 @@ export default function BillingPage() {
                     </p>
                     <Button onClick={() => setIsAddDripsDialogOpen(true)}>
                       <Plus className="mr-2 h-4 w-4" />
-                      Add Opportunities
+                      Add Drips
                     </Button>
                   </div>
                 </div>
