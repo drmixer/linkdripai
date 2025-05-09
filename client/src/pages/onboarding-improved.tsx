@@ -261,8 +261,17 @@ export default function Onboarding() {
       // Clear selectedPlan from localStorage after successful onboarding
       localStorage.removeItem('selectedPlan');
       
-      // Redirect to dashboard
-      window.location.href = "/dashboard";
+      // Redirect to dashboard - try multiple approaches
+      console.log("Onboarding complete! Redirecting to dashboard...");
+      
+      // Try wouter navigation first
+      navigate("/dashboard");
+      
+      // Then also use direct navigation as a backup after a short delay
+      setTimeout(() => {
+        console.log("Using fallback navigation to dashboard...");
+        window.location.href = "/dashboard";
+      }, 300);
     } catch (error) {
       console.error("Error:", error);
       toast({
