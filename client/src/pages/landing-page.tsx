@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Icons } from "@/lib/icons";
-import { Check, Link2, Zap, BarChart, Mail, Shield, CheckCircle, ArrowRight } from "lucide-react";
+import { Check, CheckCircle, ArrowRight, Link2, Zap, BarChart, Mail, Shield } from "lucide-react";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -18,31 +18,38 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <header className="w-full border-b bg-white sticky top-0 z-50 shadow-sm">
+      <header className="w-full border-b bg-white sticky top-0 z-50">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <Link href="/">
-              <div className="flex items-center gap-2">
-                <div className="rounded-md bg-primary p-1.5">
-                  <Link2 className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-primary mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 9L12 5M12 5L16 9M12 5V15M8 19H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-xl font-bold text-primary">LinkDripAI</span>
               </div>
             </Link>
           </div>
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Features</a>
-            <a href="#how-it-works" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">How it Works</a>
-            <a href="#pricing" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Pricing</a>
-          </nav>
-          <div className="flex items-center gap-4">
-            <Link href="/auth?tab=login">
-              <Button variant="ghost" size="sm" className="font-medium">Log in</Button>
+          <nav className="flex items-center gap-4">
+            <Link href="/pricing">
+              <span className="text-sm text-gray-600 hover:text-primary transition-colors">Pricing</span>
             </Link>
-            <a href="#pricing">
-              <Button size="sm" className="font-medium">Get Started</Button>
-            </a>
-          </div>
+            <Link href="/blog">
+              <span className="text-sm text-gray-600 hover:text-primary transition-colors">Blog</span>
+            </Link>
+            <Link href="/contact">
+              <span className="text-sm text-gray-600 hover:text-primary transition-colors">Contact</span>
+            </Link>
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="text-gray-600">Dashboard</Button>
+            </Link>
+            <Link href="/auth?tab=login">
+              <Button variant="ghost" size="sm" className="text-gray-600">Settings</Button>
+            </Link>
+            <Link href="/auth?tab=login">
+              <Button variant="ghost" size="sm" className="text-gray-600">Logout</Button>
+            </Link>
+          </nav>
         </div>
       </header>
 
