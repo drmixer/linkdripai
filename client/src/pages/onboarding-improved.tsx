@@ -29,6 +29,7 @@ import { Link } from "wouter";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, ArrowRight, Check, Globe, PanelRight, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 const websiteSchema = z.object({
   url: z.string().url("Please enter a valid URL").min(1, "Website URL is required"),
@@ -248,10 +249,17 @@ export default function Onboarding() {
         body: JSON.stringify({ websites: websitesWithPreferences }),
       });
       
-      // Mark onboarding as complete
-      await fetch("/api/user/onboarding/complete", {
+      // Mark onboarding as complete - ensure the API called successfully
+      const completeResponse = await fetch("/api/user/onboarding/complete", {
         method: "POST",
       });
+      
+      if (!completeResponse.ok) {
+        throw new Error("Failed to mark onboarding as complete");
+      }
+      
+      // Force refresh the user data to make sure the flag is updated
+      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       
       toast({
         title: "Setup complete!",
@@ -261,17 +269,17 @@ export default function Onboarding() {
       // Clear selectedPlan from localStorage after successful onboarding
       localStorage.removeItem('selectedPlan');
       
-      // Redirect to dashboard - try multiple approaches
-      console.log("Onboarding complete! Redirecting to dashboard...");
+      // Use direct window relocation for compatibility
+      console.log("Onboarding complete! Forcing redirect to dashboard...");
       
-      // Try wouter navigation first
-      navigate("/dashboard");
+      // Force reload the page and go to the dashboard
+      window.location.replace('/dashboard');
       
-      // Then also use direct navigation as a backup after a short delay
+      // Additional fallback in case the above doesn't work
       setTimeout(() => {
-        console.log("Using fallback navigation to dashboard...");
-        window.location.href = "/dashboard";
-      }, 300);
+        console.log("Using backup navigation method...");
+        window.location.pathname = "/dashboard";
+      }, 500);
     } catch (error) {
       console.error("Error:", error);
       toast({

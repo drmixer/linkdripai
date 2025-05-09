@@ -32,7 +32,8 @@ export function ProtectedRoute({
   }
 
   // Check if user has completed onboarding
-  if (!skipOnboardingCheck && path !== "/onboarding" && user.onboardingCompleted === false) {
+  if (!skipOnboardingCheck && path !== "/onboarding" && path !== "/onboarding/improved" && user.onboardingCompleted === false) {
+    console.log(`ProtectedRoute for ${path}: Redirecting to onboarding because onboardingCompleted is false`);
     return (
       <Route path={path}>
         <Redirect to="/onboarding" />
