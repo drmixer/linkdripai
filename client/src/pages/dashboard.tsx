@@ -5,13 +5,11 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
-import { useToast, toast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,39 +25,23 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { 
   ChevronDown, 
-  ChevronRight, 
   Search, 
-  Link2, 
-  PencilIcon, 
-  PlusIcon, 
-  Sparkles,
   Filter,
   SlidersHorizontal,
   LayoutGrid,
   List as ListIcon,
-  Tag,
-  CheckSquare,
-  Eye,
   EyeOff,
-  Star,
-  Unlock,
-  LightbulbIcon
+  Sparkles,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Prospect, OutreachEmail } from "@shared/schema";
+import { Prospect } from "@shared/schema";
+import { SimpleCheckbox } from "@/components/simple-checkbox";
 
 interface SiteSettings {
   id: number;
@@ -73,6 +55,8 @@ interface SiteSettings {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [location] = useLocation();
+  const { toast } = useToast();
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -82,10 +66,9 @@ export default function Dashboard() {
   const [fitScoreRange, setFitScoreRange] = useState<[number, number]>([50, 100]);
   const [searchQuery, setSearchQuery] = useState("");
   const [hideFilters, setHideFilters] = useState(true);
-  const [currentSite, setCurrentSite] = useState<SiteSettings | null>(null);
-  const [sites, setSites] = useState<SiteSettings[]>([]);
   
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
+  // Fetch stats
+  const { data: stats } = useQuery({
     queryKey: ["/api/stats"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/stats");
@@ -93,6 +76,7 @@ export default function Dashboard() {
     },
   });
   
+  // Fetch opportunities
   const { data: opportunities, isLoading: isLoadingOpportunities } = useQuery({
     queryKey: ["/api/prospects/daily"],
     queryFn: async () => {
@@ -101,111 +85,7 @@ export default function Dashboard() {
     },
   });
   
-  // Simulate sites data based on user's subscription
-  useEffect(() => {
-    if (!user) return;
-    
-    const planSites: Record<string, SiteSettings[]> = {
-      'Starter': [
-        {
-          id: 1,
-          name: "My Blog",
-          url: "myblog.com",
-          niche: "Marketing",
-          monthlyCredits: 50,
-          usedCredits: 12,
-          opportunities: 10
-        }
-      ],
-      'Grow': [
-        {
-          id: 1,
-          name: "My Blog",
-          url: "myblog.com",
-          niche: "Marketing",
-          monthlyCredits: 75,
-          usedCredits: 22,
-          opportunities: 10
-        },
-        {
-          id: 2,
-          name: "My Shop",
-          url: "myshop.com",
-          niche: "E-commerce",
-          monthlyCredits: 75,
-          usedCredits: 15,
-          opportunities: 10
-        }
-      ],
-      'Pro': [
-        {
-          id: 1,
-          name: "My Blog",
-          url: "myblog.com",
-          niche: "Marketing",
-          monthlyCredits: 60,
-          usedCredits: 18,
-          opportunities: 10
-        },
-        {
-          id: 2,
-          name: "My Shop",
-          url: "myshop.com",
-          niche: "E-commerce",
-          monthlyCredits: 60,
-          usedCredits: 25,
-          opportunities: 10
-        },
-        {
-          id: 3,
-          name: "My Agency",
-          url: "myagency.com",
-          niche: "Services",
-          monthlyCredits: 60,
-          usedCredits: 5,
-          opportunities: 10
-        },
-        {
-          id: 4,
-          name: "My Podcast",
-          url: "mypodcast.com",
-          niche: "Entertainment",
-          monthlyCredits: 60,
-          usedCredits: 10,
-          opportunities: 10
-        },
-        {
-          id: 5,
-          name: "My Portfolio",
-          url: "myportfolio.com",
-          niche: "Personal",
-          monthlyCredits: 60,
-          usedCredits: 2,
-          opportunities: 10
-        }
-      ],
-      'Free Trial': [
-        {
-          id: 1,
-          name: "My Website",
-          url: "mywebsite.com",
-          niche: "Business",
-          monthlyCredits: 10,
-          usedCredits: 3,
-          opportunities: 5
-        }
-      ]
-    };
-    
-    const plan = user.subscription || 'Free Trial';
-    const userSites = planSites[plan] || planSites['Free Trial'];
-    
-    setSites(userSites);
-    if (userSites.length > 0 && !currentSite) {
-      setCurrentSite(userSites[0]);
-    }
-  }, [user]);
-  
+  // Bulk unlock mutation
   const bulkUnlockMutation = useMutation({
     mutationFn: async (ids: number[]) => {
       const res = await apiRequest("POST", `/api/prospects/bulk-unlock`, { ids });
@@ -229,29 +109,7 @@ export default function Dashboard() {
     }
   });
   
-  const bulkStarMutation = useMutation({
-    mutationFn: async (ids: number[]) => {
-      const res = await apiRequest("POST", `/api/prospects/bulk-star`, { ids });
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/prospects/saved"] });
-      toast({
-        title: "Prospects starred",
-        description: `Successfully starred ${selectedItems.length} prospect${selectedItems.length > 1 ? 's' : ''}.`,
-      });
-      setSelectedItems([]);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to star prospects",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-  
+  // Bulk hide mutation
   const bulkHideMutation = useMutation({
     mutationFn: async (ids: number[]) => {
       const res = await apiRequest("POST", `/api/prospects/bulk-hide`, { ids });
@@ -296,18 +154,9 @@ export default function Dashboard() {
     bulkUnlockMutation.mutate(selectedItems);
   };
   
-  const handleBulkStar = () => {
-    if (selectedItems.length === 0) return;
-    bulkStarMutation.mutate(selectedItems);
-  };
-  
   const handleBulkHide = () => {
     if (selectedItems.length === 0) return;
     bulkHideMutation.mutate(selectedItems);
-  };
-  
-  const handleSiteChange = (site: SiteSettings) => {
-    setCurrentSite(site);
   };
   
   const filterOpportunities = (opportunities: Prospect[] | undefined) => {
@@ -315,14 +164,15 @@ export default function Dashboard() {
     
     // Filter the opportunities first
     const filtered = opportunities.filter(opp => {
-      // Filter out hidden opportunities
-      if (opp.isHidden) return false;
+      // Filter by hidden state
+      if (selectedTab !== "hidden" && opp.isHidden) return false;
+      if (selectedTab === "hidden" && !opp.isHidden) return false;
       
       // Filter by search query
       const searchMatch = searchQuery === "" || 
         (opp.siteName && opp.siteName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        opp.niche.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        opp.siteType.toLowerCase().includes(searchQuery.toLowerCase());
+        (opp.domain && opp.domain.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        opp.niche.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Filter by DA range
       const daValue = parseInt(opp.domainAuthority);
@@ -331,8 +181,8 @@ export default function Dashboard() {
       // Filter by fit score range
       const fitMatch = opp.fitScore >= fitScoreRange[0] && opp.fitScore <= fitScoreRange[1];
       
-      // Filter by tab
-      const tabMatch = (
+      // Filter by tab if not 'hidden'
+      const tabMatch = selectedTab === "hidden" || (
         (selectedTab === "new" && (opp.isNew ?? true)) ||
         (selectedTab === "earlier" && !(opp.isNew ?? true)) ||
         selectedTab === "all"
@@ -341,252 +191,317 @@ export default function Dashboard() {
       return searchMatch && daMatch && fitMatch && tabMatch;
     });
     
-    // Sort opportunities with newest at the top (based on ID for now, can be changed to createdAt if available)
+    // Sort opportunities with newest at the top
     return filtered.sort((a: Prospect, b: Prospect) => b.id - a.id);
   };
   
-  // Split opportunities into new and earlier
-  const newOpportunities = opportunities?.filter((opp: Prospect) => opp.isNew ?? true) || [];
-  const earlierOpportunities = opportunities?.filter((opp: Prospect) => !(opp.isNew ?? true)) || [];
   const filteredOpportunities = filterOpportunities(opportunities);
-  
   const totalCredits = stats?.credits?.total || 0;
-  const availableCredits = stats?.credits?.available || 0;
-  
-  // Debug log to confirm selections are working properly
-  useEffect(() => {
-    if (selectedItems.length > 0) {
-      console.log("Selected items:", selectedItems);
-    }
-  }, [selectedItems]);
+  const availableCredits = stats?.credits?.available || user?.credits || 0;
 
   return (
-    <Layout>
-      {/* Opportunities feed */}
-      <div>
-        {/* Tabs and bulk actions */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <div className="flex items-center">
-            <Tabs 
-              defaultValue="new" 
-              value={selectedTab}
-              onValueChange={setSelectedTab}
-              className="mr-4"
-            >
-              <TabsList>
-                <TabsTrigger value="new" className="relative">
-                  New Today
-                  {newOpportunities.length > 0 && (
-                    <Badge className="ml-1.5 py-0 h-5 min-w-5 absolute -right-1 -top-1 flex items-center justify-center">
-                      {newOpportunities.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="earlier">Earlier</TabsTrigger>
-                <TabsTrigger value="all">All</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            {selectedItems.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleBulkUnlock}
-                  disabled={bulkUnlockMutation.isPending}
-                >
-                  <Unlock className="h-4 w-4 mr-1.5" />
-                  Unlock {selectedItems.length}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleBulkStar}
-                  disabled={bulkStarMutation.isPending}
-                >
-                  <Star className="h-4 w-4 mr-1.5" />
-                  Star {selectedItems.length}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleBulkHide}
-                  disabled={bulkHideMutation.isPending}
-                >
-                  <EyeOff className="h-4 w-4 mr-1.5" />
-                  Hide {selectedItems.length}
-                </Button>
-              </div>
+    <Layout title="Daily Link Opportunities">
+      <div className="mb-2 text-sm text-gray-600">
+        Here are your latest curated backlink prospects.
+      </div>
+      
+      {/* Top Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        {/* Credits */}
+        <div className="flex items-center">
+          <div className="text-sm mr-6">
+            <span className="text-gray-500">Credits: </span>
+            <span className="font-medium">{availableCredits}</span>
+          </div>
+          
+          <Button 
+            variant="link" 
+            className="h-auto p-0 text-sm"
+            onClick={() => {
+              // Toggle hidden opportunities view
+              setSelectedTab(selectedTab === "hidden" ? "new" : "hidden");
+            }}
+          >
+            {selectedTab === "hidden" ? "Hide Hidden" : `Show Hidden (${opportunities?.filter((o: Prospect) => o.isHidden).length || 0})`}
+          </Button>
+        </div>
+        
+        {/* Filters */}
+        <div className="flex items-center gap-2">
+          {/* Niche dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                All Niches
+                <ChevronDown className="h-4 w-4 ml-2 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem className="cursor-pointer">All Niches</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer">Marketing</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">SaaS</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">E-commerce</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">Technology</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">Finance</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {/* More filters button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-9"
+            onClick={() => setHideFilters(!hideFilters)}
+          >
+            <Filter className="h-4 w-4 mr-1.5" />
+            More Filters
+          </Button>
+          
+          {/* Search */}
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search by URL, niche, or description..."
+              className="pl-9 h-9 w-[260px]"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-5 w-5 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="h-3 w-3" />
+              </Button>
             )}
           </div>
           
+          {/* View mode toggle */}
+          <div className="flex border rounded-md overflow-hidden">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setViewMode("grid")}
+              className={cn(
+                "h-9 rounded-none px-2",
+                viewMode === "grid" ? "bg-gray-100" : "bg-transparent"
+              )}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "h-9 rounded-none px-2",
+                viewMode === "list" ? "bg-gray-100" : "bg-transparent"
+              )}
+            >
+              <ListIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Bulk actions */}
+      {selectedItems.length > 0 && (
+        <div className="bg-gray-50 border rounded-lg p-3 mb-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <SimpleCheckbox
+              checked={selectedItems.length === filteredOpportunities.length && filteredOpportunities.length > 0}
+              onChange={(checked) => {
+                if (checked) {
+                  // Select all visible opportunities
+                  setSelectedItems(filteredOpportunities.map(opp => opp.id));
+                } else {
+                  // Deselect all
+                  setSelectedItems([]);
+                }
+              }}
+              className="mr-2"
+            />
+            <span className="text-sm font-medium">{selectedItems.length} items selected</span>
+          </div>
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
-              </div>
-              <Input
-                type="search"
-                placeholder="Search opportunities"
-                className="pl-9 h-9 w-48 md:w-64"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            
             <Button 
               variant="outline" 
               size="sm" 
-              className="h-9"
-              onClick={() => setHideFilters(!hideFilters)}
+              onClick={handleBulkUnlock}
+              disabled={bulkUnlockMutation.isPending}
+              className="h-8"
             >
-              <Filter className="h-4 w-4 mr-1.5" />
-              Filters
+              Unlock
+              <span className="ml-1 text-xs text-gray-500">{selectedItems.length} cr</span>
             </Button>
-            
-            <div className="flex items-center border rounded overflow-hidden">
-              <Button 
-                variant={viewMode === "grid" ? "default" : "ghost"} 
-                size="sm" 
-                className={cn("h-9 rounded-none", viewMode === "grid" ? "bg-primary-100 text-primary-700 hover:bg-primary-200" : "")} 
-                onClick={() => setViewMode("grid")}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant={viewMode === "list" ? "default" : "ghost"} 
-                size="sm" 
-                className={cn("h-9 rounded-none", viewMode === "list" ? "bg-primary-100 text-primary-700 hover:bg-primary-200" : "")}
-                onClick={() => setViewMode("list")}
-              >
-                <ListIcon className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleBulkHide}
+              disabled={bulkHideMutation.isPending}
+              className="h-8"
+            >
+              <EyeOff className="h-3.5 w-3.5 mr-1" />
+              Hide
+            </Button>
           </div>
         </div>
-        
-        {/* Filters panel */}
-        {!hideFilters && (
-          <div className="bg-gray-50 border rounded-lg p-4 mb-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Domain Authority ({daRange[0]}-{daRange[1]})</label>
-                <Slider
-                  defaultValue={[20, 80]}
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={daRange}
-                  onValueChange={(value) => setDaRange(value as [number, number])}
-                  className="py-4"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Fit Score ({fitScoreRange[0]}-{fitScoreRange[1]}%)</label>
-                <Slider
-                  defaultValue={[50, 100]}
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={fitScoreRange}
-                  onValueChange={(value) => setFitScoreRange(value as [number, number])}
-                  className="py-4"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="cursor-pointer bg-primary-50 text-primary-700 hover:bg-primary-100">
-                    Guest Post
-                  </Badge>
-                  <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">
-                    Resource Page
-                  </Badge>
-                  <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">
-                    Directory
-                  </Badge>
-                  <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">
-                    Blog Comment
-                  </Badge>
-                </div>
-              </div>
+      )}
+      
+      {/* Filters panel */}
+      {!hideFilters && (
+        <div className="bg-gray-50 border rounded-lg p-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Domain Authority ({daRange[0]}-{daRange[1]})</label>
+              <Slider
+                defaultValue={[20, 80]}
+                min={0}
+                max={100}
+                step={1}
+                value={daRange}
+                onValueChange={(value) => setDaRange(value as [number, number])}
+                className="py-4"
+              />
             </div>
             
-            <div className="flex justify-between mt-4 pt-4 border-t border-gray-200">
-              <Button variant="outline" size="sm">
-                Reset Filters
-              </Button>
-              <Button variant="outline" size="sm" className="text-primary-600">
-                <SlidersHorizontal className="h-4 w-4 mr-1.5" />
-                Save as Preset
-              </Button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Fit Score ({fitScoreRange[0]}-{fitScoreRange[1]}%)</label>
+              <Slider
+                defaultValue={[50, 100]}
+                min={0}
+                max={100}
+                step={1}
+                value={fitScoreRange}
+                onValueChange={(value) => setFitScoreRange(value as [number, number])}
+                className="py-4"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className="cursor-pointer bg-primary-50 text-primary-700 hover:bg-primary-100">
+                  Guest Post
+                </Badge>
+                <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">
+                  Resource Page
+                </Badge>
+                <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">
+                  Directory
+                </Badge>
+                <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">
+                  Blog Comment
+                </Badge>
+              </div>
             </div>
           </div>
-        )}
-        
-        {/* Opportunity cards */}
-        {isLoadingOpportunities ? (
-          <div className={`grid ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"} gap-4`}>
-            {Array(6).fill(0).map((_, i) => (
-              <Card key={i} className={viewMode === "grid" ? "h-64" : "h-24"}>
-                <div className="animate-pulse p-6 h-full flex flex-col">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="rounded-md bg-slate-200 h-10 w-10"></div>
-                      <div>
-                        <div className="h-4 w-20 bg-slate-200 rounded mb-2"></div>
-                        <div className="h-3 w-16 bg-slate-200 rounded"></div>
-                      </div>
+          
+          <div className="flex justify-between mt-4 pt-4 border-t border-gray-200">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setDaRange([20, 80]);
+                setFitScoreRange([50, 100]);
+                setSearchQuery("");
+              }}
+            >
+              Reset Filters
+            </Button>
+            <Button variant="outline" size="sm" className="text-primary-600">
+              <SlidersHorizontal className="h-4 w-4 mr-1.5" />
+              Save as Preset
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {/* Opportunity cards */}
+      {isLoadingOpportunities ? (
+        <div className={`grid ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"} gap-4`}>
+          {Array(6).fill(0).map((_, i) => (
+            <Card key={i} className={viewMode === "grid" ? "h-64" : "h-24"}>
+              <div className="animate-pulse p-6 h-full flex flex-col">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="rounded-md bg-slate-200 h-10 w-10"></div>
+                    <div>
+                      <div className="h-4 w-20 bg-slate-200 rounded mb-2"></div>
+                      <div className="h-3 w-16 bg-slate-200 rounded"></div>
                     </div>
-                    <div className="h-6 w-16 bg-slate-200 rounded"></div>
                   </div>
-                  <div className="space-y-2 flex-1">
-                    <div className="h-4 w-full bg-slate-200 rounded"></div>
-                    <div className="h-4 w-2/3 bg-slate-200 rounded"></div>
-                  </div>
-                  <div className="h-9 bg-slate-200 rounded mt-4"></div>
+                  <div className="h-6 w-16 bg-slate-200 rounded"></div>
                 </div>
-              </Card>
-            ))}
-          </div>
-        ) : filteredOpportunities.length > 0 ? (
-          <div className={`grid ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"} gap-4`}>
-            {filteredOpportunities.map((prospect: Prospect) => (
-              <OpportunityCard 
-                key={prospect.id} 
-                prospect={prospect}
-                onEmail={() => handleEmailClick(prospect)}
-                onHide={() => {
-                  // Remove this prospect from the filtered list after hiding
-                  queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
-                }}
-                isNew={prospect.isNew ?? true}
-                selectable={true}
-                selected={selectedItems.includes(prospect.id)}
-                onSelectChange={(selected) => handleItemSelect(prospect.id, selected)}
-                view={viewMode}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card className="p-8 text-center">
-            <CardContent>
-              <p className="text-gray-500">No opportunities matching your filters. Try adjusting your criteria or check back tomorrow!</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 w-full bg-slate-200 rounded"></div>
+                  <div className="h-4 w-2/3 bg-slate-200 rounded"></div>
+                </div>
+                <div className="h-9 bg-slate-200 rounded mt-4"></div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : filteredOpportunities.length > 0 ? (
+        <div className={viewMode === "grid" 
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          : "flex flex-col space-y-3"
+        }>
+          {filteredOpportunities.map((prospect: Prospect) => (
+            <OpportunityCard 
+              key={prospect.id} 
+              prospect={prospect}
+              onEmail={() => handleEmailClick(prospect)}
+              onHide={() => {
+                // Remove this prospect from the filtered list after hiding
+                queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
+              }}
+              isNew={prospect.isNew ?? true}
+              selectable={true}
+              selected={selectedItems.includes(prospect.id)}
+              onSelectChange={(selected) => handleItemSelect(prospect.id, selected)}
+              view={viewMode}
+            />
+          ))}
+        </div>
+      ) : (
+        <Card className="p-8 text-center">
+          <CardContent>
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
+              <Sparkles className="h-6 w-6 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">No opportunities found</h3>
+            <p className="text-gray-500 mb-4">
+              No opportunities matching your current filters. Try adjusting your filters or check back tomorrow.
+            </p>
+            <Button 
+              onClick={() => {
+                setSearchQuery("");
+                setDaRange([20, 80]);
+                setFitScoreRange([50, 100]);
+                setSelectedTab("new");
+              }}
+            >
+              Clear Filters
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       
       {/* Email dialog */}
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
           <DialogHeader>
             <DialogTitle>Email Outreach</DialogTitle>
           </DialogHeader>
           {selectedProspect && (
-            <EmailGenerator prospect={selectedProspect} />
+            <EmailGenerator 
+              prospect={selectedProspect}
+              onClose={() => setEmailDialogOpen(false)}
+            />
           )}
         </DialogContent>
       </Dialog>
