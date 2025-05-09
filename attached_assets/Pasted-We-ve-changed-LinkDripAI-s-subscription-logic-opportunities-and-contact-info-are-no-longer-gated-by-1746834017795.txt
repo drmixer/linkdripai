@@ -1,0 +1,77 @@
+We’ve changed LinkDripAI’s subscription logic: opportunities and contact info are no longer gated by credits. Instead we offer “Splashes” (bursts of extra drips) plus tier‑based allowances and features. Remove all legacy credit logic and implement the new system as described below.
+
+Remove Credit Unlock System
+
+• Delete any “credits” balance, purchase flows, and unlock buttons.
+
+• Opportunity cards must always display full domain and contact info and the “Generate Email” action.
+
+Implement “Splash” Feature
+
+• Definition: one Splash equals exactly 3 extra drips added immediately to the user’s active site feed.
+
+• Monthly Splash allowances: Starter plan gets 1 Splash per month; Grow plan 3 Splashes; Pro plan 7 Splashes.
+
+• Extra Splash packs (upsell): allow purchase of 1 Splash for $5, 3 Splashes for $12, or 7 Splashes for $25.
+
+• UI behavior: next to the “Next Drip In…” timer display a button labeled “Splash (X left)”. Clicking opens modal “Use one Splash to add 3 extra opportunities now?” with [Use Splash] and [Buy More Splashes]. Animate new cards into the feed and decrement allowance. Splashes reset on billing anniversary.
+
+Update Plan Definitions and Enforcement
+
+Starter plan ($29/mo) entitlements: 5–7 automatic drips per day; 1 Splash per month; manage 1 website; basic filters (DA and Fit Score); basic analytics (unlock vs. live link counts); unlimited AI email generation; Favorites and Hidden controls.
+
+Grow plan ($59/mo) entitlements: 7–10 drips/day; 3 Splashes/month; manage up to 2 websites; advanced filters (add Category and Link Type); advanced analytics (email open and response rates); one follow‑up email template per site; competitor tracking for one domain; saved filter presets.
+
+Pro plan ($99/mo) entitlements: 10–15 drips/day; 7 Splashes/month; manage up to 5 websites; full filters (add geo, language, domain age); full analytics (trend graphs, competitor benchmarking, performance by tag/status); three follow‑up templates per site; competitor tracking up to three domains; one additional team seat; priority support.
+
+Onboarding Flow Adjustments
+
+• Remove any credit tutorial or credit‑related steps.
+
+• After plan selection on the landing page, prompt user to add their website(s) up to their plan limit.
+
+• For Grow and Pro plans, prompt to enter competitor domain(s) (1 for Grow, up to 3 for Pro).
+
+• Include a brief guided tour of the new Splash feature: how to use monthly Splashes and how to purchase more.
+
+Dashboard & Feed Updates
+
+• Header: remove credit display; show “Splashes left” and the drip refresh countdown.
+
+• Opportunity cards: always unlocked; remove lock icons and credit indicators.
+
+• Add the Splash button next to the drip timer.
+
+• Filters panel: remove any credit‑gated filters; show filter controls based on plan tier.
+
+• Analytics tab: show Basic, Advanced, or Full analytics views according to plan.
+
+• Sites management: enforce per‑plan site limits and show “Add Site” button disabled when at limit, with tooltip explaining upgrade or add‑on.
+
+Upsell & Purchase Logic
+
+• When “Splash” is clicked with zero Splashes left, display purchase options for extra Splash packs.
+
+• In the Billing/Add‑Ons page, list available Splash packs with pricing. Remove any references to credit packs.
+
+Data Model Migrations
+
+• Remove any “credits” fields and credit‑usage logs.
+
+• Add “splashesAllowed” and “splashesUsed” fields to user accounts, reset monthly.
+
+• Add “splashUsage” log entries (timestamp, count, source: allowance or pack).
+
+• Update daily drip scheduler to ignore credits and rely solely on plan drip ranges and Splashes.
+
+
+
+Deliverables
+
+• Code changes implementing the above in both frontend and backend.
+
+• Database migration scripts to drop credit schema and add splash schema.
+
+• Updated UI flows and components reflecting the new Splash model.
+
+• Automated tests verifying daily drips, Splash usage, plan limits, analytics visibility, and onboarding flow.
