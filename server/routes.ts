@@ -441,8 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const metrics = await mozApiService.getDomainMetrics(prospect.domain);
       
       // Update prospect with Moz data
-      const enrichedProspect = {
-        ...prospect,
+      const prospectUpdate = {
         domainAuthority: metrics.domain_authority.toString(),
         pageAuthority: metrics.page_authority?.toString(),
         spamScore: metrics.spam_score?.toString(),
@@ -451,10 +450,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastCrawled: metrics.last_crawled
       };
       
-      // TODO: Implement storage.updateProspect method if needed
-      // const updatedProspect = await storage.updateProspect(prospectId, enrichedProspect);
+      // Save the updated prospect with Moz data
+      const updatedProspect = await storage.updateProspect(prospectId, prospectUpdate);
       
-      res.json(enrichedProspect);
+      res.json(updatedProspect);
     } catch (error: any) {
       console.error('Prospect enrichment error:', error);
       res.status(500).json({ message: error.message });

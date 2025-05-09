@@ -974,6 +974,23 @@ export class DatabaseStorage implements IStorage {
     
     return updatedProspect;
   }
+  
+  async updateProspect(id: number, prospectData: Partial<Prospect>): Promise<Prospect> {
+    const prospect = await this.getProspectById(id);
+    if (!prospect) {
+      throw new Error("Prospect not found");
+    }
+    
+    // Remove properties that shouldn't be updated
+    const { id: _, createdAt: __, ...updateData } = prospectData;
+    
+    const [updatedProspect] = await db.update(prospects)
+      .set(updateData)
+      .where(eq(prospects.id, id))
+      .returning();
+    
+    return updatedProspect;
+  }
 
   async generateEmail(prospect: Prospect, template: string): Promise<EmailTemplate> {
     // Generate email templates based on the selected template and prospect data
