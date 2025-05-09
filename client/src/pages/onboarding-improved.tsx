@@ -377,45 +377,66 @@ export default function Onboarding() {
               <CardContent>
                 <Form {...preferencesForm}>
                   <form onSubmit={preferencesForm.handleSubmit(onPreferencesSubmit)} className="space-y-6">
-                    <FormField
-                      control={preferencesForm.control}
-                      name="linkTypes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="mb-2">
-                            <FormLabel>Types of Backlinks</FormLabel>
-                            <FormDescription>
-                              Select the types of backlinks you're interested in pursuing.
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {backlinkTypes.map((type) => (
-                                <div 
-                                  key={type.id}
-                                  className="flex items-center space-x-3 rounded-md border p-4 cursor-pointer"
-                                  onClick={() => {
-                                    const currentValue = field.value || [];
-                                    const newValue = currentValue.includes(type.id)
-                                      ? currentValue.filter(value => value !== type.id)
-                                      : [...currentValue, type.id];
-                                    field.onChange(newValue);
-                                  }}
-                                >
-                                  <Checkbox
-                                    checked={field.value?.includes(type.id)}
-                                  />
-                                  <span className="font-normal">
-                                    {type.label}
-                                  </span>
-                                </div>
-                              ))}
+                    <div className="space-y-2">
+                      <div className="mb-2">
+                        <div className="text-sm font-medium">Types of Backlinks</div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Select the types of backlinks you're interested in pursuing.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {backlinkTypes.map((type) => {
+                          const isSelected = preferencesForm.getValues().linkTypes?.includes(type.id);
+                          return (
+                            <div 
+                              key={type.id}
+                              className={`flex items-center space-x-3 rounded-md border p-4 cursor-pointer ${isSelected ? 'border-primary bg-primary/5' : ''}`}
+                              onClick={() => {
+                                const currentValues = preferencesForm.getValues().linkTypes || [];
+                                if (currentValues.includes(type.id)) {
+                                  preferencesForm.setValue('linkTypes', 
+                                    currentValues.filter(value => value !== type.id),
+                                    { shouldValidate: true }
+                                  );
+                                } else {
+                                  preferencesForm.setValue('linkTypes', 
+                                    [...currentValues, type.id],
+                                    { shouldValidate: true }
+                                  );
+                                }
+                              }}
+                            >
+                              <div className={`h-4 w-4 rounded border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-gray-300'}`}>
+                                {isSelected && (
+                                  <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    width="10" 
+                                    height="10" 
+                                    viewBox="0 0 24 24" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round"
+                                    className="text-white"
+                                  >
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                  </svg>
+                                )}
+                              </div>
+                              <span className="font-normal">
+                                {type.label}
+                              </span>
                             </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                          );
+                        })}
+                      </div>
+                      {preferencesForm.formState.errors.linkTypes && (
+                        <p className="text-sm font-medium text-destructive mt-2">
+                          {preferencesForm.formState.errors.linkTypes.message}
+                        </p>
                       )}
-                    />
+                    </div>
                     
                     {/* Competitor section - only shown for Grow and Pro plans */}
                     {(selectedPlan === "Grow" || selectedPlan === "Pro") && (
