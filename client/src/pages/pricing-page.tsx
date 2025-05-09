@@ -19,7 +19,8 @@ export default function PricingPage() {
       price: "0",
       features: [
         "5 daily opportunities",
-        "10 total credits",
+        "Unlock all opportunity details",
+        "1 Splash per month",
         "1 website",
         "Basic analytics",
         "Email generation"
@@ -32,11 +33,12 @@ export default function PricingPage() {
       price: pricingInterval === "monthly" ? "39" : "31",
       features: [
         "10 daily opportunities",
-        "50 credits/month",
+        "Unlock all opportunity details",
+        "1 Splash per month",
         "1 website",
         "Full analytics",
         "Email tracking",
-        "Credit rollover"
+        "AI-powered match reasoning"
       ]
     },
     {
@@ -46,12 +48,13 @@ export default function PricingPage() {
       price: pricingInterval === "monthly" ? "69" : "55",
       features: [
         "20 daily opportunities",
-        "150 credits/month",
+        "Unlock all opportunity details",
+        "3 Splashes per month",
         "2 websites",
         "Advanced analytics",
         "Email automation",
-        "Credit rollover",
-        "Multi-site dashboard"
+        "Multi-site dashboard",
+        "AI-powered match reasoning"
       ]
     },
     {
@@ -61,11 +64,12 @@ export default function PricingPage() {
       price: pricingInterval === "monthly" ? "129" : "103",
       features: [
         "30 daily opportunities",
-        "300 credits/month",
+        "Unlock all opportunity details",
+        "5 Splashes per month",
         "5 websites",
-        "1-month credit rollover",
         "Advanced AI recommendations",
-        "Priority support"
+        "Priority support",
+        "White-label reporting"
       ]
     }
   ];
@@ -177,8 +181,12 @@ export default function PricingPage() {
           <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium mb-2">What are credits used for?</h3>
-              <p className="text-gray-600">Credits are used when you unlock detailed information about prospects, generate AI-powered outreach emails, and access advanced analytics. Each action costs a certain number of credits.</p>
+              <h3 className="text-lg font-medium mb-2">What is a Splash?</h3>
+              <p className="text-gray-600">A Splash is a powerful feature that lets you get fresh AI-matched opportunities immediately. Each plan includes a monthly Splash allowance that resets with your billing cycle.</p>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium mb-2">Are opportunities really all unlocked by default?</h3>
+              <p className="text-gray-600">Yes! With our new system, all opportunity details are unlocked from the start - no credits needed. See full domain metrics, contact information, and match reasoning for every opportunity.</p>
             </div>
             <div>
               <h3 className="text-lg font-medium mb-2">Can I change plans later?</h3>
@@ -187,10 +195,6 @@ export default function PricingPage() {
             <div>
               <h3 className="text-lg font-medium mb-2">What happens after my free trial ends?</h3>
               <p className="text-gray-600">After your 7-day free trial, you'll be prompted to select a paid plan to continue using LinkDripAI. Don't worry - we'll remind you before your trial ends and no credit card is required to start.</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-medium mb-2">Do credits roll over?</h3>
-              <p className="text-gray-600">Yes, depending on your plan. Starter and Grow plans allow unused credits to roll over to the next month (up to your monthly allocation). Pro plans offer a full month of credit rollover.</p>
             </div>
           </div>
         </div>

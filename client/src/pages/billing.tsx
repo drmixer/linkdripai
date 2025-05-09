@@ -207,14 +207,15 @@ export default function BillingPage() {
       features: [
         "1 website",
         "5 opportunities per day",
-        "10 credits total",
+        "Unlock all opportunity details",
+        "1 Splash per month",
         "Basic AI features",
         "Standard support",
       ],
       limits: {
         websites: 1,
         opportunities: 5,
-        credits: 10,
+        splashes: 1,
       },
     },
     {
@@ -225,14 +226,15 @@ export default function BillingPage() {
       features: [
         "1 website",
         "10 opportunities per day",
-        "50 credits per month",
+        "Unlock all opportunity details",
+        "1 Splash per month",
         "Basic AI features",
         "Standard support",
       ],
       limits: {
         websites: 1,
         opportunities: 10,
-        credits: 50,
+        splashes: 1,
       },
     },
     {
@@ -243,7 +245,8 @@ export default function BillingPage() {
       features: [
         "2 websites",
         "20 opportunities per day",
-        "150 credits per month",
+        "Unlock all opportunity details",
+        "3 Splashes per month",
         "1 competitor tracking",
         "Advanced AI email templates",
         "Priority support",
@@ -251,7 +254,7 @@ export default function BillingPage() {
       limits: {
         websites: 2,
         opportunities: 20,
-        credits: 150,
+        splashes: 3,
       },
       isPopular: true,
     },
@@ -263,15 +266,16 @@ export default function BillingPage() {
       features: [
         "5 websites",
         "30 opportunities per day",
-        "300 credits per month",
+        "Unlock all opportunity details",
+        "5 Splashes per month",
         "3 competitor tracking",
-        "Premium AI features",
+        "Premium AI features", 
         "Priority support with dedicated account manager",
       ],
       limits: {
         websites: 5,
         opportunities: 30,
-        credits: 300,
+        splashes: 5,
       },
     },
   ];
@@ -282,12 +286,12 @@ export default function BillingPage() {
     plan.name.toLowerCase() === userSubscription.toLowerCase()
   ) || plans[0];
 
-  // Credit packages
-  const creditPackages = [
-    { value: "50", label: "50 Credits", price: "$19" },
-    { value: "100", label: "100 Credits", price: "$29" },
-    { value: "200", label: "200 Credits", price: "$49" },
-    { value: "500", label: "500 Credits", price: "$99" },
+  // Splash packages
+  const splashPackages = [
+    { value: "1", label: "1 Splash", price: "$19" },
+    { value: "3", label: "3 Splashes", price: "$49" },
+    { value: "5", label: "5 Splashes", price: "$79" },
+    { value: "10", label: "10 Splashes", price: "$149" },
   ];
 
   // Drip (opportunity) packages
@@ -298,9 +302,9 @@ export default function BillingPage() {
   ];
 
   // Calculate progress
-  const creditsUsed = stats?.credits?.total - stats?.credits?.available || 0;
-  const creditsTotal = stats?.credits?.total || 0;
-  const creditsProgress = creditsTotal > 0 ? (creditsUsed / creditsTotal) * 100 : 0;
+  const splashesUsed = stats?.splashes?.total - stats?.splashes?.available || 0;
+  const splashesTotal = stats?.splashes?.total || 0;
+  const splashesProgress = splashesTotal > 0 ? (splashesUsed / splashesTotal) * 100 : 0;
   
   const opportunitiesUsed = stats?.dailyOpportunities?.used || 0;
   const opportunitiesTotal = stats?.dailyOpportunities?.total || 0;

@@ -72,7 +72,8 @@ const pricingPlans = [
     description: "Try out our platform for 7 days",
     features: [
       "5 opportunities per day",
-      "10 credits",
+      "Unlock all opportunity details",
+      "1 Splash per month",
       "1 website",
       "Basic email templates",
     ],
@@ -84,7 +85,8 @@ const pricingPlans = [
     description: "Perfect for individuals and small websites",
     features: [
       "10 opportunities per day",
-      "50 credits per month",
+      "Unlock all opportunity details",
+      "1 Splash per month",
       "1 website",
       "Custom email templates",
       "Email tracking",
@@ -97,7 +99,8 @@ const pricingPlans = [
     description: "For growing websites and small businesses",
     features: [
       "20 opportunities per day",
-      "150 credits per month",
+      "Unlock all opportunity details",
+      "3 Splashes per month",
       "2 websites",
       "Advanced opportunity filtering",
       "Response rate analytics",
@@ -110,7 +113,8 @@ const pricingPlans = [
     description: "For serious SEO professionals and agencies",
     features: [
       "30 opportunities per day",
-      "300 credits per month",
+      "Unlock all opportunity details",
+      "5 Splashes per month",
       "5 websites",
       "Priority support",
       "White label reporting",
@@ -194,12 +198,12 @@ export default function Onboarding() {
     }
   };
 
-  const getMonthlyCredits = () => {
+  const getSplashesPerMonth = () => {
     switch (selectedPlan) {
-      case 'Pro': return 300;
-      case 'Grow': return 150;
-      case 'Starter': return 50;
-      default: return 10;
+      case 'Pro': return 5;
+      case 'Grow': return 3;
+      case 'Starter': return 1;
+      default: return 1;
     }
   };
 
