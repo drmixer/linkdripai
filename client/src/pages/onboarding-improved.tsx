@@ -105,16 +105,47 @@ export default function Onboarding() {
       navigate("/dashboard");
     }
   }, [user, navigate]);
+  
+  // Debug the plan selection
+  useEffect(() => {
+    console.log("Selected plan from localStorage:", localStorage.getItem('selectedPlan'));
+    console.log("Selected plan from state:", selectedPlan);
+    console.log("User subscription from server:", user?.subscription);
+    
+    // Force update the plan from localStorage if needed
+    const storedPlan = localStorage.getItem('selectedPlan');
+    if (storedPlan && (storedPlan === "Grow" || storedPlan === "Pro" || storedPlan === "Starter")) {
+      setSelectedPlan(storedPlan);
+    }
+  }, []);
 
   const onWebsiteSubmit = async (data: WebsiteFormValues) => {
     setIsLoading(true);
     try {
+      // Double-check that we have the correct plan
+      const storedPlan = localStorage.getItem('selectedPlan');
+      if (storedPlan && (storedPlan === "Grow" || storedPlan === "Pro" || storedPlan === "Starter")) {
+        setSelectedPlan(storedPlan);
+        console.log("Updated selected plan to:", storedPlan);
+      }
+
       // Add the new website
       const newWebsites = [...websites, data];
       setWebsites(newWebsites);
       
       // Update the website index for preferences
       setCurrentWebsiteIndex(newWebsites.length - 1);
+      
+      // Reset preferences form with appropriate defaults based on plan
+      const storedPlanForReset = localStorage.getItem('selectedPlan') || selectedPlan;
+      if (storedPlanForReset === "Grow" || storedPlanForReset === "Pro") {
+        preferencesForm.reset({
+          linkTypes: [],
+          avoidNiches: "",
+          competitors: [""], // Start with one empty competitor field
+          dripPriorities: ["high_da", "relevance", "opportunity_type"],
+        });
+      }
       
       // Move to preferences step
       setStep(2);
@@ -451,6 +482,7 @@ export default function Onboarding() {
                     </div>
                     
                     {/* Competitor section - only shown for Grow and Pro plans */}
+                    {/* Current plan: {selectedPlan} */}
                     {(selectedPlan === "Grow" || selectedPlan === "Pro") && (
                       <div className="mt-8 pt-6 border-t border-gray-100">
                         <div className="flex items-center gap-2 mb-4">
@@ -594,48 +626,72 @@ export default function Onboarding() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-gray-900">Your Plan: {selectedPlan}</h3>
-                          {selectedPlan === "Free Trial" && (
-                            <div className="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
-                              7 days
-                            </div>
-                          )}
-                          {selectedPlan === "Starter" && (
-                            <div className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
-                              $39/month
-                            </div>
-                          )}
-                          {selectedPlan === "Grow" && (
-                            <div className="px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
-                              $69/month
-                            </div>
-                          )}
-                          {selectedPlan === "Pro" && (
-                            <div className="px-3 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">
-                              $129/month
-                            </div>
-                          )}
+                          <h3 className="text-lg font-semibold text-gray-900">Your Plan: {localStorage.getItem('selectedPlan') || selectedPlan}</h3>
+                          {(() => {
+                            // Get the actual plan from localStorage or state
+                            const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                            
+                            if (actualPlan === "Free Trial") {
+                              return (
+                                <div className="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                                  7 days
+                                </div>
+                              );
+                            } else if (actualPlan === "Starter") {
+                              return (
+                                <div className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
+                                  $39/month
+                                </div>
+                              );
+                            } else if (actualPlan === "Grow") {
+                              return (
+                                <div className="px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                                  $69/month
+                                </div>
+                              );
+                            } else if (actualPlan === "Pro") {
+                              return (
+                                <div className="px-3 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">
+                                  $129/month
+                                </div>
+                              );
+                            }
+                            
+                            return null;
+                          })()}
                         </div>
                         <div className="mt-3 grid grid-cols-2 gap-3">
                           <div className="bg-white rounded-lg p-3 shadow-sm">
                             <div className="text-sm font-medium text-gray-500">Opportunities</div>
                             <div className="font-bold text-xl text-gray-900">
-                              {selectedPlan === "Free Trial" && "5"}
-                              {selectedPlan === "Starter" && "10"}
-                              {selectedPlan === "Grow" && "20"}
-                              {selectedPlan === "Pro" && "30"}
+                              {(() => {
+                                // Get actual plan from localStorage or state
+                                const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                                
+                                if (actualPlan === "Free Trial") return "5";
+                                if (actualPlan === "Starter") return "10";
+                                if (actualPlan === "Grow") return "20";
+                                if (actualPlan === "Pro") return "30";
+                                return "5"; // Default
+                              })()}
                               <span className="text-sm font-normal text-gray-500"> / day</span>
                             </div>
                           </div>
                           <div className="bg-white rounded-lg p-3 shadow-sm">
                             <div className="text-sm font-medium text-gray-500">Credits</div>
                             <div className="font-bold text-xl text-gray-900">
-                              {selectedPlan === "Free Trial" && "10"}
-                              {selectedPlan === "Starter" && "50"}
-                              {selectedPlan === "Grow" && "150"}
-                              {selectedPlan === "Pro" && "300"}
+                              {(() => {
+                                // Get actual plan from localStorage or state
+                                const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                                
+                                if (actualPlan === "Free Trial") return "10";
+                                if (actualPlan === "Starter") return "50";
+                                if (actualPlan === "Grow") return "150";
+                                if (actualPlan === "Pro") return "300";
+                                return "10"; // Default
+                              })()}
                               <span className="text-sm font-normal text-gray-500">
-                                {selectedPlan === "Free Trial" ? " total" : " / month"}
+                                {(localStorage.getItem('selectedPlan') || selectedPlan) === "Free Trial" ? " total" : " / month"}
                               </span>
                             </div>
                           </div>
@@ -651,7 +707,13 @@ export default function Onboarding() {
                         <h3 className="text-lg font-semibold text-gray-900">Your Website{websites.length > 1 ? "s" : ""}</h3>
                         <div className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
                           {websites.length} / 
-                          {selectedPlan === "Starter" ? "1" : selectedPlan === "Grow" ? "2" : selectedPlan === "Pro" ? "5" : "1"}
+                          {(() => {
+                            const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                            if (actualPlan === "Starter") return "1";
+                            if (actualPlan === "Grow") return "2";
+                            if (actualPlan === "Pro") return "5";
+                            return "1"; // Default for Free Trial
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -736,7 +798,13 @@ export default function Onboarding() {
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    {websites.length < (selectedPlan === "Starter" ? 1 : selectedPlan === "Grow" ? 2 : selectedPlan === "Pro" ? 5 : 1) && (
+                    {websites.length < (() => {
+                      const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                      if (actualPlan === "Starter") return 1;
+                      if (actualPlan === "Grow") return 2;
+                      if (actualPlan === "Pro") return 5;
+                      return 1; // Default for Free Trial
+                    })() && (
                       <Button 
                         onClick={addAnotherWebsite}
                         variant="outline"
