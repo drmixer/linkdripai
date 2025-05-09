@@ -404,12 +404,6 @@ export default function Onboarding() {
                                 >
                                   <Checkbox
                                     checked={field.value?.includes(type.id)}
-                                    onCheckedChange={(checked) => {
-                                      const newValue = checked
-                                        ? [...(field.value || []), type.id]
-                                        : (field.value || []).filter(value => value !== type.id);
-                                      field.onChange(newValue);
-                                    }}
                                   />
                                   <span className="font-normal">
                                     {type.label}
