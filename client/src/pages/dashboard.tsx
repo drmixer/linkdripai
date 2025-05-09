@@ -38,7 +38,9 @@ import {
   List as ListIcon,
   EyeOff,
   Sparkles,
-  X
+  X,
+  BarChart,
+  Link2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Prospect } from "@shared/schema";
@@ -233,13 +235,74 @@ export default function Dashboard() {
   };
   
   const filteredOpportunities = filterOpportunities(opportunities);
-  const totalCredits = stats?.credits?.total || 0;
-  const availableCredits = stats?.credits?.available || user?.credits || 0;
+  const splashesAvailable = stats?.splashes?.available || 0;
+  const splashesTotal = stats?.splashes?.total || 0;
 
   return (
     <Layout title="Daily Link Opportunities">
-      <div className="mb-2 text-sm text-gray-600">
-        Here are your latest curated backlink prospects.
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-sm text-gray-600">
+          Here are your latest curated backlink prospects.
+        </div>
+        
+        {/* Splash Button */}
+        <SplashButton 
+          buttonText="Get Fresh Opportunities"
+          onSuccess={() => {
+            toast({
+              title: "New opportunities added!",
+              description: "New AI-matched opportunities have been added to your dashboard.",
+            });
+            // Force refresh
+            dataRefreshNeeded.current = true;
+            queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
+          }}
+        />
+      </div>
+      
+      {/* Stats Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card className="p-4">
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Splashes Available</h3>
+                <p className="text-2xl font-bold mt-1">{splashesAvailable} / {splashesTotal}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="p-4">
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Response Rate</h3>
+                <p className="text-2xl font-bold mt-1">32%</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center">
+                <BarChart className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="p-4">
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Backlinks Secured</h3>
+                <p className="text-2xl font-bold mt-1">17</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-purple-50 flex items-center justify-center">
+                <Link2 className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Top Bar */}
@@ -367,7 +430,6 @@ export default function Dashboard() {
               className="h-8"
             >
               Unlock
-              <span className="ml-1 text-xs text-gray-500">{selectedItems.length} cr</span>
             </Button>
             <Button 
               variant="outline" 
