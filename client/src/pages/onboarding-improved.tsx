@@ -39,6 +39,7 @@ const websiteSchema = z.object({
 const preferencesSchema = z.object({
   linkTypes: z.array(z.string()).min(1, "Select at least one type of backlink"),
   avoidNiches: z.string().optional(),
+  competitors: z.array(z.string()).default([]),
   dripPriorities: z.array(z.string()).default(["high_da", "relevance", "opportunity_type"]),
 });
 
@@ -79,6 +80,7 @@ export default function Onboarding() {
     defaultValues: {
       linkTypes: [],
       avoidNiches: "",
+      competitors: [],
       dripPriorities: ["high_da", "relevance", "opportunity_type"],
     },
   });
@@ -179,6 +181,7 @@ export default function Onboarding() {
           preferences: websitePreferences ? {
             linkTypes: websitePreferences.linkTypes,
             avoidNiches: websitePreferences.avoidNiches,
+            competitors: websitePreferences.competitors?.filter(c => c !== '') || [],
             dripPriorities: websitePreferences.dripPriorities || ["high_da", "relevance", "opportunity_type"],
           } : undefined,
         };
@@ -377,7 +380,7 @@ export default function Onboarding() {
                     <FormField
                       control={preferencesForm.control}
                       name="linkTypes"
-                      render={() => (
+                      render={({ field }) => (
                         <FormItem>
                           <div className="mb-2">
                             <FormLabel>Types of Backlinks</FormLabel>
@@ -385,45 +388,117 @@ export default function Onboarding() {
                               Select the types of backlinks you're interested in pursuing.
                             </FormDescription>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {backlinkTypes.map((type) => (
-                              <FormField
-                                key={type.id}
-                                control={preferencesForm.control}
-                                name="linkTypes"
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem
-                                      key={type.id}
-                                      className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
-                                    >
-                                      <FormControl>
-                                        <Checkbox
-                                          checked={field.value?.includes(type.id)}
-                                          onCheckedChange={(checked) => {
-                                            return checked
-                                              ? field.onChange([...field.value, type.id])
-                                              : field.onChange(
-                                                  field.value?.filter(
-                                                    (value) => value !== type.id
-                                                  )
-                                                )
-                                          }}
-                                        />
-                                      </FormControl>
-                                      <FormLabel className="font-normal cursor-pointer">
-                                        {type.label}
-                                      </FormLabel>
-                                    </FormItem>
-                                  )
-                                }}
-                              />
-                            ))}
-                          </div>
+                          <FormControl>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {backlinkTypes.map((type) => (
+                                <div 
+                                  key={type.id}
+                                  className="flex items-center space-x-3 rounded-md border p-4 cursor-pointer"
+                                  onClick={() => {
+                                    const currentValue = field.value || [];
+                                    const newValue = currentValue.includes(type.id)
+                                      ? currentValue.filter(value => value !== type.id)
+                                      : [...currentValue, type.id];
+                                    field.onChange(newValue);
+                                  }}
+                                >
+                                  <Checkbox
+                                    checked={field.value?.includes(type.id)}
+                                    onCheckedChange={(checked) => {
+                                      const newValue = checked
+                                        ? [...(field.value || []), type.id]
+                                        : (field.value || []).filter(value => value !== type.id);
+                                      field.onChange(newValue);
+                                    }}
+                                  />
+                                  <span className="font-normal">
+                                    {type.label}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                    
+                    {/* Competitor section - only shown for Grow and Pro plans */}
+                    {(selectedPlan === "Grow" || selectedPlan === "Pro") && (
+                      <div className="mt-8 pt-6 border-t border-gray-100">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="bg-primary/10 p-1.5 rounded-md">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M22 12H18L15 21L9 3L6 12H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-medium">Competitor Tracking</h3>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">
+                          Your {selectedPlan} plan includes competitor tracking. Add competitors to analyze their backlink profiles.
+                        </p>
+                        
+                        <FormField
+                          control={preferencesForm.control}
+                          name="competitors"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Competitor Websites (Optional)</FormLabel>
+                              <FormControl>
+                                <div className="space-y-3">
+                                  {field.value.concat(['']).map((url, index) => (
+                                    index < (selectedPlan === "Grow" ? 3 : 5) && (
+                                      <div key={index} className="flex gap-2">
+                                        <Input 
+                                          placeholder="https://competitor.com"
+                                          value={url}
+                                          onChange={(e) => {
+                                            const newCompetitors = [...field.value];
+                                            // If this is the last empty input and user types something, add a new empty input
+                                            if (index === field.value.length) {
+                                              newCompetitors.push(e.target.value);
+                                            } else {
+                                              newCompetitors[index] = e.target.value;
+                                            }
+                                            // Remove any empty values except the last one
+                                            field.onChange(newCompetitors.filter((val, i) => 
+                                              val !== '' || i === newCompetitors.length - 1
+                                            ));
+                                          }}
+                                          className="flex-1"
+                                        />
+                                        
+                                        {index < field.value.length && (
+                                          <Button 
+                                            type="button" 
+                                            variant="ghost" 
+                                            size="icon"
+                                            className="text-gray-400 hover:text-red-500"
+                                            onClick={() => {
+                                              const newValues = [...field.value];
+                                              newValues.splice(index, 1);
+                                              field.onChange(newValues);
+                                            }}
+                                          >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                          </Button>
+                                        )}
+                                      </div>
+                                    )
+                                  ))}
+                                </div>
+                              </FormControl>
+                              <FormDescription>
+                                Enter up to {selectedPlan === "Grow" ? "3" : "5"} competitor websites to track their backlink strategies
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
                     
                     <FormField
                       control={preferencesForm.control}
@@ -587,6 +662,28 @@ export default function Onboarding() {
                                         </span>
                                       ))}
                                     </div>
+                                    
+                                    {/* Show competitor tracking section for Grow and Pro plans */}
+                                    {(selectedPlan === "Grow" || selectedPlan === "Pro") && sitePrefs.competitors && sitePrefs.competitors.length > 0 && sitePrefs.competitors.some(c => c) && (
+                                      <div className="mt-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <div className="p-1 rounded-full bg-primary/10">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                              <path d="M22 12H18L15 21L9 3L6 12H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                          </div>
+                                          <div className="text-sm font-medium text-gray-900">Competitor Tracking</div>
+                                        </div>
+                                        <div className="ml-7">
+                                          {sitePrefs.competitors.filter(c => c).map((competitor, i) => (
+                                            <div key={i} className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                                              <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                                              {competitor}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                     
                                     {sitePrefs.avoidNiches && (
                                       <div className="mt-4">
