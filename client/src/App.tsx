@@ -14,7 +14,7 @@ import EmailOutreach from "@/pages/email-outreach";
 import Analytics from "@/pages/analytics";
 import LandingPage from "@/pages/landing-page";
 import PricingPage from "@/pages/pricing-page";
-import Onboarding from "@/pages/onboarding-new";
+import Onboarding from "@/pages/onboarding-improved";
 
 function Router() {
   return (

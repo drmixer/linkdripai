@@ -28,7 +28,8 @@ export const users = pgTable("users", {
   onboardingCompleted: boolean("onboardingCompleted").default(false),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
+// Basic insert schema for user registration
+const baseInsertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   subscription: true,
@@ -37,6 +38,11 @@ export const insertUserSchema = createInsertSchema(users).omit({
   dailyOpportunitiesLimit: true,
   websites: true,
   onboardingCompleted: true,
+});
+
+// Extended schema with plan information for registration process
+export const insertUserSchema = baseInsertUserSchema.extend({
+  plan: z.enum(["Free Trial", "Starter", "Grow", "Pro"]).optional(),
 });
 
 // Websites table - for users to manage multiple websites
