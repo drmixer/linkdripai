@@ -7,7 +7,9 @@ import {
   HelpCircle, 
   LogOut, 
   CreditCardIcon,
+  Plus,
 } from "lucide-react";
+import BuyCreditsDialog from "./buy-credits-dialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -127,9 +129,13 @@ export default function Header() {
               <div className="hidden md:flex items-center px-3 py-1.5 bg-gray-100 rounded-lg">
                 <CreditCardIcon className="h-4 w-4 text-gray-500 mr-1.5" />
                 <span className="text-sm font-medium text-gray-900">{credits} credits</span>
-                <Button variant="link" className="h-auto p-0 ml-1.5 text-primary-600 text-xs">
-                  Buy
-                </Button>
+                <BuyCreditsDialog
+                  trigger={
+                    <Button variant="link" className="h-auto p-0 ml-1.5 text-primary-600 text-xs">
+                      Buy
+                    </Button>
+                  }
+                />
               </div>
             </TooltipTrigger>
             <TooltipContent>

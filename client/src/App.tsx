@@ -15,6 +15,8 @@ import Analytics from "@/pages/analytics";
 import LandingPage from "@/pages/landing-page";
 import PricingPage from "@/pages/pricing-page";
 import Onboarding from "@/pages/onboarding-improved";
+import WebsitesPage from "@/pages/websites";
+import BillingPage from "@/pages/billing";
 
 function Router() {
   return (
@@ -28,6 +30,8 @@ function Router() {
       <ProtectedRoute path="/analytics" component={Analytics} />
       <ProtectedRoute path="/onboarding" component={Onboarding} skipOnboardingCheck={true} />
       <ProtectedRoute path="/onboarding/improved" component={Onboarding} skipOnboardingCheck={true} />
+      <ProtectedRoute path="/websites" component={WebsitesPage} />
+      <ProtectedRoute path="/billing" component={BillingPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
