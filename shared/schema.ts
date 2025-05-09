@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, varchar, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -139,6 +139,104 @@ export const analytics = pgTable("analytics", {
   data: json("data"),
 });
 
+// Source types for opportunity discovery
+export const sourceTypeEnum = pgEnum('source_type', [
+  'resource_page',
+  'directory',
+  'blog',
+  'guest_post',
+  'competitor_backlink',
+  'social_mention',
+  'forum',
+  'comment_section'
+]);
+
+// Status of the opportunity in the discovery pipeline
+export const discoveryStatusEnum = pgEnum('discovery_status', [
+  'discovered',      // Initial discovery
+  'analyzed',        // Analyzed but not yet matched
+  'matched',         // Matched to user(s)
+  'assigned',        // Assigned to user's daily feed
+  'unlocked',        // Unlocked by user
+  'contacted',       // Email sent
+  'converted',       // Backlink secured
+  'failed',          // Failed attempt
+  'expired'          // No longer valid
+]);
+
+// Website analysis data for better matching
+export const websiteProfiles = pgTable("websiteProfiles", {
+  id: serial("id").primaryKey(),
+  websiteId: integer("websiteId").notNull().references(() => websites.id),
+  keywords: json("keywords").$type<string[]>().default([]),
+  topics: json("topics").$type<string[]>().default([]),
+  contentTypes: json("contentTypes").$type<string[]>().default([]),
+  analyzedAt: timestamp("analyzedAt").defaultNow(),
+  activeBacklinks: integer("activeBacklinks").default(0),
+  domainAuthority: integer("domainAuthority"),
+  targetNiches: json("targetNiches").$type<string[]>().default([]),
+  avoidNiches: json("avoidNiches").$type<string[]>().default([]),
+  linkTypePreferences: json("linkTypePreferences").$type<string[]>().default([]),
+  lastUpdated: timestamp("lastUpdated").defaultNow(),
+});
+
+// Raw discovered opportunities before processing
+export const discoveredOpportunities = pgTable("discoveredOpportunities", {
+  id: serial("id").primaryKey(),
+  url: text("url").notNull().unique(),
+  domain: text("domain").notNull(),
+  sourceType: sourceTypeEnum("sourceType").notNull(),
+  pageTitle: text("pageTitle"),
+  pageContent: text("pageContent"),
+  contactInfo: json("contactInfo").$type<{
+    email?: string;
+    form?: string;
+    social?: string[];
+  }>(),
+  discoveredAt: timestamp("discoveredAt").defaultNow(),
+  lastChecked: timestamp("lastChecked").defaultNow(),
+  status: discoveryStatusEnum("status").default('discovered'),
+  rawData: json("rawData"),
+});
+
+// Opportunity match records - links users to opportunities
+export const opportunityMatches = pgTable("opportunityMatches", {
+  id: serial("id").primaryKey(),
+  websiteId: integer("websiteId").notNull().references(() => websites.id),
+  prospectId: integer("prospectId").notNull().references(() => prospects.id),
+  matchScore: integer("matchScore").notNull(), // 0-100 matching score
+  matchReason: json("matchReason").$type<string[]>(), // Reasons for match
+  assignedAt: timestamp("assignedAt").defaultNow(),
+  showDate: timestamp("showDate"), // When to show in the feed
+  status: text("status").default("pending"), // pending, shown, interacted, expired
+  userDismissed: boolean("userDismissed").default(false),
+  userSaved: boolean("userSaved").default(false),
+});
+
+// Daily drip allocations
+export const dailyDrips = pgTable("dailyDrips", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().references(() => users.id),
+  websiteId: integer("websiteId").notNull().references(() => websites.id),
+  date: timestamp("date").defaultNow(),
+  opportunitiesLimit: integer("opportunitiesLimit").notNull(),
+  opportunitiesDelivered: integer("opportunitiesDelivered").default(0),
+  isPurchasedExtra: boolean("isPurchasedExtra").default(false),
+  matches: json("matches").$type<number[]>().default([]), // Array of opportunityMatch IDs
+});
+
+// Crawler configuration and status
+export const crawlerJobs = pgTable("crawlerJobs", {
+  id: serial("id").primaryKey(),
+  jobType: text("jobType").notNull(), // discovery, verification, refresh
+  targetUrl: text("targetUrl"),
+  status: text("status").default("pending"), // pending, in_progress, completed, failed
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  results: json("results"),
+  error: text("error"),
+});
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -153,3 +251,9 @@ export type OutreachEmail = typeof outreachEmails.$inferSelect;
 export type InsertEmail = z.infer<typeof insertEmailSchema>;
 
 export type Analytic = typeof analytics.$inferSelect;
+
+export type WebsiteProfile = typeof websiteProfiles.$inferSelect;
+export type DiscoveredOpportunity = typeof discoveredOpportunities.$inferSelect;
+export type OpportunityMatch = typeof opportunityMatches.$inferSelect;
+export type DailyDrip = typeof dailyDrips.$inferSelect;
+export type CrawlerJob = typeof crawlerJobs.$inferSelect;

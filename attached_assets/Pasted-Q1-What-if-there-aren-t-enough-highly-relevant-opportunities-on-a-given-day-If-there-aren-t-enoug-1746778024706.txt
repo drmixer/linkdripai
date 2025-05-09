@@ -1,0 +1,23 @@
+Q1: What if there aren’t enough highly-relevant opportunities on a given day?
+
+If there aren’t enough highly-relevant opportunities for a user on a given day, the system should prioritize delivering the best available matches, even if fewer than the tier’s daily limit. Remaining spots in the daily drip can be backfilled with slightly broader opportunities that still fit the user’s niche or related categories, but are marked as “Low Fit” or “Related.” This ensures the feed stays active while clearly communicating relevance.
+
+Q2: How to balance fresh opportunities vs. high-quality ones?
+
+The system should prioritize high-quality (high DA, niche-aligned, low spam score) opportunities, even if they aren’t brand new. “Fresh” opportunities can be mixed in when they meet the quality threshold. To balance this, a tiered logic can be used:
+
+First, select opportunities that are both high-quality and fresh.
+
+If needed, include high-quality but older (not previously shown) opportunities.
+
+Only add newer but lower-quality options when the others are exhausted.
+
+This keeps the daily drip both useful and engaging, without sacrificing relevance.
+
+Q3: How to handle multi-website accounts (Pro plan users with 5 websites)?
+
+Each website in a multi-site account should have its own dedicated dashboard/feed with its own drip logic and tracking. The system should rotate attention evenly across the sites unless the user sets a priority order (a potential future feature). Credits and opportunities are shared across sites, but filtering, outreach, and analytics are separate per site to ensure clarity and accuracy.
+
+Q4: Should we allow for manual adjustments to the algorithm?
+
+Manual adjustments to the core algorithm are not recommended for most users, as it could lead to confusion or ineffective results. Instead, users can influence results through onboarding and dashboard filters (e.g., niche, language, DA preferences, exclude categories). This gives perceived control without exposing or risking the algorithm logic. Advanced filtering options can be unlocked on higher-tier plans for added value.
