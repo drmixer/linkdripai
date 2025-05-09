@@ -89,8 +89,8 @@ export default function BillingPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string>(user?.subscription || 'Free Trial');
-  const [selectedCredits, setSelectedCredits] = useState<string>("50");
-  const [selectedDrips, setSelectedDrips] = useState<string>("10");
+  const [selectedCredits, setSelectedCredits] = useState<string>("1");
+  const [selectedDrips, setSelectedDrips] = useState<string>("1");
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const [isAddCreditsDialogOpen, setIsAddCreditsDialogOpen] = useState(false);
   const [isAddDripsDialogOpen, setIsAddDripsDialogOpen] = useState(false);
@@ -505,7 +505,7 @@ export default function BillingPage() {
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="text-sm font-medium mb-2">Get more opportunities (One-time)</h4>
                     <p className="text-sm text-gray-600 mb-3">
-                      Purchase additional opportunities to find quality backlink prospects.
+                      Purchase additional daily opportunities (one-time) to find quality backlink prospects.
                     </p>
                     <Button onClick={() => setIsAddDripsDialogOpen(true)}>
                       <Plus className="mr-2 h-4 w-4" />
@@ -859,7 +859,7 @@ export default function BillingPage() {
                 <div className="flex items-center justify-between rounded-md border p-4">
                   <div>
                     <div className="font-medium text-lg">Daily Drips</div>
-                    <div className="text-sm text-gray-500">$0.50 per drip per month</div>
+                    <div className="text-sm text-gray-500">$0.50 per drip (one-time)</div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <Button 
@@ -902,15 +902,15 @@ export default function BillingPage() {
                   </div>
                 </div>
                 <div className="flex justify-between font-medium mt-2">
-                  <span>Monthly Cost:</span>
-                  <span>${(parseInt(selectedDrips) * 0.5).toFixed(2)}/month</span>
+                  <span>Total:</span>
+                  <span>${(parseInt(selectedDrips) * 0.5).toFixed(2)}</span>
                 </div>
               </div>
               
               <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4 text-yellow-800 text-sm flex items-start mt-4">
                 <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
                 <div>
-                  This is a recurring monthly charge that will be added to your subscription. Your daily opportunity limit will be immediately increased.
+                  This is a one-time purchase. Your daily opportunity limit will be immediately increased.
                 </div>
               </div>
             </div>
