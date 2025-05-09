@@ -4,6 +4,9 @@ import { storage, MemStorage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import { insertProspectSchema, insertEmailSchema } from "@shared/schema";
+import { db } from "./db";
+import * as schema from "@shared/schema";
+import { desc } from "drizzle-orm";
 import { getMozApiService } from "./services/moz";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -456,6 +459,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedProspect);
     } catch (error: any) {
       console.error('Prospect enrichment error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Test endpoint to show prospects with Moz metrics (for development testing)
+  app.get("/api/prospects/test", async (req, res) => {
+    try {
+      // Get all prospects from database for testing
+      const prospects = await db.select().from(schema.prospects).limit(5);
+      
+      // Create an array with both locked and unlocked versions for testing the UI
+      const testProspects = [];
+      
+      for (const prospect of prospects) {
+        // Add the locked version first
+        testProspects.push({
+          ...prospect,
+          isUnlocked: false,
+          isNew: true
+        });
+        
+        // Add the unlocked version (display all fields)
+        testProspects.push({
+          ...prospect,
+          isUnlocked: true,
+          isNew: false
+        });
+      }
+      
+      res.json(testProspects);
+    } catch (error: any) {
+      console.error('Get test prospects error:', error);
       res.status(500).json({ message: error.message });
     }
   });
