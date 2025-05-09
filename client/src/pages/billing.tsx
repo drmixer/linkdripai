@@ -253,12 +253,12 @@ export default function BillingPage() {
   const opportunitiesProgress = opportunitiesTotal > 0 ? (opportunitiesUsed / opportunitiesTotal) * 100 : 0;
 
   return (
-    <Layout title="Billing & Add-ons">
+    <Layout title="My Account">
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Billing & Add-ons</h1>
+          <h1 className="text-2xl font-bold tracking-tight">My Account</h1>
           <p className="text-muted-foreground">
-            Manage your subscription, credits, and daily opportunities
+            Here's an overview of your backlink opportunities and outreach progress.
           </p>
         </div>
       </div>
@@ -310,7 +310,7 @@ export default function BillingPage() {
 
             {/* Other Plans */}
             {plans
-              .filter(plan => plan.name !== user?.subscription)
+              .filter(plan => plan.name.toLowerCase() !== (user?.subscription || '').toLowerCase())
               .map((plan) => (
                 <Card 
                   key={plan.id} 
@@ -435,7 +435,7 @@ export default function BillingPage() {
                   Daily Opportunities (Drips)
                 </CardTitle>
                 <CardDescription>
-                  Increase your daily opportunities limit
+                  Get more opportunities for your backlink outreach
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -449,9 +449,9 @@ export default function BillingPage() {
                   </div>
                   
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium mb-2">Increase Daily Opportunities</h4>
+                    <h4 className="text-sm font-medium mb-2">Get more opportunities (One-time)</h4>
                     <p className="text-sm text-gray-600 mb-3">
-                      Get more daily opportunities to find quality backlink prospects.
+                      Purchase additional opportunities to find quality backlink prospects.
                     </p>
                     <Button onClick={() => setIsAddDripsDialogOpen(true)}>
                       <Plus className="mr-2 h-4 w-4" />
