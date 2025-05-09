@@ -76,10 +76,36 @@ export function setupAuth(app: Express) {
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
+      
+      // Extract the plan from the request
+      const plan = req.body.plan || "Free Trial";
+      
+      // Set default credits and limits based on the plan
+      let credits = 10;
+      let totalCredits = 10;
+      let dailyOpportunitiesLimit = 5;
+      
+      if (plan === "Starter") {
+        credits = 50;
+        totalCredits = 50;
+        dailyOpportunitiesLimit = 10;
+      } else if (plan === "Grow") {
+        credits = 150;
+        totalCredits = 150;
+        dailyOpportunitiesLimit = 20;
+      } else if (plan === "Pro") {
+        credits = 300;
+        totalCredits = 300;
+        dailyOpportunitiesLimit = 30;
+      }
 
       const user = await storage.createUser({
         ...req.body,
         password: await hashPassword(req.body.password),
+        subscription: plan,
+        credits,
+        totalCredits,
+        dailyOpportunitiesLimit
       });
 
       req.login(user, (err) => {
