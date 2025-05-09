@@ -75,6 +75,7 @@ export interface IStorage {
   unlockProspect(id: number, userId: number): Promise<Prospect>;
   saveProspect(id: number, userId: number): Promise<Prospect>;
   hideProspect(id: number, userId: number): Promise<Prospect>;
+  updateProspect(id: number, prospectData: Partial<Prospect>): Promise<Prospect>;
   
   // Email methods
   generateEmail(prospect: Prospect, template: string): Promise<EmailTemplate>;
@@ -361,6 +362,24 @@ export class MemStorage implements IStorage {
     const updatedProspect: Prospect = {
       ...prospect,
       isHidden: true,
+    };
+    
+    this.prospects.set(id, updatedProspect);
+    return updatedProspect;
+  }
+  
+  async updateProspect(id: number, prospectData: Partial<Prospect>): Promise<Prospect> {
+    const prospect = await this.getProspectById(id);
+    if (!prospect) {
+      throw new Error("Prospect not found");
+    }
+    
+    const updatedProspect: Prospect = {
+      ...prospect,
+      ...prospectData,
+      // Ensure these properties are not accidentally overwritten
+      id: prospect.id,
+      createdAt: prospect.createdAt,
     };
     
     this.prospects.set(id, updatedProspect);

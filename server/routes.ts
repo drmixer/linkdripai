@@ -4,6 +4,7 @@ import { storage, MemStorage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import { insertProspectSchema, insertEmailSchema } from "@shared/schema";
+import { getMozApiService } from "./services/moz";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -376,6 +377,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(updatedUser);
       });
     } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Moz API Endpoints
+  app.get("/api/moz/domain-metrics", isAuthenticated, async (req, res) => {
+    try {
+      const { domain } = req.query;
+      
+      if (!domain || typeof domain !== 'string') {
+        return res.status(400).json({ message: "Valid domain is required" });
+      }
+      
+      const mozApiService = getMozApiService();
+      const metrics = await mozApiService.getDomainMetrics(domain);
+      
+      res.json(metrics);
+    } catch (error: any) {
+      console.error('Moz API error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  app.post("/api/moz/batch-domain-metrics", isAuthenticated, async (req, res) => {
+    try {
+      const { domains } = req.body;
+      
+      if (!Array.isArray(domains) || domains.length === 0) {
+        return res.status(400).json({ message: "Valid domains array is required" });
+      }
+      
+      const mozApiService = getMozApiService();
+      const metrics = await mozApiService.getBatchDomainMetrics(domains);
+      
+      res.json(metrics);
+    } catch (error: any) {
+      console.error('Moz API batch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Endpoint to enrich prospects with Moz data
+  app.post("/api/prospects/enrich/:id", isAuthenticated, async (req, res) => {
+    try {
+      const prospectId = parseInt(req.params.id);
+      if (isNaN(prospectId)) {
+        return res.status(400).json({ message: "Invalid prospect ID" });
+      }
+      
+      // Get the prospect
+      const prospect = await storage.getProspectById(prospectId);
+      if (!prospect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+      
+      if (!prospect.domain) {
+        return res.status(400).json({ message: "Prospect has no domain to enrich" });
+      }
+      
+      // Get metrics from Moz
+      const mozApiService = getMozApiService();
+      const metrics = await mozApiService.getDomainMetrics(prospect.domain);
+      
+      // Update prospect with Moz data
+      const enrichedProspect = {
+        ...prospect,
+        domainAuthority: metrics.domain_authority.toString(),
+        pageAuthority: metrics.page_authority?.toString(),
+        spamScore: metrics.spam_score?.toString(),
+        totalLinks: metrics.links?.toString(),
+        rootDomainsLinking: metrics.root_domains_to_root_domain?.toString(),
+        lastCrawled: metrics.last_crawled
+      };
+      
+      // TODO: Implement storage.updateProspect method if needed
+      // const updatedProspect = await storage.updateProspect(prospectId, enrichedProspect);
+      
+      res.json(enrichedProspect);
+    } catch (error: any) {
+      console.error('Prospect enrichment error:', error);
       res.status(500).json({ message: error.message });
     }
   });
