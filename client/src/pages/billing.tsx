@@ -169,6 +169,24 @@ export default function BillingPage() {
   // Plan details
   const plans = [
     {
+      id: "free-trial",
+      name: "Free Trial",
+      description: "Try LinkDripAI for 7 days",
+      price: "$0",
+      features: [
+        "1 website",
+        "5 opportunities per day",
+        "10 credits total",
+        "Basic AI features",
+        "Standard support",
+      ],
+      limits: {
+        websites: 1,
+        opportunities: 5,
+        credits: 10,
+      },
+    },
+    {
       id: "starter",
       name: "Starter",
       description: "Perfect for individual bloggers and small websites",
@@ -178,6 +196,7 @@ export default function BillingPage() {
         "10 opportunities per day",
         "50 credits per month",
         "Basic AI features",
+        "Standard support",
       ],
       limits: {
         websites: 1,
@@ -196,6 +215,7 @@ export default function BillingPage() {
         "150 credits per month",
         "1 competitor tracking",
         "Advanced AI email templates",
+        "Priority support",
       ],
       limits: {
         websites: 2,
@@ -215,7 +235,7 @@ export default function BillingPage() {
         "300 credits per month",
         "3 competitor tracking",
         "Premium AI features",
-        "Priority support",
+        "Priority support with dedicated account manager",
       ],
       limits: {
         websites: 5,
@@ -225,8 +245,11 @@ export default function BillingPage() {
     },
   ];
 
-  // Current plan object
-  const currentPlan = plans.find(plan => plan.name === user?.subscription) || plans[0];
+  // Current plan object - case insensitive match
+  const userSubscription = user?.subscription || 'Free Trial';
+  const currentPlan = plans.find(plan => 
+    plan.name.toLowerCase() === userSubscription.toLowerCase()
+  ) || plans[0];
 
   // Credit packages
   const creditPackages = [
@@ -253,12 +276,12 @@ export default function BillingPage() {
   const opportunitiesProgress = opportunitiesTotal > 0 ? (opportunitiesUsed / opportunitiesTotal) * 100 : 0;
 
   return (
-    <Layout title="My Account">
+    <Layout title="Billing & Add-ons">
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Account</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Billing & Add-ons</h1>
           <p className="text-muted-foreground">
-            Here's an overview of your backlink opportunities and outreach progress.
+            Manage your subscription, credits, and daily opportunities
           </p>
         </div>
       </div>
@@ -364,7 +387,7 @@ export default function BillingPage() {
               <div className="space-y-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-medium">Current Plan: <span className="text-primary-600">{user?.subscription || 'Free Trial'}</span></h3>
+                    <h3 className="text-lg font-medium">Current Plan: <span className="text-primary-600">{currentPlan.name}</span></h3>
                     <p className="text-gray-500">
                       {isLoadingBillingInfo ? (
                         <span className="text-sm">Loading subscription details...</span>
