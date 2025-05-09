@@ -126,18 +126,8 @@ export default function EmailGenerator({ prospect, onClose }: EmailGeneratorProp
     <div className="grid grid-cols-1 md:grid-cols-5 h-[600px] overflow-hidden">
       {/* Left sidebar with prospect info */}
       <div className="md:col-span-2 bg-gray-50 border-r p-5 overflow-y-auto">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-medium">Prospect Details</h3>
-          {onClose && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8" 
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+        <div className="mb-5">
+          <h3 className="text-lg font-medium text-gray-800">Prospect Details</h3>
         </div>
         
         <div className="space-y-5">
@@ -233,62 +223,63 @@ export default function EmailGenerator({ prospect, onClose }: EmailGeneratorProp
       
       {/* Right side with email editor */}
       <div className="md:col-span-3 flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium flex items-center">
+        <div className="flex-1 overflow-y-auto p-5 pb-0">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-medium flex items-center text-gray-800">
               <Mail className="h-5 w-5 mr-2 text-primary-600" />
               Compose Email
             </h3>
             
             <Tabs value={emailTemplate} onValueChange={(v) => setEmailTemplate(v as any)}>
-              <TabsList className="h-8">
-                <TabsTrigger value="ai" className="h-7 text-xs px-3">
+              <TabsList className="h-9">
+                <TabsTrigger value="ai" className="text-xs px-3">
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                   AI-Generated
                 </TabsTrigger>
-                <TabsTrigger value="template1" className="h-7 text-xs px-3">
+                <TabsTrigger value="template1" className="text-xs px-3">
                   Template 1
                 </TabsTrigger>
-                <TabsTrigger value="template2" className="h-7 text-xs px-3">
+                <TabsTrigger value="template2" className="text-xs px-3">
                   Template 2
                 </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
           
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1.5">Subject:</label>
+          <div className="mb-5">
+            <label className="block text-sm font-medium mb-2 text-gray-700">Subject:</label>
             <Input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full"
+              className="w-full focus:ring-primary-500"
             />
           </div>
           
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1.5">Email body:</label>
+          <div className="mb-5">
+            <label className="block text-sm font-medium mb-2 text-gray-700">Email body:</label>
             <Textarea
               value={emailBody}
               onChange={(e) => setEmailBody(e.target.value)}
               placeholder="Hi there, I noticed you're looking for guest post submissions..."
-              rows={12}
-              className="w-full resize-none"
+              rows={14}
+              className="w-full resize-none focus:ring-primary-500 min-h-[250px]"
             />
           </div>
         </div>
         
-        <div className="flex justify-between items-center p-4 border-t bg-gray-50">
-          <div className="flex gap-2">
+        <div className="flex justify-between items-center p-5 border-t bg-gray-50">
+          <div className="flex gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefreshEmail}
               disabled={generateEmailMutation.isPending}
+              className="h-9 px-4"
             >
               {generateEmailMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <RefreshCw className="h-4 w-4 mr-1.5" />
+                <RefreshCw className="h-4 w-4 mr-2" />
               )}
               Regenerate
             </Button>
@@ -297,23 +288,24 @@ export default function EmailGenerator({ prospect, onClose }: EmailGeneratorProp
               variant="outline"
               size="sm"
               onClick={handleCopyEmail}
-              className="relative"
+              className="relative h-9 px-4"
             >
               {copied ? (
-                <CheckCircle2 className="h-4 w-4 mr-1.5 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
               ) : (
-                <Copy className="h-4 w-4 mr-1.5" />
+                <Copy className="h-4 w-4 mr-2" />
               )}
-              {copied ? "Copied" : "Copy"}
+              {copied ? "Copied" : "Copy Email"}
             </Button>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {onClose && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
+                className="h-9 px-4"
               >
                 Cancel
               </Button>
@@ -324,11 +316,12 @@ export default function EmailGenerator({ prospect, onClose }: EmailGeneratorProp
               size="sm"
               onClick={handleSendEmail}
               disabled={sendEmailMutation.isPending || !emailBody}
+              className="h-9 px-4 bg-primary hover:bg-primary-dark"
             >
               {sendEmailMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <MessageSquare className="h-4 w-4 mr-1.5" />
+                <MessageSquare className="h-4 w-4 mr-2" />
               )}
               Send Email
             </Button>

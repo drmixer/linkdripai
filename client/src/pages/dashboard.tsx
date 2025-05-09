@@ -496,16 +496,26 @@ export default function Dashboard() {
       
       {/* Email dialog */}
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="max-w-xl sm:max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2 flex flex-row justify-between items-center border-b">
             <DialogTitle>Email Outreach</DialogTitle>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setEmailDialogOpen(false)}
+              className="h-8 w-8 rounded-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </DialogHeader>
-          {selectedProspect && (
-            <EmailGenerator 
-              prospect={selectedProspect}
-              onClose={() => setEmailDialogOpen(false)}
-            />
-          )}
+          <div className="p-6 pt-4">
+            {selectedProspect && (
+              <EmailGenerator 
+                prospect={selectedProspect}
+                onClose={() => setEmailDialogOpen(false)}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </Layout>
