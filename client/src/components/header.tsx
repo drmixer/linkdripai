@@ -3,12 +3,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { 
   CreditCard, 
   BellIcon, 
-  Sparkles, 
   Settings, 
   HelpCircle, 
   LogOut, 
   CreditCardIcon,
-  Link2,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -29,7 +27,6 @@ export default function Header() {
   const { user, logoutMutation } = useAuth();
   const [selectedWebsite, setSelectedWebsite] = useState<string>("");
   const [websites, setWebsites] = useState<Array<{id: number, name: string, url: string}>>([]);
-  const [newOpportunitiesCount, setNewOpportunitiesCount] = useState<number>(0);
   
   // Effects for simulation - would be replaced with real data
   useEffect(() => {
@@ -57,9 +54,6 @@ export default function Header() {
     if (userWebsites.length > 0 && !selectedWebsite) {
       setSelectedWebsite(userWebsites[0].url);
     }
-    
-    // Simulate new opportunities
-    setNewOpportunitiesCount(Math.floor(Math.random() * 10) + 5);
   }, [user]);
   
 
@@ -78,20 +72,8 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-white border-b border-gray-200">
-      {/* Left: Logo */}
+      {/* Left section with website selector */}
       <div className="flex items-center">
-        <Link href="/" className="flex items-center">
-          <div className="flex-shrink-0 flex items-center mr-1">
-            <div className="h-8 w-8 rounded-md bg-primary-600 flex items-center justify-center">
-              <Link2 className="h-5 w-5 text-white" />
-            </div>
-          </div>
-          <span className="text-xl font-bold text-gray-900 ml-2">LinkDripAI</span>
-        </Link>
-      </div>
-      
-      {/* Center section */}
-      <div className="flex items-center justify-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="h-9 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
@@ -101,7 +83,7 @@ export default function Header() {
               </svg>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="w-72">
+          <DropdownMenuContent align="start" className="w-72">
             <DropdownMenuLabel>Select Website</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {websites.map(site => (
@@ -132,6 +114,9 @@ export default function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      
+      {/* Center spacer */}
+      <div className="flex-1"></div>
 
       {/* Right side actions */}
       <div className="flex items-center space-x-3">
@@ -153,20 +138,7 @@ export default function Header() {
           </Tooltip>
         </TooltipProvider>
         
-        {/* New Opportunities */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" className="hidden md:flex items-center h-9 px-3 py-1.5">
-                <Sparkles className="h-4 w-4 text-amber-500 mr-1.5" />
-                <span className="text-sm font-medium">{newOpportunitiesCount} new</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{newOpportunitiesCount} new opportunities today</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+
         
 
         

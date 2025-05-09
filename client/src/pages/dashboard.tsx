@@ -242,13 +242,8 @@ export default function Dashboard() {
       
       {/* Top Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        {/* Credits */}
+        {/* Left side options */}
         <div className="flex items-center">
-          <div className="text-sm mr-6">
-            <span className="text-gray-500">Credits: </span>
-            <span className="font-medium">{availableCredits}</span>
-          </div>
-          
           <Button 
             variant="link" 
             className="h-auto p-0 text-sm"
