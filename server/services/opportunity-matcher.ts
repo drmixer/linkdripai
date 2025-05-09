@@ -405,7 +405,24 @@ export class OpportunityMatcher {
         .where(sql`${prospects.id} IN (${prospectIds.join(',')})`)
         .orderBy(desc(prospects.fitScore), asc(prospects.id));
       
-      return prospectResults;
+      // For each prospect, add match reasons from the corresponding match
+      const enhancedProspects = prospectResults.map(prospect => {
+        // Find the match for this prospect
+        const prospectMatch = matches.find(m => m.prospectId === prospect.id);
+        
+        // If we found a match with reasons, update the prospect's matchReasons
+        if (prospectMatch && prospectMatch.matchReason && prospectMatch.matchReason.length > 0) {
+          return {
+            ...prospect,
+            // Use match-specific reasons if available, otherwise keep the general ones
+            matchReasons: prospectMatch.matchReason
+          };
+        }
+        
+        return prospect;
+      });
+      
+      return enhancedProspects;
     } catch (error) {
       console.error(`Error getting daily opportunities for user ${userId}:`, error);
       return [];

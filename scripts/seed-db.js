@@ -27,12 +27,38 @@ async function seedProspects() {
     const trafficK = Math.floor(Math.random() * 200) + 30;
     const fitScore = Math.floor(Math.random() * 30) + 70;
     
+    // Generate some sample match reasons based on the metrics
+    const matchReasons = [];
+    
+    if (da >= 70) {
+      matchReasons.push(`High domain authority (${da})`);
+    } else if (da >= 40) {
+      matchReasons.push(`Good domain authority (${da})`);
+    }
+    
+    if (trafficK >= 150) {
+      matchReasons.push(`Excellent monthly traffic (${trafficK}K visits)`);
+    } else if (trafficK >= 80) {
+      matchReasons.push(`Strong monthly traffic (${trafficK}K visits)`);
+    }
+    
+    // Add niche-based reasons
+    matchReasons.push(`Relevant ${niche.toLowerCase()} website that matches your content`);
+    
+    // Add type-based reasons
+    if (siteType.includes("guest posting")) {
+      matchReasons.push("Accepts guest posts (easy outreach)");
+    } else if (siteType.includes("Resource")) {
+      matchReasons.push("Resource listing opportunity (high conversion)");
+    }
+    
     sampleProspects.push({
       siteType,
       domainAuthority: `${da}`,
       niche,
       monthlyTraffic: `${trafficK}K`,
       fitScore,
+      matchReasons,
       isUnlocked: false,
       isSaved: false,
     });
