@@ -333,7 +333,7 @@ export default function BillingPage() {
 
             {/* Other Plans */}
             {plans
-              .filter(plan => plan.name.toLowerCase() !== (user?.subscription || '').toLowerCase())
+              .filter(plan => plan.name.toLowerCase() !== userSubscription.toLowerCase())
               .map((plan) => (
                 <Card 
                   key={plan.id} 
@@ -505,11 +505,11 @@ export default function BillingPage() {
                     <p className="text-sm text-gray-600 mb-3">
                       Track your competitors' backlinks and get insights for your own strategy.
                     </p>
-                    {user?.subscription === 'Pro' ? (
+                    {userSubscription.toLowerCase() === 'pro' ? (
                       <div className="text-sm text-primary-600">
                         3 competitors included in your Pro plan
                       </div>
-                    ) : user?.subscription === 'Grow' ? (
+                    ) : userSubscription.toLowerCase() === 'grow' ? (
                       <div className="text-sm text-primary-600">
                         1 competitor included in your Grow plan
                       </div>
@@ -531,9 +531,9 @@ export default function BillingPage() {
                     <p className="text-sm text-gray-600 mb-3">
                       Access premium AI-powered email templates for higher response rates.
                     </p>
-                    {user?.subscription === 'Pro' || user?.subscription === 'Grow' ? (
+                    {userSubscription.toLowerCase() === 'pro' || userSubscription.toLowerCase() === 'grow' ? (
                       <div className="text-sm text-primary-600">
-                        Included in your {user?.subscription} plan
+                        Included in your {currentPlan.name} plan
                       </div>
                     ) : (
                       <Button className="w-full">
@@ -553,7 +553,7 @@ export default function BillingPage() {
                     <p className="text-sm text-gray-600 mb-3">
                       Get priority support with a dedicated account manager.
                     </p>
-                    {user?.subscription === 'Pro' ? (
+                    {userSubscription.toLowerCase() === 'pro' ? (
                       <div className="text-sm text-primary-600">
                         Included in your Pro plan
                       </div>
