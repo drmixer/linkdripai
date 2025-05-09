@@ -103,11 +103,12 @@ export default function Dashboard() {
     },
   });
   
-  // Fetch opportunities
+  // Fetch AI-matched opportunities
   const { data: opportunities, isLoading: isLoadingOpportunities } = useQuery({
     queryKey: ["/api/prospects/daily"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/prospects/daily");
+      // Using the AI-driven opportunities endpoint
+      const res = await apiRequest("GET", "/api/drips/opportunities");
       return await res.json();
     },
   });

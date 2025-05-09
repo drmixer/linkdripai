@@ -372,12 +372,12 @@ export class OpportunityMatcher {
       }
       
       // Get prospects
-      const prospects = await db.select()
+      const prospectResults = await db.select()
         .from(prospects)
         .where(sql`${prospects.id} IN (${prospectIds.join(',')})`)
         .orderBy(desc(prospects.fitScore), asc(prospects.id));
       
-      return prospects;
+      return prospectResults;
     } catch (error) {
       console.error(`Error getting daily opportunities for user ${userId}:`, error);
       return [];
