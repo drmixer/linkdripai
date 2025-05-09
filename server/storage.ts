@@ -494,35 +494,48 @@ export class MemStorage implements IStorage {
       throw new Error("User not found");
     }
     
-    // Update credits and daily opportunities based on the plan
-    let credits = 10;
+    // Update subscription related values based on the plan
     let dailyOpportunitiesLimit = 5;
+    let splashesAllowed = 1;
+    let maxWebsites = 1;
     
     switch (plan) {
       case 'Pro':
-        credits = 300;
-        dailyOpportunitiesLimit = 30;
+        dailyOpportunitiesLimit = 15; // 10-15 drips/day
+        splashesAllowed = 7;          // 7 Splashes per month
+        maxWebsites = 5;              // Up to 5 websites
         break;
       case 'Grow':
-        credits = 150;
-        dailyOpportunitiesLimit = 20;
+        dailyOpportunitiesLimit = 10; // 7-10 drips/day
+        splashesAllowed = 3;          // 3 Splashes per month
+        maxWebsites = 2;              // Up to 2 websites
         break;
       case 'Starter':
-        credits = 50;
-        dailyOpportunitiesLimit = 10;
+        dailyOpportunitiesLimit = 7;  // 5-7 drips/day
+        splashesAllowed = 1;          // 1 Splash per month
+        maxWebsites = 1;              // 1 website only
         break;
       default: // Free Trial
-        credits = 10;
         dailyOpportunitiesLimit = 5;
+        splashesAllowed = 1;
+        maxWebsites = 1;
         break;
     }
+    
+    // Reset the splash usage counter and set billing anniversary 
+    const now = new Date();
+    const billingAnniversary = new Date();
+    billingAnniversary.setMonth(billingAnniversary.getMonth() + 1); // Set to one month from now
     
     const updatedUser = {
       ...user,
       subscription: plan,
-      credits,
-      totalCredits: credits,
       dailyOpportunitiesLimit,
+      splashesAllowed,
+      splashesUsed: 0,
+      lastSplashReset: now,
+      billingAnniversary,
+      maxWebsites
     };
     
     this.users.set(userId, updatedUser);
@@ -834,35 +847,48 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserSubscription(userId: number, plan: string): Promise<User> {
-    // Update credits and daily opportunities based on the plan
-    let credits = 10;
+    // Update subscription related values based on the plan
     let dailyOpportunitiesLimit = 5;
+    let splashesAllowed = 1;
+    let maxWebsites = 1;
     
     switch (plan) {
       case 'Pro':
-        credits = 300;
-        dailyOpportunitiesLimit = 30;
+        dailyOpportunitiesLimit = 15; // 10-15 drips/day
+        splashesAllowed = 7;          // 7 Splashes per month
+        maxWebsites = 5;              // Up to 5 websites
         break;
       case 'Grow':
-        credits = 150;
-        dailyOpportunitiesLimit = 20;
+        dailyOpportunitiesLimit = 10; // 7-10 drips/day
+        splashesAllowed = 3;          // 3 Splashes per month
+        maxWebsites = 2;              // Up to 2 websites
         break;
       case 'Starter':
-        credits = 50;
-        dailyOpportunitiesLimit = 10;
+        dailyOpportunitiesLimit = 7;  // 5-7 drips/day
+        splashesAllowed = 1;          // 1 Splash per month
+        maxWebsites = 1;              // 1 website only
         break;
       default: // Free Trial
-        credits = 10;
         dailyOpportunitiesLimit = 5;
+        splashesAllowed = 1;
+        maxWebsites = 1;
         break;
     }
+    
+    // Reset the splash usage counter and set billing anniversary 
+    const now = new Date();
+    const billingAnniversary = new Date();
+    billingAnniversary.setMonth(billingAnniversary.getMonth() + 1); // Set to one month from now
     
     const [updatedUser] = await db.update(users)
       .set({ 
         subscription: plan, 
-        credits, 
-        totalCredits: credits, 
-        dailyOpportunitiesLimit 
+        dailyOpportunitiesLimit,
+        splashesAllowed,
+        splashesUsed: 0,
+        lastSplashReset: now,
+        billingAnniversary,
+        maxWebsites
       })
       .where(eq(users.id, userId))
       .returning();

@@ -233,6 +233,16 @@ export const dailyDrips = pgTable("dailyDrips", {
   matches: json("matches").$type<number[]>().default([]), // Array of opportunityMatch IDs
 });
 
+// Splash usage tracking
+export const splashUsage = pgTable("splashUsage", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().references(() => users.id),
+  websiteId: integer("websiteId").references(() => websites.id),
+  usedAt: timestamp("usedAt").defaultNow(),
+  count: integer("count").default(1),
+  source: text("source").default("monthly_allowance"), // allowance or purchased
+});
+
 // Crawler configuration and status
 export const crawlerJobs = pgTable("crawlerJobs", {
   id: serial("id").primaryKey(),
@@ -264,4 +274,5 @@ export type WebsiteProfile = typeof websiteProfiles.$inferSelect;
 export type DiscoveredOpportunity = typeof discoveredOpportunities.$inferSelect;
 export type OpportunityMatch = typeof opportunityMatches.$inferSelect;
 export type DailyDrip = typeof dailyDrips.$inferSelect;
+export type SplashUsage = typeof splashUsage.$inferSelect;
 export type CrawlerJob = typeof crawlerJobs.$inferSelect;
