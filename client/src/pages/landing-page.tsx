@@ -18,13 +18,17 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <header className="w-full border-b bg-white">
+      <header className="w-full border-b bg-white sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <div className="rounded-md bg-primary p-1.5">
-              <Link2 className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
+            <Link href="/">
+              <div className="flex items-center gap-2">
+                <div className="rounded-md bg-primary p-1.5">
+                  <Link2 className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
+              </div>
+            </Link>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">Features</a>
@@ -33,11 +37,11 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-4">
             <Link href="/auth?tab=login">
-              <Button variant="ghost" size="sm">Log in</Button>
+              <Button variant="ghost" size="sm" className="font-medium">Log in</Button>
             </Link>
-            <Link href="/auth?tab=register&plan=Free+Trial">
-              <Button size="sm">Get Started</Button>
-            </Link>
+            <a href="#pricing">
+              <Button size="sm" className="font-medium">Get Started</Button>
+            </a>
           </div>
         </div>
       </header>
@@ -62,14 +66,14 @@ export default function LandingPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link href="/auth?tab=register&plan=Free+Trial">
-                    <Button size="lg" className="px-8 py-6">
+                    <Button size="lg" className="px-8 py-6 shadow-md hover:shadow-lg transition-all duration-200">
                       Start Free Trial
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
-                  <a href="#how-it-works">
-                    <Button variant="outline" size="lg" className="px-8 py-6">
-                      How It Works
+                  <a href="#pricing">
+                    <Button variant="outline" size="lg" className="px-8 py-6 border-primary text-primary hover:bg-primary/5">
+                      View Pricing
                     </Button>
                   </a>
                 </div>
