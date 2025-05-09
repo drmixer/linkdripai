@@ -221,17 +221,30 @@ export default function OpportunityCard({
                         <span className="text-xs font-medium">{prospect.fitScore}%</span>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" sideOffset={5} className="max-w-[250px]">
-                      <p>AI-calculated relevance score based on your website's niche, content, and preferences</p>
-                      <div className="text-xs mt-1 opacity-80">
-                        {prospect.matchReasons && prospect.matchReasons.length > 0 && 
-                          <ul className="list-disc list-inside">
+                    <TooltipContent side="bottom" sideOffset={5} className="max-w-[300px] p-4">
+                      <h4 className="text-sm font-medium mb-2">AI Match Score: {prospect.fitScore}%</h4>
+                      <p className="text-xs text-gray-600 mb-3">Our AI analyzed this opportunity based on your website's niche, content, and preferences</p>
+                      
+                      {prospect.matchReasons && prospect.matchReasons.length > 0 ? (
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-md p-2">
+                          <h5 className="text-xs font-medium text-emerald-700 mb-1.5 flex items-center">
+                            <BadgeCheck className="h-3.5 w-3.5 mr-1.5" />
+                            Why this is a good match:
+                          </h5>
+                          <ul className="text-xs text-emerald-800 space-y-1.5">
                             {prospect.matchReasons.map((reason, idx) => (
-                              <li key={idx}>{reason}</li>
+                              <li key={idx} className="flex items-start">
+                                <span className="mr-1.5 text-emerald-500 mt-0.5">•</span>
+                                <span>{reason}</span>
+                              </li>
                             ))}
                           </ul>
-                        }
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500 italic">
+                          No specific match reasons available
+                        </div>
+                      )}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -468,17 +481,30 @@ export default function OpportunityCard({
                 <span className="ml-2 text-xs font-medium">{prospect.fitScore}%</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="bottom" sideOffset={5} className="max-w-[250px]">
-              <p>AI-calculated relevance score based on your website's niche, content, and preferences</p>
-              <div className="text-xs mt-1 opacity-80">
-                {prospect.matchReasons && prospect.matchReasons.length > 0 && 
-                  <ul className="list-disc list-inside">
+            <TooltipContent side="bottom" sideOffset={5} className="max-w-[300px] p-4">
+              <h4 className="text-sm font-medium mb-2">AI Match Score: {prospect.fitScore}%</h4>
+              <p className="text-xs text-gray-600 mb-3">Our AI analyzed this opportunity based on your website's niche, content, and preferences</p>
+              
+              {prospect.matchReasons && prospect.matchReasons.length > 0 ? (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-md p-2">
+                  <h5 className="text-xs font-medium text-emerald-700 mb-1.5 flex items-center">
+                    <BadgeCheck className="h-3.5 w-3.5 mr-1.5" />
+                    Why this is a good match:
+                  </h5>
+                  <ul className="text-xs text-emerald-800 space-y-1.5">
                     {prospect.matchReasons.map((reason, idx) => (
-                      <li key={idx}>{reason}</li>
+                      <li key={idx} className="flex items-start">
+                        <span className="mr-1.5 text-emerald-500 mt-0.5">•</span>
+                        <span>{reason}</span>
+                      </li>
                     ))}
                   </ul>
-                }
-              </div>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500 italic">
+                  No specific match reasons available
+                </div>
+              )}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
