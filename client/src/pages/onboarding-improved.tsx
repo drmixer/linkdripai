@@ -139,11 +139,18 @@ export default function Onboarding() {
       
       // Reset preferences form with appropriate defaults based on plan
       const storedPlanForReset = localStorage.getItem('selectedPlan') || selectedPlan;
-      if (storedPlanForReset === "Grow" || storedPlanForReset === "Pro") {
+      if (storedPlanForReset === "Grow") {
         preferencesForm.reset({
           linkTypes: [],
           avoidNiches: "",
-          competitors: [""], // Start with one empty competitor field
+          competitors: [""], // Grow plan: 1 competitor field
+          dripPriorities: ["high_da", "relevance", "opportunity_type"],
+        });
+      } else if (storedPlanForReset === "Pro") {
+        preferencesForm.reset({
+          linkTypes: [],
+          avoidNiches: "",
+          competitors: ["", "", ""], // Pro plan: 3 competitor fields
           dripPriorities: ["high_da", "relevance", "opportunity_type"],
         });
       }
@@ -269,17 +276,22 @@ export default function Onboarding() {
       // Clear selectedPlan from localStorage after successful onboarding
       localStorage.removeItem('selectedPlan');
       
-      // Use direct window relocation for compatibility
-      console.log("Onboarding complete! Forcing redirect to dashboard...");
+      // Use most direct method to get to dashboard - skip React routing entirely
+      console.log("Onboarding complete! Using direct reload to dashboard...");
       
-      // Force reload the page and go to the dashboard
-      window.location.replace('/dashboard');
+      // Set a flag in localStorage to ensure we go to dashboard after page reload
+      localStorage.setItem('onboardingJustCompleted', 'true');
+      localStorage.setItem('redirectAfterReload', '/dashboard');
       
-      // Additional fallback in case the above doesn't work
+      // Force a full page reload to clear any stale state
+      window.location.href = '/dashboard';
+      
+      // Fallback with different approach after a delay
       setTimeout(() => {
-        console.log("Using backup navigation method...");
-        window.location.pathname = "/dashboard";
-      }, 500);
+        console.log("Using absolute URL fallback...");
+        const baseUrl = window.location.origin;
+        window.location.href = `${baseUrl}/dashboard`;
+      }, 800);
     } catch (error) {
       console.error("Error:", error);
       toast({

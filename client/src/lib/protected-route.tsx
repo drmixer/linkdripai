@@ -31,8 +31,21 @@ export function ProtectedRoute({
     );
   }
 
-  // Check if user has completed onboarding
-  if (!skipOnboardingCheck && path !== "/onboarding" && path !== "/onboarding/improved" && user.onboardingCompleted === false) {
+  // Check for onboarding just completed flag in localStorage
+  const onboardingJustCompleted = typeof window !== 'undefined' ? 
+    localStorage.getItem('onboardingJustCompleted') === 'true' : false;
+  
+  // If we have the flag, clear it and allow access to dashboard
+  if (onboardingJustCompleted && path === "/dashboard") {
+    console.log("Detected onboardingJustCompleted flag, allowing access to dashboard");
+    localStorage.removeItem('onboardingJustCompleted');
+    localStorage.removeItem('redirectAfterReload');
+  }
+  // Otherwise, check if user needs to complete onboarding
+  else if (!skipOnboardingCheck && 
+           path !== "/onboarding" && 
+           path !== "/onboarding/improved" && 
+           user.onboardingCompleted === false) {
     console.log(`ProtectedRoute for ${path}: Redirecting to onboarding because onboardingCompleted is false`);
     return (
       <Route path={path}>
