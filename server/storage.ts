@@ -113,35 +113,136 @@ export class MemStorage implements IStorage {
   }
 
   private initializeSampleData() {
+    // Create a test user with credits
+    const testUser: User = {
+      id: 1,
+      username: "demo",
+      password: "5c0c0cec7bd0387108f4afd92943fef1.d6e3dbe8ed0ef7ec154f3d2a56f6b027", // 'password'
+      firstName: "Demo",
+      lastName: "User",
+      email: "demo@linkdripai.com",
+      subscription: "Grow",
+      credits: 45,
+      totalCredits: 150,
+      dailyOpportunitiesLimit: 20,
+      createdAt: new Date(),
+      websites: [
+        {
+          id: 1,
+          url: "https://myblog.com",
+          name: "My Tech Blog",
+          competitors: ["https://competitor.com"],
+          topics: ["SEO", "Marketing", "Content"],
+          targetCountries: ["US", "UK", "CA"],
+          targetDomainAuthority: [20, 80],
+          excludeAdultContent: true,
+          excludeGambling: true,
+          userId: 1
+        }
+      ],
+      onboardingCompleted: true
+    };
+    this.users.set(1, testUser);
+    this.currentUserId = 2;
+    
     // Create some sample prospect data
     const niches = ["Digital Marketing", "SEO", "Content", "Web Dev", "Programming", "Business"];
     const siteTypes = ["Blog with guest posting", "Premium blog", "Tutorial site", "News site", "Resource directory"];
     
-    for (let i = 0; i < 20; i++) {
+    // Create 10 locked prospects with Moz metrics but hidden identity
+    for (let i = 0; i < 10; i++) {
       const niche = niches[Math.floor(Math.random() * niches.length)];
       const siteType = siteTypes[Math.floor(Math.random() * siteTypes.length)];
-      const da = Math.floor(Math.random() * 80) + 20;
-      const trafficK = Math.floor(Math.random() * 200) + 30;
-      const fitScore = Math.floor(Math.random() * 30) + 70;
+      const da = Math.floor(Math.random() * 80) + 20; // DA between 20-99
+      const pa = Math.floor(Math.random() * 80) + 20; // PA between 20-99
+      const trafficK = Math.floor(Math.random() * 900) + 100; // Traffic between 100K-999K
+      const fitScore = Math.floor(Math.random() * 30) + 70; // Fit score between 70-99
+      const spamScore = (Math.random() * 10).toFixed(1); // Spam score between 0-10
+      const totalLinks = Math.floor(Math.random() * 9000) + 1000; // Between 1K-10K links
+      const rootDomainsLinking = Math.floor(Math.random() * 900) + 100; // Between 100-999 linking domains
+      
+      // These are locked prospects with Moz metrics
+      const id = this.currentProspectId++;
+      const domain = `${siteType.replace(/\s+/g, '').toLowerCase()}${id}.com`;
       
       const prospect: Prospect = {
-        id: this.currentProspectId++,
+        id,
         siteType,
-        siteName: "", // Will be revealed when unlocked
+        // These fields will be hidden until unlocked
+        siteName: `${siteType.replace(/\s+/g, '')} ${id}`,
+        domain,
+        // Visible Moz metrics
         domainAuthority: `${da}`,
+        pageAuthority: `${pa}`,
+        spamScore,
+        totalLinks: `${totalLinks}`,
+        rootDomainsLinking: `${rootDomainsLinking}`,
+        lastCrawled: new Date().toISOString(),
+        // Basic info
         niche,
         monthlyTraffic: `${trafficK}K`,
-        contactEmail: "", // Will be revealed when unlocked
-        contactRole: "",
+        // Hidden contact info (revealed after unlock)
+        contactEmail: `contact@${domain}`,
+        contactRole: "Editor",
+        contactName: `John Smith ${id}`,
+        targetUrl: `https://${domain}/write-for-us`,
+        // Status fields
         fitScore,
         isUnlocked: false,
         isSaved: false,
-        unlockedBy: undefined,
-        unlockedAt: undefined,
-        createdAt: new Date(),
+        isNew: true,
+        isHidden: false,
+        unlockedBy: null,
+        unlockedAt: null,
+        createdAt: new Date()
       };
       
-      this.prospects.set(prospect.id, prospect);
+      this.prospects.set(id, prospect);
+    }
+    
+    // Create 5 already unlocked prospects
+    for (let i = 0; i < 5; i++) {
+      const niche = niches[Math.floor(Math.random() * niches.length)];
+      const siteType = siteTypes[Math.floor(Math.random() * siteTypes.length)];
+      const da = Math.floor(Math.random() * 80) + 20;
+      const pa = Math.floor(Math.random() * 80) + 20;
+      const trafficK = Math.floor(Math.random() * 900) + 100;
+      const fitScore = Math.floor(Math.random() * 30) + 70;
+      const spamScore = (Math.random() * 10).toFixed(1);
+      const totalLinks = Math.floor(Math.random() * 9000) + 1000;
+      const rootDomainsLinking = Math.floor(Math.random() * 900) + 100;
+      
+      const id = this.currentProspectId++;
+      const domain = `${siteType.replace(/\s+/g, '').toLowerCase()}${id}.com`;
+      
+      const prospect: Prospect = {
+        id,
+        siteType,
+        siteName: `${siteType.replace(/\s+/g, '')} ${id}`,
+        domain,
+        domainAuthority: `${da}`,
+        pageAuthority: `${pa}`,
+        spamScore,
+        totalLinks: `${totalLinks}`,
+        rootDomainsLinking: `${rootDomainsLinking}`,
+        lastCrawled: new Date().toISOString(),
+        niche,
+        monthlyTraffic: `${trafficK}K`,
+        contactEmail: `contact@${domain}`,
+        contactRole: "Editor",
+        contactName: `John Smith ${id}`,
+        targetUrl: `https://${domain}/write-for-us`,
+        fitScore,
+        isUnlocked: true,
+        isSaved: i % 2 === 0, // Every other one is saved
+        isNew: false,
+        isHidden: false,
+        unlockedBy: 1, // Unlocked by the demo user
+        unlockedAt: new Date(Date.now() - 86400000 * (i + 1)), // 1-5 days ago
+        createdAt: new Date(Date.now() - 86400000 * (i + 6)) // 6-10 days ago
+      };
+      
+      this.prospects.set(id, prospect);
     }
   }
 
