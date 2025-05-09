@@ -4,7 +4,7 @@ import EmailGenerator from "@/components/email-generator";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import {
@@ -67,6 +67,33 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [hideFilters, setHideFilters] = useState(true);
   
+  // Use a ref to track when we need to refresh the data
+  const dataRefreshNeeded = useRef(true);
+  
+  // Add effect to force refresh on opportunities when unlocked
+  useEffect(() => {
+    if (dataRefreshNeeded.current) {
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] }); 
+      dataRefreshNeeded.current = false;
+    }
+  }, []);
+  
+  // Listen for unlocked opportunities and refresh data when needed
+  useEffect(() => {
+    // Setup a listener for refresh events
+    const handleRefreshEvent = () => {
+      dataRefreshNeeded.current = true;
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
+    };
+    
+    window.addEventListener('prospect-unlocked', handleRefreshEvent);
+    
+    return () => {
+      window.removeEventListener('prospect-unlocked', handleRefreshEvent);
+    };
+  }, []);
+  
   // Fetch stats
   const { data: stats } = useQuery({
     queryKey: ["/api/stats"],
@@ -93,7 +120,12 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/unlocked"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Dispatch an event to notify about the unlock
+      window.dispatchEvent(new Event('prospect-unlocked'));
+      
       toast({
         title: "Prospects unlocked",
         description: `Successfully unlocked ${selectedItems.length} prospect${selectedItems.length > 1 ? 's' : ''}.`,

@@ -61,8 +61,13 @@ export default function OpportunityCard({
       return await res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/unlocked"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Dispatch an event to notify about the unlock
+      window.dispatchEvent(new Event('prospect-unlocked'));
+      
       toast({
         title: "Prospect unlocked",
         description: "You can now see the full details and contact information.",
