@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "wouter";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ArrowRight, Check, Globe, PanelRight } from "lucide-react";
+import { Loader2, ArrowRight, Check, Globe, PanelRight, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const websiteSchema = z.object({
@@ -464,85 +464,141 @@ export default function Onboarding() {
           
           {/* Step 3: Review & Finish */}
           {step === 3 && (
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle className="text-2xl">Review & Finish</CardTitle>
-                <CardDescription>
-                  Review your setup details before completing the onboarding process.
-                </CardDescription>
+            <Card className="w-full shadow-md border-0">
+              <CardHeader className="border-b border-gray-100 pb-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <Check className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl">Almost Done!</CardTitle>
+                    <CardDescription className="text-gray-500">
+                      Review your details before completing the setup
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6 pt-8">
                 <div className="space-y-8">
                   {/* Plan Summary */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Plan</h3>
-                    <div className="bg-primary/10 rounded-md p-4 mb-2">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">{selectedPlan}</div>
-                        {selectedPlan === "Free Trial" && (
-                          <div className="px-2 py-1 text-xs font-medium rounded-full bg-blue-200 text-blue-800">
-                            7 days
-                          </div>
-                        )}
+                  <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-6 shadow-sm">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-full bg-white shadow-sm">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16 4H8C7.44772 4 7 4.44772 7 5V19C7 19.5523 7.44772 20 8 20H16C16.5523 20 17 19.5523 17 19V5C17 4.44772 16.5523 4 16 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M11 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
                       </div>
-                      <div className="mt-2 text-sm">
-                        {selectedPlan === "Free Trial" && (
-                          <p>5 daily opportunities, 10 total credits</p>
-                        )}
-                        {selectedPlan === "Starter" && (
-                          <p>10 daily opportunities, 50 credits/month, 1 website</p>
-                        )}
-                        {selectedPlan === "Grow" && (
-                          <p>20 daily opportunities, 150 credits/month, 2 websites</p>
-                        )}
-                        {selectedPlan === "Pro" && (
-                          <p>30 daily opportunities, 300 credits/month, 5 websites</p>
-                        )}
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-900">Your Plan: {selectedPlan}</h3>
+                          {selectedPlan === "Free Trial" && (
+                            <div className="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                              7 days
+                            </div>
+                          )}
+                          {selectedPlan === "Starter" && (
+                            <div className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
+                              $39/month
+                            </div>
+                          )}
+                          {selectedPlan === "Grow" && (
+                            <div className="px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                              $69/month
+                            </div>
+                          )}
+                          {selectedPlan === "Pro" && (
+                            <div className="px-3 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">
+                              $129/month
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                          <div className="bg-white rounded-lg p-3 shadow-sm">
+                            <div className="text-sm font-medium text-gray-500">Opportunities</div>
+                            <div className="font-bold text-xl text-gray-900">
+                              {selectedPlan === "Free Trial" && "5"}
+                              {selectedPlan === "Starter" && "10"}
+                              {selectedPlan === "Grow" && "20"}
+                              {selectedPlan === "Pro" && "30"}
+                              <span className="text-sm font-normal text-gray-500"> / day</span>
+                            </div>
+                          </div>
+                          <div className="bg-white rounded-lg p-3 shadow-sm">
+                            <div className="text-sm font-medium text-gray-500">Credits</div>
+                            <div className="font-bold text-xl text-gray-900">
+                              {selectedPlan === "Free Trial" && "10"}
+                              {selectedPlan === "Starter" && "50"}
+                              {selectedPlan === "Grow" && "150"}
+                              {selectedPlan === "Pro" && "300"}
+                              <span className="text-sm font-normal text-gray-500">
+                                {selectedPlan === "Free Trial" ? " total" : " / month"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
                   {/* Website Summary */}
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900">Your Website{websites.length > 1 ? "s" : ""}</h3>
-                      <div>
-                        <span className="text-sm text-gray-500">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-gray-900">Your Website{websites.length > 1 ? "s" : ""}</h3>
+                        <div className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
                           {websites.length} / 
                           {selectedPlan === "Starter" ? "1" : selectedPlan === "Grow" ? "2" : selectedPlan === "Pro" ? "5" : "1"}
-                        </span>
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {websites.map((site, index) => {
                         const sitePrefs = preferences.find(p => p.websiteId === index);
                         return (
-                          <div key={index} className="bg-white border rounded-md p-4">
-                            <div className="flex items-start gap-3">
-                              <div className="bg-primary/10 p-2 rounded-md">
+                          <div key={index} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                            <div className="flex items-start gap-4">
+                              <div className="bg-primary/10 p-2.5 rounded-md flex-shrink-0">
                                 <Globe className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex-1">
-                                <div className="font-medium">{site.url}</div>
-                                <div className="text-sm text-gray-500">{site.niche}</div>
-                                <div className="text-sm mt-1">{site.description}</div>
+                                <div className="font-semibold text-gray-900">{site.url}</div>
+                                <div className="text-sm text-gray-600 mt-1">
+                                  <span className="font-medium">Niche:</span> {site.niche}
+                                </div>
+                                <div className="text-sm mt-2 text-gray-600">{site.description}</div>
                                 
                                 {sitePrefs && (
-                                  <div className="mt-3 pt-3 border-t border-gray-100">
-                                    <div className="text-sm font-medium">Link types:</div>
-                                    <div className="flex flex-wrap gap-1 mt-1">
+                                  <div className="mt-4 pt-4 border-t border-gray-100">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <div className="p-1 rounded-full bg-primary/10">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M8 6H21M8 12H21M8 18H21M3 6H3.01M3 12H3.01M3 18H3.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </div>
+                                      <div className="text-sm font-medium text-gray-900">Selected Link Types</div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mt-2">
                                       {sitePrefs.linkTypes.map(type => (
-                                        <span key={type} className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
+                                        <span key={type} className="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary font-medium">
                                           {backlinkTypes.find(t => t.id === type)?.label || type}
                                         </span>
                                       ))}
                                     </div>
                                     
                                     {sitePrefs.avoidNiches && (
-                                      <div className="mt-2">
-                                        <div className="text-sm font-medium">Avoiding:</div>
-                                        <div className="text-sm text-gray-500 mt-1">{sitePrefs.avoidNiches}</div>
+                                      <div className="mt-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <div className="p-1 rounded-full bg-red-100">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                              <path d="M12 9V12M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0378 2.66667 10.268 4L3.33978 16C2.56998 17.3333 3.53223 19 5.07183 19Z" stroke="#E11D48" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                          </div>
+                                          <div className="text-sm font-medium text-gray-900">Niches to Avoid</div>
+                                        </div>
+                                        <div className="ml-7 text-sm text-gray-600 mt-1">{sitePrefs.avoidNiches}</div>
                                       </div>
                                     )}
                                   </div>
@@ -555,31 +611,41 @@ export default function Onboarding() {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button 
-                      onClick={addAnotherWebsite}
-                      variant="outline"
-                      className="flex-1"
-                      disabled={isLoading}
-                    >
-                      Add Another Website
-                    </Button>
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                    {websites.length < (selectedPlan === "Starter" ? 1 : selectedPlan === "Grow" ? 2 : selectedPlan === "Pro" ? 5 : 1) && (
+                      <Button 
+                        onClick={addAnotherWebsite}
+                        variant="outline"
+                        className="flex-1 border-primary text-primary hover:bg-primary/5"
+                        disabled={isLoading}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
+                          <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Add Another Website
+                      </Button>
+                    )}
                     
                     <Button 
                       onClick={finishOnboarding}
-                      className="flex-1 sm:flex-[2]"
+                      className="flex-1 sm:flex-[2] bg-gradient-to-r from-primary to-primary-light hover:from-primary/90 hover:to-primary-light/90 shadow-sm"
                       disabled={isLoading}
                     >
                       {isLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       ) : null}
-                      Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                      Complete Setup & Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                   
-                  <p className="text-sm text-gray-500">
-                    You can always adjust your site preferences, add more sites (if eligible), or upgrade as you grow.
-                  </p>
+                  <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mt-4 bg-gray-50 p-3 rounded-lg">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13 16H12V12H11M12 8H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <p>
+                      You can always adjust your site preferences, add more websites, or upgrade your plan later.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
