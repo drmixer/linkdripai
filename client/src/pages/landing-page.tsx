@@ -343,211 +343,265 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="py-20 bg-white">
+        <section id="pricing" className="py-20 bg-gray-50">
           <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-10">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full gap-x-2 text-sm bg-primary/10 text-primary mb-4">
+                <span className="h-2 w-2 rounded-full bg-primary"></span>
+                <span>Plans & Pricing</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
               <p className="text-lg text-gray-600">
                 Choose the right plan for your link building needs with flexible options to scale
               </p>
             </div>
 
-            <div className="flex justify-center mb-10">
-              <div className="inline-flex items-center p-1 bg-gray-100 rounded-lg">
+            <div className="flex justify-center mb-12">
+              <div className="inline-flex items-center p-1 bg-white rounded-lg border shadow-sm">
                 <button
                   onClick={() => setPricingInterval("monthly")}
-                  className={`px-4 py-2 text-sm font-medium rounded-md ${
-                    pricingInterval === "monthly" ? "bg-white shadow-sm" : "text-gray-600"
+                  className={`px-6 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                    pricingInterval === "monthly" ? "bg-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Monthly
                 </button>
                 <button
                   onClick={() => setPricingInterval("annual")}
-                  className={`px-4 py-2 text-sm font-medium rounded-md ${
-                    pricingInterval === "annual" ? "bg-white shadow-sm" : "text-gray-600"
+                  className={`px-6 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                    pricingInterval === "annual" ? "bg-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  Annual <span className="text-xs text-primary">Save 20%</span>
+                  Annual <span className="ml-1 text-xs font-bold">{pricingInterval === "annual" ? "" : "Save 20%"}</span>
                 </button>
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {/* Free Trial */}
-              <Card className="relative border-gray-200">
-                <CardContent className="pt-6">
+              <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="absolute inset-x-0 top-0 h-2 bg-gray-200"></div>
+                <CardContent className="pt-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Free Trial</h3>
-                  <p className="text-gray-600 mb-6">Try our platform with no commitment</p>
+                  <p className="text-gray-500 mb-6 text-sm">Try our platform with no commitment</p>
                   <div className="mb-6">
                     <span className="text-4xl font-bold text-gray-900">$0</span>
-                    <span className="text-gray-600">/7 days</span>
+                    <span className="text-gray-600 ml-1">/7 days</span>
                   </div>
 
                   <ul className="space-y-3 mb-6">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">5 opportunities/day drip</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">Max 10 total credits</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">Max 2 credits per day</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">AI email generation</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">No rollover</span>
                     </li>
                   </ul>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="px-6 pb-6 pt-0">
                   <Link href="/auth?tab=register&plan=Free+Trial" className="w-full">
-                    <Button variant="outline" className="w-full">Start Free Trial</Button>
+                    <Button variant="outline" className="w-full h-11 font-medium">Start Free Trial</Button>
                   </Link>
                 </CardFooter>
               </Card>
 
               {/* Starter Plan */}
-              <Card className="relative border-primary">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-4 py-1 rounded-full">
+              <Card className="relative border-primary-200 overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 scale-105 z-10 bg-white">
+                <div className="absolute inset-x-0 top-0 h-2 bg-primary"></div>
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-4 py-1 rounded-full font-medium">
                   Most Popular
                 </div>
-                <CardContent className="pt-6">
+                <CardContent className="pt-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Starter</h3>
-                  <p className="text-gray-600 mb-6">Perfect for small businesses starting with link building</p>
+                  <p className="text-gray-500 mb-6 text-sm">Perfect for small businesses starting with link building</p>
                   <div className="mb-6">
                     <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "39" : "31"}</span>
-                    <span className="text-gray-600">/month</span>
-                    {pricingInterval === "annual" && <span className="ml-2 text-xs text-primary">billed annually</span>}
+                    <span className="text-gray-600 ml-1">/month</span>
+                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${31*12}/year)</div>}
                   </div>
 
                   <ul className="space-y-3 mb-6">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">1 website</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">10 opportunities/day drip</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">50 credits/month</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">1-month credit rollover</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">Basic AI Fit Scoring</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-sm text-gray-600">Free email generation</span>
                     </li>
                   </ul>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="px-6 pb-6 pt-0">
                   <Link href="/auth?tab=register&plan=Starter" className="w-full">
-                    <Button className="w-full">Get Started</Button>
+                    <Button className="w-full h-11 shadow-sm font-medium">Get Started</Button>
                   </Link>
                 </CardFooter>
               </Card>
 
               {/* Grow Plan */}
-              <Card className="relative border-gray-200">
-                <CardContent className="pt-6">
+              <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="absolute inset-x-0 top-0 h-2 bg-blue-400"></div>
+                <CardContent className="pt-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Grow</h3>
-                  <p className="text-gray-600 mb-6">For growing businesses with active link building</p>
+                  <p className="text-gray-500 mb-6 text-sm">For growing businesses with active link building</p>
                   <div className="mb-6">
                     <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "69" : "55"}</span>
-                    <span className="text-gray-600">/month</span>
-                    {pricingInterval === "annual" && <span className="ml-2 text-xs text-primary">billed annually</span>}
+                    <span className="text-gray-600 ml-1">/month</span>
+                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${55*12}/year)</div>}
                   </div>
 
                   <ul className="space-y-3 mb-6">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-blue-500" />
+                      </div>
                       <span className="text-sm text-gray-600">Up to 2 websites</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-blue-500" />
+                      </div>
                       <span className="text-sm text-gray-600">20 opportunities/day drip</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-blue-500" />
+                      </div>
                       <span className="text-sm text-gray-600">150 credits/month</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-blue-500" />
+                      </div>
                       <span className="text-sm text-gray-600">1-month credit rollover</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-blue-500" />
+                      </div>
                       <span className="text-sm text-gray-600">Advanced AI recommendations</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-blue-500" />
+                      </div>
                       <span className="text-sm text-gray-600">Multi-site dashboard</span>
                     </li>
                   </ul>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="px-6 pb-6 pt-0">
                   <Link href="/auth?tab=register&plan=Grow" className="w-full">
-                    <Button variant="outline" className="w-full">Get Started</Button>
+                    <Button variant="outline" className="w-full h-11 font-medium">Get Started</Button>
                   </Link>
                 </CardFooter>
               </Card>
               
               {/* Pro Plan */}
-              <Card className="relative border-gray-200">
-                <CardContent className="pt-6">
+              <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="absolute inset-x-0 top-0 h-2 bg-purple-500"></div>
+                <CardContent className="pt-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
-                  <p className="text-gray-600 mb-6">For agencies and serious link builders</p>
+                  <p className="text-gray-500 mb-6 text-sm">For agencies and serious link builders</p>
                   <div className="mb-6">
                     <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "129" : "103"}</span>
-                    <span className="text-gray-600">/month</span>
-                    {pricingInterval === "annual" && <span className="ml-2 text-xs text-primary">billed annually</span>}
+                    <span className="text-gray-600 ml-1">/month</span>
+                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${103*12}/year)</div>}
                   </div>
 
                   <ul className="space-y-3 mb-6">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-purple-500" />
+                      </div>
                       <span className="text-sm text-gray-600">Up to 5 websites</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-purple-500" />
+                      </div>
                       <span className="text-sm text-gray-600">30 opportunities/day drip</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-purple-500" />
+                      </div>
                       <span className="text-sm text-gray-600">300 credits/month</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-purple-500" />
+                      </div>
                       <span className="text-sm text-gray-600">1-month credit rollover</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-purple-500" />
+                      </div>
                       <span className="text-sm text-gray-600">Advanced AI recommendations</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-purple-500" />
+                      </div>
                       <span className="text-sm text-gray-600">Priority support</span>
                     </li>
                   </ul>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="px-6 pb-6 pt-0">
                   <Link href="/auth?tab=register&plan=Pro" className="w-full">
-                    <Button variant="outline" className="w-full">Get Started</Button>
+                    <Button variant="outline" className="w-full h-11 font-medium">Get Started</Button>
                   </Link>
                 </CardFooter>
               </Card>
@@ -556,69 +610,99 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-primary">
-          <div className="container mx-auto px-4">
+        <section className="py-24 bg-gradient-to-br from-primary to-primary-600 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute right-0 bottom-0 w-80 h-80 rounded-full bg-white/30 -mr-20 -mb-20"></div>
+            <div className="absolute left-[10%] top-[20%] w-64 h-64 rounded-full bg-white/20"></div>
+            <div className="absolute right-[20%] top-[15%] w-36 h-36 rounded-full bg-white/10"></div>
+          </div>
+          <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl font-bold text-white mb-6">Ready to supercharge your link building?</h2>
-              <p className="text-xl text-white/90 mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready to supercharge your link building?</h2>
+              <p className="text-xl text-white/90 mb-10 max-w-3xl mx-auto">
                 Join thousands of satisfied users who are building high-quality backlinks faster and more efficiently than ever before.
               </p>
-              <Link href="/auth?tab=register&plan=Free+Trial">
-                <Button size="lg" variant="secondary" className="px-10 py-6">
-                  Start Your Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <p className="mt-4 text-sm text-white/80">No credit card required. 7-day free trial.</p>
+              <div className="flex flex-col sm:flex-row justify-center gap-6">
+                <Link href="/auth?tab=register&plan=Free+Trial">
+                  <Button size="lg" variant="secondary" className="px-10 py-6 text-primary font-medium shadow-xl hover:shadow-2xl transition-all duration-200 text-lg">
+                    Start Your Free Trial
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/auth?tab=login">
+                  <Button size="lg" variant="outline" className="px-10 py-6 bg-transparent text-white border-white/30 hover:bg-white/10 transition-all duration-200 text-lg">
+                    Log In
+                  </Button>
+                </Link>
+              </div>
+              <p className="mt-6 text-sm text-white/80 font-medium">No credit card required. 7-day free trial.</p>
             </div>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900 text-white py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="font-bold text-lg mb-4">Product</h3>
-              <ul className="space-y-2">
-                <li><a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="text-gray-400 hover:text-white transition-colors">How it Works</a></li>
-                <li><a href="#pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
-              </ul>
+          <div className="flex flex-col md:flex-row justify-between mb-12">
+            <div className="mb-8 md:mb-0">
+              <Link href="/">
+                <div className="flex items-center mb-6">
+                  <div className="rounded-md bg-primary/90 p-2 mr-2">
+                    <Link2 className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-xl font-bold">LinkDripAI</span>
+                </div>
+              </Link>
+              <p className="text-gray-400 max-w-xs mb-6">
+                Advanced AI-powered backlink prospecting and outreach platform for SEO professionals and digital marketers.
+              </p>
+              <div className="flex space-x-4">
+                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary/80 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg>
+                </a>
+                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary/80 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                </a>
+                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary/80 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                </a>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-lg mb-4">Resources</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact Support</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg mb-4">Company</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg mb-4">Connect</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Twitter</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">LinkedIn</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Facebook</a></li>
-              </ul>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-8 lg:gap-16">
+              <div>
+                <h3 className="font-bold text-lg mb-4">Product</h3>
+                <ul className="space-y-3">
+                  <li><a href="#features" className="text-gray-400 hover:text-white transition-colors text-sm">Features</a></li>
+                  <li><a href="#how-it-works" className="text-gray-400 hover:text-white transition-colors text-sm">How it Works</a></li>
+                  <li><a href="#pricing" className="text-gray-400 hover:text-white transition-colors text-sm">Pricing</a></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-bold text-lg mb-4">Resources</h3>
+                <ul className="space-y-3">
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Blog</a></li>
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Help Center</a></li>
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Contact Support</a></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-bold text-lg mb-4">Company</h3>
+                <ul className="space-y-3">
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">About Us</a></li>
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Privacy Policy</a></li>
+                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Terms of Service</a></li>
+                </ul>
+              </div>
             </div>
           </div>
+          
           <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <div className="rounded-md bg-primary p-1.5 mr-2">
-                <Link2 className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">LinkDripAI</span>
+            <div className="flex items-center space-x-4 mb-4 md:mb-0">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Privacy</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Terms</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Cookies</a>
             </div>
             <p className="text-gray-400 text-sm">© {new Date().getFullYear()} LinkDripAI. All rights reserved.</p>
           </div>
