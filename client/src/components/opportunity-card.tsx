@@ -161,23 +161,15 @@ export default function OpportunityCard({
       className={cn(
         "relative overflow-hidden h-full transition-all duration-200",
         isNew ? "border-l-4 border-l-amber-400" : "",
-        prospect.isUnlocked ? "shadow-md" : "shadow",
-        isHovering ? "shadow-lg" : ""
+        prospect.isUnlocked ? "shadow-sm" : "shadow-sm",
+        isHovering ? "shadow-md" : ""
       )}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {/* Traffic indicator & DA score */}
-      <div className="absolute top-0 left-0 w-full h-1.5 bg-gray-100">
-        <div 
-          className="h-full bg-green-500" 
-          style={{ width: `${parseInt(prospect.monthlyTraffic) / 10000 * 100}%`, maxWidth: '100%' }}
-        ></div>
-      </div>
-
       {/* Selection checkbox */}
       {selectable && (
-        <div className="absolute top-3 left-3 z-10">
+        <div className="absolute top-4 left-4 z-10">
           <SimpleCheckbox 
             checked={selected === true}
             onChange={handleSelectChange} 
@@ -185,116 +177,131 @@ export default function OpportunityCard({
         </div>
       )}
 
-      {/* Fit score */}
-      <div className="absolute top-3 right-3">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant="outline" className="bg-white border-gray-200 text-xs font-medium">
-                <BadgeCheck className="h-3 w-3 mr-1 text-green-500" />
-                {prospect.fitScore}% Fit
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>AI-calculated relevance score based on your site</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+      {/* "New" indicator */}
+      {isNew && (
+        <div className="absolute top-4 right-4 z-10">
+          <Badge className="bg-amber-100 text-amber-800 border-none text-xs">New</Badge>
+        </div>
+      )}
 
-      <CardContent className="p-5 pt-8">
-        <div className="flex flex-col space-y-4">
-          {/* Header with DA and type */}
-          <div className="flex items-start justify-between">
-            <div className="flex flex-col">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-md bg-primary-50 text-primary-700 flex items-center justify-center font-bold text-lg">
-                  {prospect.domainAuthority}
-                </div>
-                <div>
-                  <Badge variant="outline" className="text-xs border-gray-200">
-                    <Globe className="h-3 w-3 mr-1 opacity-70" />
-                    {prospect.siteType}
-                  </Badge>
-                </div>
-              </div>
+      <CardContent className="p-4 pt-10">
+        {/* Domain Authority */}
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded bg-primary-50 flex items-center justify-center mr-2">
+              <span className="text-primary-700 font-bold">{prospect.domainAuthority}</span>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              {getStatusIcon()}
+            <div>
+              <p className="text-xs text-gray-500">Domain Authority</p>
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium">Fit Score:</span>
+                        <div className="h-1.5 w-10 bg-gray-100 rounded-full">
+                          <div 
+                            className={cn(
+                              "h-1.5 rounded-full",
+                              prospect.fitScore >= 80 ? "bg-green-500" :
+                              prospect.fitScore >= 60 ? "bg-green-400" :
+                              prospect.fitScore >= 40 ? "bg-yellow-500" : "bg-red-500"
+                            )}
+                            style={{ width: `${prospect.fitScore}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-medium">{prospect.fitScore}%</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>AI-calculated relevance score based on your site</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div>
-            <h3 className="font-medium text-gray-900 mb-1">
-              {prospect.isUnlocked ? prospect.siteName : "Domain locked"}
-            </h3>
-            
-            <div className="mb-2 flex items-center">
-              <Badge variant="outline" className="text-xs bg-gray-50">
-                <Tag className="h-3 w-3 mr-1 opacity-70" />
-                {prospect.niche}
-              </Badge>
-            </div>
-            
-            {prospect.isUnlocked && (
-              <div className="mt-2 space-y-1.5 text-xs text-gray-500">
+          <div className="flex items-center space-x-2">
+            {getStatusIcon()}
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="mb-4">
+          <h3 className="font-medium text-gray-900 mb-1 line-clamp-1">
+            {prospect.isUnlocked ? prospect.siteName : "Domain locked"}
+          </h3>
+          
+          <div className="flex flex-wrap gap-1 mb-2">
+            <Badge variant="outline" className="text-xs bg-gray-50 px-2 py-0">
+              {prospect.siteType}
+            </Badge>
+            <Badge variant="outline" className="text-xs bg-gray-50 px-2 py-0">
+              {prospect.niche}
+            </Badge>
+          </div>
+          
+          {prospect.isUnlocked ? (
+            <div className="text-xs text-gray-500 space-y-1">
+              <div className="flex items-center">
+                <Globe className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
+                <span className="truncate">{prospect.domain || (prospect.siteName && `${prospect.siteName.toLowerCase().replace(/\s+/g, '')}.com`)}</span>
+              </div>
+              {prospect.contactEmail && (
                 <div className="flex items-center">
-                  <Globe className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                  <span className="truncate">{prospect.domain || (prospect.siteName && `${prospect.siteName.toLowerCase().replace(/\s+/g, '')}.com`)}</span>
+                  <Mail className="h-3 w-3 mr-1.5 flex-shrink-0 opacity-60" />
+                  <span className="truncate">{prospect.contactEmail}</span>
                 </div>
-                {prospect.contactEmail && (
-                  <div className="flex items-center">
-                    <Mail className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                    <span className="truncate">{prospect.contactEmail}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500">
+              Unlock to view domain and contact details
+            </div>
+          )}
         </div>
       </CardContent>
 
       {/* Actions */}
-      <CardFooter className="p-3 pt-0 flex flex-wrap gap-2 mt-auto">
+      <CardFooter className="px-4 py-3 border-t flex flex-wrap gap-2 bg-gray-50">
         {prospect.isUnlocked ? (
           <>
             <Button 
               variant="default" 
               size="sm" 
-              className="flex-1 h-9"
+              className="flex-1 h-8 text-xs"
               onClick={handleEmail}
             >
-              <Mail className="h-4 w-4 mr-1.5" />
-              <span>Email</span>
+              <Mail className="h-3.5 w-3.5 mr-1.5" />
+              <span>Send Email</span>
             </Button>
             <Button 
               variant="outline" 
               size="icon"
-              className="h-9 w-9" 
+              className="h-8 w-8" 
               onClick={handleSave}
               disabled={saveMutation.isPending}
             >
-              <Star className={cn("h-4 w-4", prospect.isSaved ? "fill-amber-400 text-amber-400" : "")} />
+              <Star className={cn("h-3.5 w-3.5", prospect.isSaved ? "fill-amber-400 text-amber-400" : "")} />
             </Button>
             <Button 
               variant="outline" 
               size="icon"
-              className="h-9 w-9"
+              className="h-8 w-8"
               onClick={handleHide}
             >
-              <EyeOff className="h-4 w-4" />
+              <EyeOff className="h-3.5 w-3.5" />
             </Button>
           </>
         ) : (
           <Button 
-            className="w-full flex items-center justify-center h-9"
+            className="w-full flex items-center justify-center h-8 text-xs"
             onClick={handleUnlock}
             disabled={unlockMutation.isPending}
           >
-            <Unlock className="h-4 w-4 mr-1.5" />
-            {unlockMutation.isPending ? 'Unlocking...' : 'Unlock for 1 credit'}
+            <Unlock className="h-3.5 w-3.5 mr-1.5" />
+            {unlockMutation.isPending ? 'Unlocking...' : 'Unlock (1 credit)'}
           </Button>
         )}
       </CardFooter>
@@ -304,8 +311,8 @@ export default function OpportunityCard({
   const renderListView = () => (
     <div 
       className={cn(
-        "relative w-full p-4 border rounded-lg flex items-center gap-4 transition-all duration-200",
-        isNew ? "border-l-4 border-l-amber-400 pl-5" : "",
+        "relative w-full p-3 border rounded-lg flex items-center gap-3 transition-all duration-200",
+        isNew ? "border-l-4 border-l-amber-400 pl-4" : "",
         prospect.isUnlocked ? "bg-white shadow-sm" : "bg-gray-50",
         isHovering ? "shadow-md" : ""
       )}
@@ -318,57 +325,69 @@ export default function OpportunityCard({
           <SimpleCheckbox 
             checked={selected === true}
             onChange={handleSelectChange}
+            size="sm"
           />
         </div>
       )}
 
       {/* DA Score */}
-      <div className="w-12 h-12 flex-shrink-0 rounded-md bg-primary-50 text-primary-700 flex items-center justify-center">
-        <div className="text-center">
-          <div className="font-bold text-lg leading-none">{prospect.domainAuthority}</div>
-          <div className="text-[10px] opacity-70">DA</div>
-        </div>
+      <div className="w-10 h-10 flex-shrink-0 rounded bg-primary-50 text-primary-700 flex items-center justify-center">
+        <span className="font-bold">{prospect.domainAuthority}</span>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-medium text-gray-900 truncate">
+        <div className="flex flex-wrap items-center gap-1.5 mb-1">
+          <h3 className="font-medium text-gray-900 text-sm truncate">
             {prospect.isUnlocked ? prospect.siteName : "Domain locked"}
           </h3>
-          <Badge variant="outline" className="text-xs border-gray-200 whitespace-nowrap flex-shrink-0">
-            <Globe className="h-3 w-3 mr-1 opacity-70" />
+          {isNew && (
+            <Badge className="text-[10px] px-1.5 py-0 h-4 bg-amber-100 text-amber-800 border-none">
+              New
+            </Badge>
+          )}
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+          <Badge variant="outline" className="text-[10px] px-2 py-0 h-4 bg-gray-50">
             {prospect.siteType}
           </Badge>
-          <Badge variant="outline" className="text-xs bg-gray-50 whitespace-nowrap flex-shrink-0">
-            <Tag className="h-3 w-3 mr-1 opacity-70" />
+          <Badge variant="outline" className="text-[10px] px-2 py-0 h-4 bg-gray-50">
             {prospect.niche}
           </Badge>
         </div>
         
-        {prospect.isUnlocked && (
-          <div className="text-sm text-gray-500 flex items-center gap-4">
+        {prospect.isUnlocked ? (
+          <div className="text-xs text-gray-500 flex items-center gap-2">
+            <Globe className="h-3 w-3 text-gray-400" />
             <span className="truncate">{prospect.domain || (prospect.siteName && `${prospect.siteName.toLowerCase().replace(/\s+/g, '')}.com`)}</span>
-            {prospect.contactEmail && (
-              <span className="truncate">{prospect.contactEmail}</span>
-            )}
+          </div>
+        ) : (
+          <div className="text-xs text-gray-500">
+            Unlock to view domain and contact details
           </div>
         )}
       </div>
 
       {/* Fit Score */}
-      <div className="hidden md:block flex-shrink-0">
+      <div className="hidden md:flex flex-shrink-0 items-center">
+        <div className="text-xs text-gray-500 mr-2">Fit Score:</div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center">
-                <div className="w-16 bg-gray-100 rounded-full h-2">
+                <div className="w-16 bg-gray-100 rounded-full h-1.5">
                   <div 
-                    className="h-2 rounded-full bg-green-500" 
+                    className={cn(
+                      "h-1.5 rounded-full",
+                      prospect.fitScore >= 80 ? "bg-green-500" :
+                      prospect.fitScore >= 60 ? "bg-green-400" :
+                      prospect.fitScore >= 40 ? "bg-yellow-500" : "bg-red-500"
+                    )}
                     style={{ width: `${prospect.fitScore}%` }}
                   ></div>
                 </div>
-                <span className="ml-2 text-sm font-medium text-gray-700">{prospect.fitScore}%</span>
+                <span className="ml-2 text-xs font-medium">{prospect.fitScore}%</span>
               </div>
             </TooltipTrigger>
             <TooltipContent>
@@ -378,50 +397,45 @@ export default function OpportunityCard({
         </TooltipProvider>
       </div>
 
-      {/* Status */}
-      <div className="flex-shrink-0 w-6">
-        {getStatusIcon()}
-      </div>
-
       {/* Actions */}
-      <div className="flex-shrink-0 flex items-center gap-2">
+      <div className="flex-shrink-0 flex items-center gap-1.5">
         {prospect.isUnlocked ? (
           <>
             <Button 
               variant="default" 
               size="sm" 
-              className="h-9"
+              className="h-8 text-xs"
               onClick={handleEmail}
             >
-              <Mail className="h-4 w-4 mr-1.5" />
+              <Mail className="h-3.5 w-3.5 mr-1" />
               <span>Email</span>
             </Button>
             <Button 
               variant="outline" 
               size="icon"
-              className="h-9 w-9" 
+              className="h-8 w-8" 
               onClick={handleSave}
               disabled={saveMutation.isPending}
             >
-              <Star className={cn("h-4 w-4", prospect.isSaved ? "fill-amber-400 text-amber-400" : "")} />
+              <Star className={cn("h-3.5 w-3.5", prospect.isSaved ? "fill-amber-400 text-amber-400" : "")} />
             </Button>
             <Button 
               variant="outline" 
               size="icon"
-              className="h-9 w-9"
+              className="h-8 w-8"
               onClick={handleHide}
             >
-              <EyeOff className="h-4 w-4" />
+              <EyeOff className="h-3.5 w-3.5" />
             </Button>
           </>
         ) : (
           <Button 
-            className="flex items-center justify-center h-9"
+            className="flex items-center justify-center h-8 text-xs"
             onClick={handleUnlock}
             disabled={unlockMutation.isPending}
           >
-            <Unlock className="h-4 w-4 mr-1.5" />
-            {unlockMutation.isPending ? 'Unlocking...' : 'Unlock'}
+            <Unlock className="h-3.5 w-3.5 mr-1" />
+            {unlockMutation.isPending ? 'Unlocking...' : 'Unlock (1 cr)'}
           </Button>
         )}
       </div>
