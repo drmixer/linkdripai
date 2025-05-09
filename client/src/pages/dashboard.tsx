@@ -164,6 +164,9 @@ export default function Dashboard() {
     
     // Filter the opportunities first
     const filtered = opportunities.filter(opp => {
+      // Filter out unlocked opportunities - these belong in Unlocked Opportunities section
+      if (opp.isUnlocked) return false;
+      
       // Filter by hidden state
       if (selectedTab !== "hidden" && opp.isHidden) return false;
       if (selectedTab === "hidden" && !opp.isHidden) return false;
