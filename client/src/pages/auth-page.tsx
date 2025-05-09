@@ -80,7 +80,7 @@ export default function AuthPage() {
       if (loginMutation.data) {
         navigate("/dashboard");
       } else if (registerMutation.data) {
-        navigate("/onboarding");
+        navigate("/onboarding-improved");
       } else {
         navigate("/dashboard");
       }

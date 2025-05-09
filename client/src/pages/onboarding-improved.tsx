@@ -58,11 +58,23 @@ export default function Onboarding() {
   const { toast } = useToast();
 
   // Get the selected plan from user data or localStorage as fallback
-  const selectedPlan = user?.subscription || (() => {
-    // Fallback to localStorage if user subscription isn't set yet
-    const savedPlan = typeof window !== 'undefined' ? localStorage.getItem('selectedPlan') : null;
-    return savedPlan || "Free Trial";
-  })();
+  const [selectedPlan, setSelectedPlan] = useState(() => {
+    // First check if we have the plan in the user object
+    if (user?.subscription) {
+      return user.subscription;
+    }
+    
+    // Then try localStorage
+    if (typeof window !== 'undefined') {
+      const savedPlan = localStorage.getItem('selectedPlan');
+      if (savedPlan) {
+        return savedPlan;
+      }
+    }
+    
+    // Default to Free Trial
+    return "Free Trial";
+  });
 
   // Initialize website form
   const websiteForm = useForm<WebsiteFormValues>({
@@ -80,7 +92,7 @@ export default function Onboarding() {
     defaultValues: {
       linkTypes: [],
       avoidNiches: "",
-      competitors: [],
+      competitors: [""],
       dripPriorities: ["high_da", "relevance", "opportunity_type"],
     },
   });
