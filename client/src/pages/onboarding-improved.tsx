@@ -258,8 +258,11 @@ export default function Onboarding() {
         description: "You're all set to start using LinkDripAI",
       });
       
+      // Clear selectedPlan from localStorage after successful onboarding
+      localStorage.removeItem('selectedPlan');
+      
       // Redirect to dashboard
-      navigate("/dashboard");
+      window.location.href = "/dashboard";
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -491,8 +494,10 @@ export default function Onboarding() {
                     </div>
                     
                     {/* Competitor section - only shown for Grow and Pro plans */}
-                    {/* Current plan: {selectedPlan} */}
-                    {(selectedPlan === "Grow" || selectedPlan === "Pro") && (
+                    {(() => {
+                      const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                      return (actualPlan === "Grow" || actualPlan === "Pro");
+                    })() && (
                       <div className="mt-8 pt-6 border-t border-gray-100">
                         <div className="flex items-center gap-2 mb-4">
                           <div className="bg-primary/10 p-1.5 rounded-md">
@@ -503,7 +508,12 @@ export default function Onboarding() {
                           <h3 className="text-lg font-medium">Competitor Tracking</h3>
                         </div>
                         <p className="text-sm text-gray-500 mb-4">
-                          Your {selectedPlan} plan includes competitor tracking. Add competitors to analyze their backlink profiles.
+                          Your {localStorage.getItem('selectedPlan') || selectedPlan} plan includes competitor tracking. Add 
+                          {(() => {
+                            const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                            return actualPlan === "Grow" ? " 1 competitor" : " up to 3 competitors";
+                          })()}
+                          to analyze their backlink profiles.
                         </p>
                         
                         <FormField
@@ -515,7 +525,12 @@ export default function Onboarding() {
                               <FormControl>
                                 <div className="space-y-3">
                                   {field.value.concat(['']).map((url, index) => (
-                                    index < (selectedPlan === "Grow" ? 3 : 5) && (
+                                    index < (() => {
+                                      const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                                      if (actualPlan === "Grow") return 1; // Grow plan: 1 competitor
+                                      if (actualPlan === "Pro") return 3;  // Pro plan: 3 competitors
+                                      return 0; // Default (shouldn't show any for other plans)
+                                    })() && (
                                       <div key={index} className="flex gap-2">
                                         <Input 
                                           placeholder="https://competitor.com"
@@ -559,7 +574,12 @@ export default function Onboarding() {
                                 </div>
                               </FormControl>
                               <FormDescription>
-                                Enter up to {selectedPlan === "Grow" ? "3" : "5"} competitor websites to track their backlink strategies
+                                {(() => {
+                                  const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
+                                  if (actualPlan === "Grow") return "Enter 1 competitor website to track their backlink strategies";
+                                  if (actualPlan === "Pro") return "Enter up to 3 competitor websites to track their backlink strategies";
+                                  return ""; // Default shouldn't happen
+                                })()}
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
