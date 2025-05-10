@@ -325,24 +325,24 @@ export default function LandingPage() {
               <Card className="flex flex-col h-full border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="flex-1 pt-6">
                   <div className="p-2 w-12 h-12 rounded-lg bg-primary/10 text-primary mb-5">
-                    <Icons.creditCard size={24} />
+                    <Zap size={24} />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Credit System</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Splash Feature</h3>
                   <p className="text-gray-600 mb-4">
-                    Use credits to unlock prospect contact details and access premium features as you need them.
+                    Gain instant access to new quality opportunities whenever you need them with our Splash feature.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Flexible credit packages</span>
+                      <span className="text-sm text-gray-600">Open access to all opportunity details</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Monthly credit allowance</span>
+                      <span className="text-sm text-gray-600">Monthly Splash allowance by plan</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Credit usage analytics</span>
+                      <span className="text-sm text-gray-600">Add-on Splash packages available</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -513,13 +513,13 @@ export default function LandingPage() {
                   <p className="text-gray-500 mb-6 text-sm">Perfect for small businesses and bloggers</p>
                   <div className="mb-8">
                     <div className="flex items-baseline">
-                      <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "39" : "31"}</span>
+                      <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "9" : "7"}</span>
                       <span className="text-gray-500 ml-1 text-sm">/month</span>
                     </div>
                     {pricingInterval === "annual" && (
                       <div className="flex items-center mt-1">
-                        <span className="text-xs text-green-600 font-medium">Save $96/year</span>
-                        <span className="text-xs text-gray-500 ml-1">($372 billed annually)</span>
+                        <span className="text-xs text-green-600 font-medium">Save $24/year</span>
+                        <span className="text-xs text-gray-500 ml-1">($84 billed annually)</span>
                       </div>
                     )}
                   </div>
@@ -579,9 +579,9 @@ export default function LandingPage() {
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Grow</h3>
                   <p className="text-gray-500 mb-6 text-sm">For growing businesses with active link building</p>
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "69" : "55"}</span>
+                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "19" : "15"}</span>
                     <span className="text-gray-600 ml-1">/month</span>
-                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${55*12}/year)</div>}
+                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${15*12}/year)</div>}
                   </div>
 
                   <ul className="space-y-3 mb-6">
@@ -595,7 +595,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-blue-500" />
                       </div>
-                      <span className="text-sm text-gray-600">20 opportunities/day drip</span>
+                      <span className="text-sm text-gray-600">7-10 drips/day</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -607,19 +607,19 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-blue-500" />
                       </div>
-                      <span className="text-sm text-gray-600"><span className="font-medium">3 Splashes</span> for instant opportunities</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">3 Splashes</span>/month</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-blue-500" />
                       </div>
-                      <span className="text-sm text-gray-600">Advanced AI recommendations</span>
+                      <span className="text-sm text-gray-600">Advanced filters & analytics</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-blue-500" />
                       </div>
-                      <span className="text-sm text-gray-600">Multi-site dashboard</span>
+                      <span className="text-sm text-gray-600">Follow-up email template</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -637,9 +637,9 @@ export default function LandingPage() {
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
                   <p className="text-gray-500 mb-6 text-sm">For agencies and serious link builders</p>
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "129" : "103"}</span>
+                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "39" : "31"}</span>
                     <span className="text-gray-600 ml-1">/month</span>
-                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${103*12}/year)</div>}
+                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${31*12}/year)</div>}
                   </div>
 
                   <ul className="space-y-3 mb-6">
@@ -653,7 +653,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-purple-500" />
                       </div>
-                      <span className="text-sm text-gray-600">30 opportunities/day drip</span>
+                      <span className="text-sm text-gray-600">10-15 drips/day</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
@@ -665,19 +665,19 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-purple-500" />
                       </div>
-                      <span className="text-sm text-gray-600"><span className="font-medium">5 Splashes</span> for instant opportunities</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">7 Splashes</span>/month</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-purple-500" />
                       </div>
-                      <span className="text-sm text-gray-600">Premium AI recommendations</span>
+                      <span className="text-sm text-gray-600">Full filters & detailed analytics</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-purple-500" />
                       </div>
-                      <span className="text-sm text-gray-600">Priority support</span>
+                      <span className="text-sm text-gray-600">Priority support + team seat</span>
                     </li>
                   </ul>
                 </CardContent>
