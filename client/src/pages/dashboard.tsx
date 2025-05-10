@@ -40,7 +40,8 @@ import {
   Sparkles,
   X,
   BarChart,
-  Link2
+  Link2,
+  Droplet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Prospect } from "@shared/schema";
@@ -235,8 +236,11 @@ export default function Dashboard() {
   };
   
   const filteredOpportunities = filterOpportunities(opportunities);
-  const splashesAvailable = stats?.splashes?.available || 0;
-  const splashesTotal = stats?.splashes?.total || 0;
+  // Calculate splashes based on stats or fall back to user data
+  const splashesAvailable = stats?.splashes?.available || 
+    (user ? (user.splashesAllowed || 0) - (user.splashesUsed || 0) : 0);
+  const splashesTotal = stats?.splashes?.total || 
+    (user ? user.splashesAllowed || 0 : 0);
 
   return (
     <Layout title="Daily Link Opportunities">
@@ -270,7 +274,7 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold mt-1">{splashesAvailable} / {splashesTotal}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center">
-                <Sparkles className="h-6 w-6 text-blue-600" />
+                <Droplet className="h-6 w-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
