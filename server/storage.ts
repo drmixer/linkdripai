@@ -902,9 +902,9 @@ export class DatabaseStorage implements IStorage {
     return updatedUser;
   }
 
-  async updateUserCredits(userId: number, credits: number): Promise<User> {
+  async updateUserSplashes(userId: number, splashesUsed: number): Promise<User> {
     const [user] = await db.update(users)
-      .set({ credits })
+      .set({ splashesUsed })
       .where(eq(users.id, userId))
       .returning();
     
@@ -913,6 +913,45 @@ export class DatabaseStorage implements IStorage {
     }
     
     return user;
+  }
+  
+  async resetMonthlySplashes(userId: number): Promise<User> {
+    // Find the user first to check their subscription
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Reset Splashes based on their subscription
+    let splashesAllowed = 1; // Default for Free Trial
+    
+    switch (user.subscription) {
+      case 'Pro':
+        splashesAllowed = 7;
+        break;
+      case 'Grow':
+        splashesAllowed = 3;
+        break;
+      case 'Starter':
+        splashesAllowed = 1;
+        break;
+      default:
+        splashesAllowed = 1;
+        break;
+    }
+    
+    // Update user with reset splash values
+    const [updatedUser] = await db.update(users)
+      .set({ 
+        splashesUsed: 0,
+        splashesAllowed,
+        lastSplashReset: new Date(),
+        billingAnniversary: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
   }
 
   async getUserStats(userId: number): Promise<Stats> {

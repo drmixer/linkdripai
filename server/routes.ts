@@ -302,6 +302,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Reset Splash API for end of billing cycle
+  app.post("/api/reset-splashes", isAuthenticated, async (req, res) => {
+    try {
+      const updatedUser = await storage.resetMonthlySplashes(req.user!.id);
+      
+      // Update session
+      req.login(updatedUser, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error updating session" });
+        }
+        
+        res.json({
+          success: true,
+          message: "Monthly splashes reset successfully",
+          splashesAllowed: updatedUser.splashesAllowed,
+          splashesUsed: updatedUser.splashesUsed,
+          nextReset: updatedUser.billingAnniversary
+        });
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   // Splash feature - get additional opportunities immediately
   app.post("/api/splash", isAuthenticated, async (req, res) => {
     try {
