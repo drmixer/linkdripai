@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Icons } from "@/lib/icons";
-import { Check, CheckCircle, ArrowRight, Link2, Zap, BarChart, Mail, Shield, Droplets } from "lucide-react";
+import { Check, CheckCircle, ArrowRight, Link2, Zap, BarChart, Mail, Shield, Droplets, LineChart, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function LandingPage() {
@@ -203,6 +203,201 @@ export default function LandingPage() {
                     </div>
                   </motion.div>
                 </motion.div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section id="how-it-works" className="py-20 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                viewport={{ once: true }}
+              >
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">How LinkDripAI Works</h2>
+                <p className="text-lg text-gray-600">
+                  A simple three-step process to transform your link building strategy
+                </p>
+              </motion.div>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto">
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-8 shadow-md relative"
+              >
+                <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xl">1</div>
+                <div className="mb-6 h-14 flex items-center">
+                  <Droplets className="h-12 w-12 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Daily Fresh Drips</h3>
+                <p className="text-gray-600">
+                  Our AI constantly scans the web for high-quality backlink opportunities that match your website's niche and content, delivering fresh prospects daily.
+                </p>
+              </motion.div>
+              
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-8 shadow-md relative mt-8 md:mt-0"
+              >
+                <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xl">2</div>
+                <div className="mb-6 h-14 flex items-center">
+                  <Check className="h-12 w-12 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Select Opportunities</h3>
+                <p className="text-gray-600">
+                  Review detailed metrics for each opportunity including domain authority, relevance score, and contact information. Use Splashes for instant access to more opportunities.
+                </p>
+              </motion.div>
+              
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-8 shadow-md relative mt-8 md:mt-0"
+              >
+                <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xl">3</div>
+                <div className="mb-6 h-14 flex items-center">
+                  <Mail className="h-12 w-12 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">AI-Powered Outreach</h3>
+                <p className="text-gray-600">
+                  Use our AI to generate personalized outreach emails designed to maximize response rates, then track and manage your entire campaign from within the platform.
+                </p>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="py-20 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                viewport={{ once: true }}
+              >
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Powerful Features</h2>
+                <p className="text-lg text-gray-600">
+                  Everything you need to discover and secure quality backlinks
+                </p>
+              </motion.div>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {/* Feature 1 */}
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-8 shadow-md group hover:shadow-lg transition-all duration-300 border border-gray-100"
+              >
+                <div className="w-14 h-14 rounded-lg bg-blue-50 flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors">
+                  <Droplets className="h-7 w-7 text-blue-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Daily Drips</h3>
+                <p className="text-gray-600">
+                  Fresh backlink opportunities delivered to your dashboard daily, tailored specifically to your website niche.
+                </p>
+              </motion.div>
+              
+              {/* Feature 2 */}
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-8 shadow-md group hover:shadow-lg transition-all duration-300 border border-gray-100"
+              >
+                <div className="w-14 h-14 rounded-lg bg-green-50 flex items-center justify-center mb-6 group-hover:bg-green-100 transition-colors">
+                  <Zap className="h-7 w-7 text-green-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Splash Feature</h3>
+                <p className="text-gray-600">
+                  Get immediate access to more high-quality opportunities when you need them with our on-demand Splash feature.
+                </p>
+              </motion.div>
+              
+              {/* Feature 3 */}
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-8 shadow-md group hover:shadow-lg transition-all duration-300 border border-gray-100"
+              >
+                <div className="w-14 h-14 rounded-lg bg-purple-50 flex items-center justify-center mb-6 group-hover:bg-purple-100 transition-colors">
+                  <BarChart className="h-7 w-7 text-purple-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Advanced Metrics</h3>
+                <p className="text-gray-600">
+                  Comprehensive domain metrics including authority scores, spam detection, and relevance scoring for each opportunity.
+                </p>
+              </motion.div>
+              
+              {/* Feature 4 */}
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-8 shadow-md group hover:shadow-lg transition-all duration-300 border border-gray-100"
+              >
+                <div className="w-14 h-14 rounded-lg bg-amber-50 flex items-center justify-center mb-6 group-hover:bg-amber-100 transition-colors">
+                  <Mail className="h-7 w-7 text-amber-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">AI Email Generator</h3>
+                <p className="text-gray-600">
+                  Create personalized outreach emails with our AI writer that crafts compelling messages based on prospect details.
+                </p>
+              </motion.div>
+              
+              {/* Feature 5 */}
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-8 shadow-md group hover:shadow-lg transition-all duration-300 border border-gray-100"
+              >
+                <div className="w-14 h-14 rounded-lg bg-red-50 flex items-center justify-center mb-6 group-hover:bg-red-100 transition-colors">
+                  <LineChart className="h-7 w-7 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Campaign Analytics</h3>
+                <p className="text-gray-600">
+                  Track your outreach performance with detailed analytics on open rates, response rates, and backlinks secured.
+                </p>
+              </motion.div>
+              
+              {/* Feature 6 */}
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-8 shadow-md group hover:shadow-lg transition-all duration-300 border border-gray-100"
+              >
+                <div className="w-14 h-14 rounded-lg bg-teal-50 flex items-center justify-center mb-6 group-hover:bg-teal-100 transition-colors">
+                  <Globe className="h-7 w-7 text-teal-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Multi-Site Support</h3>
+                <p className="text-gray-600">
+                  Manage backlink campaigns for multiple websites from a single dashboard with custom preferences for each site.
+                </p>
               </motion.div>
             </div>
           </div>
