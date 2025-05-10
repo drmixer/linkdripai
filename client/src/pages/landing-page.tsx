@@ -462,7 +462,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
-                      <span className="text-sm text-gray-600">5 daily AI-matched opportunities</span>
+                      <span className="text-sm text-gray-600">3-5 drips/day</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
@@ -474,7 +474,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
-                      <span className="text-sm text-gray-600">1 Splash for instant opportunities</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">1 Splash</span> total</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
@@ -531,7 +531,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
-                      <span className="text-sm text-gray-600"><span className="font-medium">10 opportunities</span>/day</span>
+                      <span className="text-sm text-gray-600">3-5 drips/day</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -543,7 +543,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
-                      <span className="text-sm text-gray-600"><span className="font-medium">1 Splash</span> for instant opportunities</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">1 Splash</span>/month</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
