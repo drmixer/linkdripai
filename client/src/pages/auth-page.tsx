@@ -223,17 +223,17 @@ export default function AuthPage() {
                     )}
                     {selectedPlan === "Starter" && (
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800">
-                        $39/month
+                        $9/month
                       </span>
                     )}
                     {selectedPlan === "Grow" && (
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-200 text-purple-800">
-                        $69/month
+                        $19/month
                       </span>
                     )}
                     {selectedPlan === "Pro" && (
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-indigo-200 text-indigo-800">
-                        $129/month
+                        $39/month
                       </span>
                     )}
                   </div>
@@ -241,36 +241,37 @@ export default function AuthPage() {
                   <div className="space-y-1 text-sm text-blue-700">
                     {selectedPlan === "Free Trial" && (
                       <>
-                        <p>• 5 opportunities per day</p>
-                        <p>• 10 total credits</p>
-                        <p>• Basic AI email templates</p>
+                        <p>• 3-5 drips per day</p>
+                        <p>• 1 Splash per month</p>
+                        <p>• 1 website</p>
+                        <p>• Basic filters and analytics</p>
                         <p className="mt-2 font-medium text-blue-800">Free for 7 days, no credit card required</p>
                       </>
                     )}
                     {selectedPlan === "Starter" && (
                       <>
-                        <p>• 10 opportunities per day</p>
-                        <p>• 50 credits per month</p>
+                        <p>• 3-5 drips per day</p>
+                        <p>• 1 Splash per month</p>
                         <p>• 1 website</p>
-                        <p>• Advanced AI email templates</p>
+                        <p>• Basic filters and analytics</p>
                         <p className="mt-2 font-medium text-green-800">Perfect for individual bloggers and content creators</p>
                       </>
                     )}
                     {selectedPlan === "Grow" && (
                       <>
-                        <p>• 20 opportunities per day</p>
-                        <p>• 150 credits per month</p>
+                        <p>• 7-10 drips per day</p>
+                        <p>• 3 Splashes per month</p>
                         <p>• 2 websites</p>
-                        <p>• Priority support</p>
+                        <p>• Advanced filters and analytics</p>
                         <p className="mt-2 font-medium text-purple-800">Ideal for growing businesses and small agencies</p>
                       </>
                     )}
                     {selectedPlan === "Pro" && (
                       <>
-                        <p>• 30 opportunities per day</p>
-                        <p>• 300 credits per month</p>
+                        <p>• 10-15 drips per day</p>
+                        <p>• 7 Splashes per month</p>
                         <p>• 5 websites</p>
-                        <p>• Premium analytics and reporting</p>
+                        <p>• Full filters and analytics</p>
                         <p className="mt-2 font-medium text-indigo-800">Best for agencies and professional SEO teams</p>
                       </>
                     )}
@@ -449,7 +450,7 @@ export default function AuthPage() {
           </div>
 
           <div className="bg-white p-4 rounded-lg shadow-sm">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Plans starting at $39/month</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Plans starting at $9/month</h3>
             <p className="text-gray-600 mb-4">Choose the right plan for your link building needs with flexible options to scale.</p>
             <div className="flex space-x-2">
               <div className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium">Free Trial</div>
