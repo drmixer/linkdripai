@@ -1,7 +1,7 @@
 import Layout from "@/components/layout";
 import OpportunityCard from "@/components/opportunity-card";
 import EmailGenerator from "@/components/email-generator";
-import { SplashButton } from "@/components/splash-button";
+import SplashButton from "@/components/splash-button";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -247,8 +247,7 @@ export default function Dashboard() {
         
         {/* Splash Button */}
         <SplashButton 
-          buttonText="Get Fresh Opportunities"
-          onSuccess={() => {
+          onSuccess={(data) => {
             toast({
               title: "New opportunities added!",
               description: "New AI-matched opportunities have been added to your dashboard.",
@@ -257,6 +256,7 @@ export default function Dashboard() {
             dataRefreshNeeded.current = true;
             queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
           }}
+          className="px-4"
         />
       </div>
       

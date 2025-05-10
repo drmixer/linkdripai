@@ -97,7 +97,7 @@ export default function SplashButton({
       
       <BuySplashesDialog 
         open={showBuyDialog} 
-        onOpenChange={setShowBuyDialog} 
+        onOpenChange={(open) => setShowBuyDialog(open)} 
       />
     </>
   );

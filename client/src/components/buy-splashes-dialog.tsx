@@ -19,16 +19,21 @@ import { cn } from "@/lib/utils";
 interface BuySplashesDialogProps {
   trigger?: React.ReactNode;
   defaultOpen?: boolean;
+  open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
 export default function BuySplashesDialog({
   trigger,
   defaultOpen = false,
+  open: controlledOpen,
   onOpenChange,
 }: BuySplashesDialogProps) {
   const { toast } = useToast();
-  const [open, setOpen] = useState(defaultOpen);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  
+  // If open prop is provided, use it (controlled component), otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
   const [selectedSplashes, setSelectedSplashes] = useState<string>("3");
 
   // Splash packages
@@ -64,7 +69,11 @@ export default function BuySplashesDialog({
   });
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    // Only update internal state if we're not controlled
+    if (controlledOpen === undefined) {
+      setUncontrolledOpen(newOpen);
+    }
+    
     if (onOpenChange) {
       onOpenChange(newOpen);
     }
