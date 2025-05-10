@@ -638,15 +638,15 @@ export default function Onboarding() {
                 </div>
                 
                 <div className="bg-primary-50 border border-primary-100 rounded-lg p-4">
-                  <h3 className="font-medium text-primary-800 mb-2">Using Your Credits</h3>
+                  <h3 className="font-medium text-primary-800 mb-2">Your Plan Benefits</h3>
                   <p className="text-sm text-gray-600 mb-2">
-                    Each opportunity requires 1 credit to unlock contact details. Your {user?.subscription || "Free Trial"} plan includes:
+                    All opportunities and contact details are now unlocked by default. Your {user?.subscription || "Free Trial"} plan includes:
                   </p>
                   <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
                     <li>{getDailyOpportunities()} opportunities per day</li>
-                    <li>{getMonthlyCredits()} credits per month</li>
+                    <li>{getMonthlySplashes()} Splashes per month</li>
                     <li>Unlimited AI-generated emails</li>
-                    <li>Unused credits roll over for 1 month</li>
+                    <li>Splashes reset each billing cycle</li>
                   </ul>
                 </div>
                 
@@ -693,8 +693,8 @@ export default function Onboarding() {
                       <div className="text-sm text-gray-500">Daily Opportunities</div>
                     </div>
                     <div className="border rounded-md p-3 bg-white">
-                      <div className="text-2xl font-bold text-primary-600 mb-1">{getMonthlyCredits()}</div>
-                      <div className="text-sm text-gray-500">Monthly Credits</div>
+                      <div className="text-2xl font-bold text-primary-600 mb-1">{getMonthlySplashes()}</div>
+                      <div className="text-sm text-gray-500">Monthly Splashes</div>
                     </div>
                   </div>
                   
@@ -704,7 +704,7 @@ export default function Onboarding() {
                 </div>
                 
                 <Button 
-                  onClick={finishOnboarding}
+                  onClick={() => navigate("/dashboard")}
                   className="w-full"
                   disabled={isLoading}
                 >

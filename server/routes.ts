@@ -337,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      if (!user.splashesallowed || user.splashesused >= user.splashesallowed) {
+      if (!user.splashesAllowed || user.splashesUsed >= user.splashesAllowed) {
         return res.status(400).json({ 
           message: "No Splashes available. Upgrade your plan or wait until next billing cycle." 
         });
@@ -353,7 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Increment the user's splash usage count
       const [updatedUser] = await db.update(schema.users)
-        .set({ splashesused: (user.splashesused || 0) + 1 })
+        .set({ splashesUsed: (user.splashesUsed || 0) + 1 })
         .where(eq(schema.users.id, user.id))
         .returning();
       

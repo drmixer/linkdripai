@@ -239,11 +239,10 @@ export default function Dashboard() {
   
   const filteredOpportunities = filterOpportunities(opportunities);
   // Calculate splashes based on stats or fall back to user data
-  // The database columns are lowercase, so we need to access them with the correct case
   const splashesAvailable = stats?.splashes?.available || 
-    (user ? (user.splashesallowed || 0) - (user.splashesused || 0) : 0);
+    (user ? (user.splashesAllowed || 0) - (user.splashesUsed || 0) : 0);
   const splashesTotal = stats?.splashes?.total || 
-    (user ? user.splashesallowed || 0 : 0);
+    (user ? user.splashesAllowed || 0 : 0);
 
   return (
     <Layout title="Daily Link Opportunities">
