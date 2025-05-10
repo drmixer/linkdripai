@@ -58,7 +58,8 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUserCredits(userId: number, credits: number): Promise<User>;
+  updateUserSplashes(userId: number, splashesUsed: number): Promise<User>;
+  resetMonthlySplashes(userId: number): Promise<User>;
   getUserStats(userId: number): Promise<Stats>;
   
   // Onboarding methods
@@ -114,7 +115,7 @@ export class MemStorage implements IStorage {
   }
 
   private initializeSampleData() {
-    // Create a test user with credits
+    // Create a test user with splashes
     const testUser: User = {
       id: 1,
       username: "demo",
@@ -123,9 +124,11 @@ export class MemStorage implements IStorage {
       lastName: "User",
       email: "demo@linkdripai.com",
       subscription: "Grow",
-      credits: 45,
-      totalCredits: 150,
-      dailyOpportunitiesLimit: 20,
+      splashesAllowed: 3,
+      splashesUsed: 1,
+      lastSplashReset: new Date(),
+      billingAnniversary: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      dailyOpportunitiesLimit: 10,
       createdAt: new Date(),
       websites: [
         {
@@ -259,20 +262,26 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
+    const now = new Date();
+    const billingAnniversary = new Date(now);
+    billingAnniversary.setMonth(billingAnniversary.getMonth() + 1);
+    
     const user: User = { 
       ...insertUser,
       id,
       subscription: "Free Trial",
-      credits: 10,
-      totalCredits: 10,
+      splashesAllowed: 1,
+      splashesUsed: 0,
+      lastSplashReset: now,
+      billingAnniversary,
       dailyOpportunitiesLimit: 5,
-      createdAt: new Date(),
+      createdAt: now,
     };
     this.users.set(id, user);
     return user;
   }
 
-  async updateUserCredits(userId: number, credits: number): Promise<User> {
+  async updateUserSplashes(userId: number, splashesUsed: number): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) {
       throw new Error("User not found");
@@ -280,7 +289,47 @@ export class MemStorage implements IStorage {
     
     const updatedUser = {
       ...user,
-      credits,
+      splashesUsed,
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async resetMonthlySplashes(userId: number): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Reset Splashes based on subscription
+    let splashesAllowed = 1; // Default for Free Trial
+    
+    switch (user.subscription) {
+      case 'Pro':
+        splashesAllowed = 7;
+        break;
+      case 'Grow':
+        splashesAllowed = 3;
+        break;
+      case 'Starter':
+        splashesAllowed = 1;
+        break;
+      default:
+        splashesAllowed = 1;
+        break;
+    }
+    
+    const now = new Date();
+    const billingAnniversary = new Date(now);
+    billingAnniversary.setMonth(billingAnniversary.getMonth() + 1);
+    
+    const updatedUser = {
+      ...user,
+      splashesUsed: 0,
+      splashesAllowed,
+      lastSplashReset: now,
+      billingAnniversary
     };
     
     this.users.set(userId, updatedUser);
@@ -324,14 +373,18 @@ export class MemStorage implements IStorage {
     
     const averageDA = backlinks.length > 0 ? Math.round(totalDA / backlinks.length) : 0;
     
+    // Calculate next reset date (billing anniversary or last reset + 30 days)
+    const nextReset = user.billingAnniversary || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    
     return {
       dailyOpportunities: {
         used: unlockedToday,
-        total: user.dailyOpportunitiesLimit,
+        total: user.dailyOpportunitiesLimit || 5,
       },
-      credits: {
-        available: user.credits,
-        total: user.totalCredits,
+      splashes: {
+        available: (user.splashesAllowed || 1) - (user.splashesUsed || 0),
+        total: user.splashesAllowed || 1,
+        nextReset,
       },
       emailsSent: {
         total: userEmails.length,
