@@ -403,7 +403,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Websites must be an array" });
       }
       
+      // First save to the user's websites property for backward compatibility
       const updatedUser = await storage.updateUserWebsites(req.user!.id, websites);
+      
+      // Then also save each website to the websites table
+      for (const website of websites) {
+        // Add website to the websites table
+        await db.insert(schema.websites)
+          .values({
+            userId: req.user!.id,
+            url: website.url,
+            name: website.url.split('.')[0], // Use domain name as the website name
+            description: website.description || '',
+            niche: website.niche,
+            createdAt: new Date(),
+          })
+          .onConflictDoNothing(); // Avoid duplicates
+      }
+      
       res.json(updatedUser);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -453,6 +470,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(websites);
     } catch (error: any) {
       console.error("Error fetching user websites:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Handle website submissions from onboarding
+  app.post("/api/user/websites", isAuthenticated, async (req, res) => {
+    try {
+      const { websites } = req.body;
+      
+      if (!Array.isArray(websites)) {
+        return res.status(400).json({ message: "Websites must be an array" });
+      }
+      
+      // Save to user's websites property for compatibility
+      await storage.updateUserWebsites(req.user!.id, websites);
+      
+      // Then save each website to the websites table
+      for (const website of websites) {
+        // Process preferences if available
+        const preferences = website.preferences || {};
+        
+        // Add website to the websites table
+        await db.insert(schema.websites)
+          .values({
+            userId: req.user!.id,
+            url: website.url,
+            name: website.url.split('.')[0].replace(/^www\./, ''), // Use domain name as the website name
+            description: website.description || '',
+            niche: website.niche,
+            createdAt: new Date(),
+          })
+          .onConflictDoNothing(); // Avoid duplicates
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error saving user websites:", error);
       res.status(500).json({ message: error.message });
     }
   });

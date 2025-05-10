@@ -257,7 +257,7 @@ export default function Onboarding() {
       });
       
       // Mark onboarding as complete - ensure the API called successfully
-      const completeResponse = await fetch("/api/user/onboarding/complete", {
+      const completeResponse = await fetch("/api/onboarding/complete", {
         method: "POST",
       });
       
