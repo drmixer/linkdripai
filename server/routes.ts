@@ -443,8 +443,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Website management endpoints
   
-  // Website management endpoints
-  
   // Get user's websites
   app.get("/api/websites", isAuthenticated, async (req, res) => {
     try {
@@ -497,7 +495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: name,
           url: url,
           niche: niche,
-          addedAt: new Date(),
+          createdAt: new Date(),
         })
         .returning();
       

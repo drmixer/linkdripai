@@ -79,7 +79,7 @@ export default function Header() {
           <DropdownMenuContent align="start" className="w-72">
             <DropdownMenuLabel>Select Website</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {websites.map((site) => (
+            {websites.map((site: any) => (
               <DropdownMenuItem 
                 key={site.id} 
                 onClick={() => handleWebsiteChange(site.url)}
