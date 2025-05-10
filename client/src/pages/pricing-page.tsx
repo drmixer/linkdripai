@@ -18,57 +18,59 @@ export default function PricingPage() {
       description: "Try LinkDripAI free for 7 days",
       price: "0",
       features: [
-        "5 daily opportunities",
-        "Unlock all opportunity details",
-        "1 Splash per month",
+        "5 daily AI-matched opportunities",
+        "Open access to all opportunity details",
+        "1 Splash for instant opportunities",
         "1 website",
-        "Basic analytics",
-        "Email generation"
+        "Basic analytics dashboard",
+        "AI email generation"
       ]
     },
     {
       id: "starter",
       name: "Starter",
-      description: "Perfect for solo site owners",
+      description: "Perfect for individual bloggers and small websites",
       price: pricingInterval === "monthly" ? "39" : "31",
       features: [
-        "10 daily opportunities",
-        "Unlock all opportunity details",
+        "10 daily AI-matched opportunities",
+        "Open access to all opportunity details",
         "1 Splash per month",
         "1 website",
-        "Full analytics",
-        "Email tracking",
-        "AI-powered match reasoning"
+        "Full analytics dashboard",
+        "Email tracking & templates",
+        "Detailed match reasoning"
       ]
     },
     {
       id: "grow",
       name: "Grow",
-      description: "For growing businesses",
+      description: "Ideal for growing websites and small agencies",
       price: pricingInterval === "monthly" ? "69" : "55",
       features: [
-        "20 daily opportunities",
-        "Unlock all opportunity details",
+        "20 daily AI-matched opportunities",
+        "Open access to all opportunity details",
         "3 Splashes per month",
         "2 websites",
-        "Advanced analytics",
-        "Email automation",
-        "Multi-site dashboard",
-        "AI-powered match reasoning"
-      ]
+        "Advanced analytics & reporting",
+        "Email automation sequences",
+        "1 competitor tracking",
+        "Advanced AI match reasoning"
+      ],
+      popular: true
     },
     {
       id: "pro",
       name: "Pro",
-      description: "For agencies and serious link builders",
+      description: "For agencies and multiple website owners",
       price: pricingInterval === "monthly" ? "129" : "103",
       features: [
-        "30 daily opportunities",
-        "Unlock all opportunity details",
+        "30 daily AI-matched opportunities",
+        "Open access to all opportunity details",
         "5 Splashes per month",
         "5 websites",
-        "Advanced AI recommendations",
-        "Priority support",
+        "3 competitor tracking",
+        "Premium AI features",
+        "Priority support with dedicated account manager",
         "White-label reporting"
       ]
     }
@@ -101,8 +103,11 @@ export default function PricingPage() {
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Choose the Right Plan for Your Link Building Needs
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            All plans include our AI-powered link prospecting, email generation, and outreach tools.
+          <p className="text-xl text-gray-600 mb-4">
+            All plans include <span className="font-medium text-primary">open access to opportunity details</span> - no credits needed!
+          </p>
+          <p className="text-lg text-gray-600 mb-8">
+            Get AI-powered link prospecting, domain metrics, email generation, and use Splashes for immediate opportunities.
           </p>
 
           {/* Pricing Toggle */}
@@ -123,13 +128,18 @@ export default function PricingPage() {
         </div>
 
         {/* Plan Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <div id="plan-selection" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {plans.map((plan) => (
             <Card 
               key={plan.id} 
-              className={`border-2 ${selectedPlan === plan.name ? "border-primary" : "border-gray-200"} transition-all hover:shadow-md`}
+              className={`border-2 ${selectedPlan === plan.name ? "border-primary" : "border-gray-200"} transition-all hover:shadow-md relative`}
               onClick={() => setSelectedPlan(plan.name as "Free Trial" | "Starter" | "Grow" | "Pro")}
             >
+              {plan.popular && (
+                <div className="absolute top-0 right-0 bg-primary text-white px-3 py-1 text-xs font-medium rounded-bl-md">
+                  Most Popular
+                </div>
+              )}
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
@@ -182,11 +192,19 @@ export default function PricingPage() {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-medium mb-2">What is a Splash?</h3>
-              <p className="text-gray-600">A Splash is a powerful feature that lets you get fresh AI-matched opportunities immediately. Each plan includes a monthly Splash allowance that resets with your billing cycle.</p>
+              <p className="text-gray-600">A Splash is a powerful feature that lets you get fresh AI-matched opportunities immediately when you need them. Each plan includes a monthly Splash allowance that resets with your billing cycle. Splashes never expire, so you can save them for when you really need that extra boost.</p>
             </div>
             <div>
               <h3 className="text-lg font-medium mb-2">Are opportunities really all unlocked by default?</h3>
-              <p className="text-gray-600">Yes! With our new system, all opportunity details are unlocked from the start - no credits needed. See full domain metrics, contact information, and match reasoning for every opportunity.</p>
+              <p className="text-gray-600">Yes! With our new open-access model, all opportunity details are unlocked from the start - no credits needed. See full domain metrics, contact information, and match reasoning for every opportunity in your daily feed without any additional cost.</p>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium mb-2">How does the AI match opportunities to my sites?</h3>
+              <p className="text-gray-600">Our AI analyzes your website's content, niche, and existing backlinks to find highly relevant opportunities with the best potential for success. Each opportunity comes with detailed match reasoning that explains exactly why it was selected for you.</p>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium mb-2">What SEO metrics are provided?</h3>
+              <p className="text-gray-600">All opportunities include Moz-powered metrics like Domain Authority, Page Authority, spam score, and linking data to help you evaluate each opportunity's value. Higher tier plans include more advanced metrics and competitor tracking.</p>
             </div>
             <div>
               <h3 className="text-lg font-medium mb-2">Can I change plans later?</h3>
@@ -202,13 +220,21 @@ export default function PricingPage() {
         {/* CTA Section */}
         <div className="text-center mt-16">
           <h2 className="text-2xl font-bold mb-4">Ready to supercharge your link building?</h2>
+          <p className="text-lg text-gray-600 mb-3">Experience our new open-access model with unlimited opportunity details.</p>
           <p className="text-lg text-gray-600 mb-6">Get started with a risk-free 7-day trial. No credit card required.</p>
-          <Link href="/auth?tab=register&plan=Free Trial">
-            <Button size="lg" className="px-8">
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/auth?tab=register&plan=Free Trial">
+              <Button size="lg" className="px-8">
+                Start Your Free Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="#plan-selection">
+              <Button size="lg" variant="outline" className="px-8">
+                Compare Plans
+              </Button>
+            </Link>
+          </div>
         </div>
       </main>
 
