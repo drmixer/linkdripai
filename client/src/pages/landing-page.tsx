@@ -692,32 +692,32 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-24 bg-gradient-to-br from-primary-700 to-primary-900 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute right-0 bottom-0 w-80 h-80 rounded-full bg-white/30 -mr-20 -mb-20"></div>
-            <div className="absolute left-[10%] top-[20%] w-64 h-64 rounded-full bg-white/20"></div>
-            <div className="absolute right-[20%] top-[15%] w-36 h-36 rounded-full bg-white/10"></div>
+        <section className="py-24 bg-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute right-0 bottom-0 w-80 h-80 rounded-full bg-primary/30 -mr-20 -mb-20"></div>
+            <div className="absolute left-[10%] top-[20%] w-64 h-64 rounded-full bg-primary/20"></div>
+            <div className="absolute right-[20%] top-[15%] w-36 h-36 rounded-full bg-primary/10"></div>
           </div>
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready to supercharge your link building?</h2>
-              <p className="text-xl text-white mb-10 max-w-3xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-primary mb-6">Ready to supercharge your link building?</h2>
+              <p className="text-xl text-primary-600 mb-10 max-w-3xl mx-auto">
                 Join thousands of satisfied users who are building high-quality backlinks faster and more efficiently than ever before.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-6">
                 <Link href="/auth?tab=register&plan=Free+Trial">
-                  <Button size="lg" variant="secondary" className="px-10 py-6 text-primary font-medium shadow-xl hover:shadow-2xl transition-all duration-200 text-lg">
+                  <Button size="lg" variant="default" className="px-10 py-6 text-white font-medium shadow-xl hover:shadow-2xl transition-all duration-200 text-lg">
                     Start Your Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="/auth?tab=login">
-                  <Button size="lg" variant="outline" className="px-10 py-6 bg-transparent text-white border-white/30 hover:bg-white/10 transition-all duration-200 text-lg">
+                  <Button size="lg" variant="outline" className="px-10 py-6 bg-transparent text-primary border-primary/30 hover:bg-primary/5 transition-all duration-200 text-lg">
                     Log In
                   </Button>
                 </Link>
               </div>
-              <p className="mt-6 text-sm text-white font-medium">No credit card required. 7-day free trial.</p>
+              <p className="mt-6 text-sm text-primary-600 font-medium">No credit card required. 7-day free trial.</p>
             </div>
           </div>
         </section>
