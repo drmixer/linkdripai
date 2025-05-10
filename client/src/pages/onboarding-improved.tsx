@@ -699,19 +699,19 @@ export default function Onboarding() {
                             } else if (actualPlan === "Starter") {
                               return (
                                 <div className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
-                                  $39/month
+                                  $9/month
                                 </div>
                               );
                             } else if (actualPlan === "Grow") {
                               return (
                                 <div className="px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
-                                  $69/month
+                                  $19/month
                                 </div>
                               );
                             } else if (actualPlan === "Pro") {
                               return (
                                 <div className="px-3 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">
-                                  $129/month
+                                  $39/month
                                 </div>
                               );
                             }
@@ -727,10 +727,10 @@ export default function Onboarding() {
                                 // Get actual plan from localStorage or state
                                 const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
                                 
-                                if (actualPlan === "Free Trial") return "5";
-                                if (actualPlan === "Starter") return "10";
-                                if (actualPlan === "Grow") return "20";
-                                if (actualPlan === "Pro") return "30";
+                                if (actualPlan === "Free Trial") return "3-5";
+                                if (actualPlan === "Starter") return "3-5";
+                                if (actualPlan === "Grow") return "7-10";
+                                if (actualPlan === "Pro") return "10-15";
                                 return "5"; // Default
                               })()}
                               <span className="text-sm font-normal text-gray-500"> / day</span>
