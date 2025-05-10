@@ -6,10 +6,10 @@ import {
   Settings, 
   HelpCircle, 
   LogOut, 
-  CreditCardIcon,
+  Droplet,
   Plus,
 } from "lucide-react";
-import BuyCreditsDialog from "./buy-credits-dialog";
+import BuySplashesDialog from "./buy-splashes-dialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -69,7 +69,7 @@ export default function Header() {
   };
 
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : 'U';
-  const credits = user?.credits || 0;
+  const splashesAvailable = user?.splashesAllowed ? (user.splashesAllowed - (user.splashesUsed || 0)) : 0;
   const planName = user?.subscription || 'Free Trial';
 
   return (
@@ -122,14 +122,14 @@ export default function Header() {
 
       {/* Right side actions */}
       <div className="flex items-center space-x-3">
-        {/* Credits */}
+        {/* Splashes */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="hidden md:flex items-center px-3 py-1.5 bg-gray-100 rounded-lg">
-                <CreditCardIcon className="h-4 w-4 text-gray-500 mr-1.5" />
-                <span className="text-sm font-medium text-gray-900">{credits} credits</span>
-                <BuyCreditsDialog
+              <div className="hidden md:flex items-center px-3 py-1.5 bg-primary-50 rounded-lg">
+                <Droplet className="h-4 w-4 text-blue-500 mr-1.5" />
+                <span className="text-sm font-medium text-gray-900">{splashesAvailable} splashes</span>
+                <BuySplashesDialog
                   trigger={
                     <Button variant="link" className="h-auto p-0 ml-1.5 text-primary-600 text-xs">
                       Buy
@@ -139,7 +139,7 @@ export default function Header() {
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Credits are used to unlock opportunities</p>
+              <p>Splashes give you immediate access to more fresh opportunities</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
