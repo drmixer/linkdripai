@@ -500,15 +500,11 @@ export default function LandingPage() {
               </Card>
 
               {/* Starter Plan */}
-              <Card className="relative border-primary rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 scale-105 z-10 bg-white">
-                <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary to-primary-light"></div>
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-primary to-primary-light text-white text-xs px-4 py-1 rounded-full font-medium">
-                  Most Popular
-                </div>
+              <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 bg-white">
+                <div className="absolute inset-x-0 top-0 h-1.5 bg-primary"></div>
                 <CardContent className="pt-8">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-gray-900">Starter</h3>
-                    <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">Best Value</span>
                   </div>
                   <p className="text-gray-500 mb-6 text-sm">Perfect for small businesses and bloggers</p>
                   <div className="mb-8">
@@ -573,10 +569,16 @@ export default function LandingPage() {
               </Card>
 
               {/* Grow Plan */}
-              <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
-                <div className="absolute inset-x-0 top-0 h-2 bg-blue-400"></div>
+              <Card className="relative border-blue-500 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 scale-105 z-10 bg-white">
+                <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 to-blue-400"></div>
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-500 to-blue-400 text-white text-xs px-4 py-1 rounded-full font-medium">
+                  Most Popular
+                </div>
                 <CardContent className="pt-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Grow</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Grow</h3>
+                    <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Best Value</span>
+                  </div>
                   <p className="text-gray-500 mb-6 text-sm">For growing businesses with active link building</p>
                   <div className="mb-6">
                     <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "19" : "15"}</span>
@@ -625,7 +627,7 @@ export default function LandingPage() {
                 </CardContent>
                 <CardFooter className="px-6 pb-6 pt-0">
                   <Link href="/auth?tab=register&plan=Grow" className="w-full">
-                    <Button variant="outline" className="w-full h-11 font-medium">Get Started</Button>
+                    <Button className="w-full h-11 font-medium bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 shadow-sm">Get Started</Button>
                   </Link>
                 </CardFooter>
               </Card>
