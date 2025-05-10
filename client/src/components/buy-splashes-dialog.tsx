@@ -94,7 +94,7 @@ export default function BuySplashesDialog({
         <DialogHeader>
           <DialogTitle>Purchase Additional Splashes</DialogTitle>
           <DialogDescription>
-            Splashes give you immediate access to more fresh opportunities beyond your daily drips.
+            Splashes give you immediate access to more fresh opportunities beyond your daily drips. Each splash triggers our AI to find relevant backlink opportunities for your website right away.
           </DialogDescription>
         </DialogHeader>
         

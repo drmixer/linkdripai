@@ -90,7 +90,8 @@ export default function SplashButton({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Use a Splash to get more opportunities immediately</p>
+            <p>Use a Splash to find new backlink opportunities immediately</p>
+            <p className="text-xs text-gray-400 mt-1">You can get more splashes from your dashboard</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -2,6 +2,7 @@ import Layout from "@/components/layout";
 import OpportunityCard from "@/components/opportunity-card";
 import EmailGenerator from "@/components/email-generator";
 import SplashButton from "@/components/splash-button";
+import BuySplashesDialog from "@/components/buy-splashes-dialog";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -70,6 +71,7 @@ export default function Dashboard() {
   const [fitScoreRange, setFitScoreRange] = useState<[number, number]>([50, 100]);
   const [searchQuery, setSearchQuery] = useState("");
   const [hideFilters, setHideFilters] = useState(true);
+  const [showBuySplashesDialog, setShowBuySplashesDialog] = useState(false);
   
   // Use a ref to track when we need to refresh the data
   const dataRefreshNeeded = useRef(true);
@@ -266,19 +268,27 @@ export default function Dashboard() {
       
       {/* Stats Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="p-4">
+        <Card className="p-4 group cursor-pointer hover:border-blue-300 transition-all" onClick={() => setShowBuySplashesDialog(true)}>
           <CardContent className="p-0">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Splashes Available</h3>
                 <p className="text-2xl font-bold mt-1">{splashesAvailable} / {splashesTotal}</p>
+                <p className="text-xs text-blue-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Click to get more splashes
+                </p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                 <Droplet className="h-6 w-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
         </Card>
+        
+        <BuySplashesDialog
+          open={showBuySplashesDialog}
+          onOpenChange={setShowBuySplashesDialog}
+        />
         
         <Card className="p-4">
           <CardContent className="p-0">
