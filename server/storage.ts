@@ -840,9 +840,10 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.insert(users).values({
       ...insertUser,
       subscription: "Free Trial",
-      credits: 10,
-      totalCredits: 10,
       dailyOpportunitiesLimit: 5,
+      splashesAllowed: 1,
+      splashesUsed: 0,
+      lastSplashReset: new Date(),
     }).returning();
     return user;
   }
