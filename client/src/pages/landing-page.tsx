@@ -462,25 +462,31 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
-                      <span className="text-sm text-gray-600">5 opportunities/day</span>
+                      <span className="text-sm text-gray-600">5 daily AI-matched opportunities</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
-                      <span className="text-sm text-gray-600">10 total credits</span>
+                      <span className="text-sm text-gray-600">Open access to all opportunity details</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
-                      <span className="text-sm text-gray-600">AI email generation</span>
+                      <span className="text-sm text-gray-600">1 Splash for instant opportunities</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
                       <span className="text-sm text-gray-600">1 website</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-gray-700" />
+                      </div>
+                      <span className="text-sm text-gray-600">AI email generation</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -535,13 +541,13 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
-                      <span className="text-sm text-gray-600"><span className="font-medium">50 credits</span>/month</span>
+                      <span className="text-sm text-gray-600">Open access to all opportunity details</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
-                      <span className="text-sm text-gray-600">1-month credit rollover</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">1 Splash</span> for instant opportunities</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -553,7 +559,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-primary" />
                       </div>
-                      <span className="text-sm text-gray-600">Free email generation</span>
+                      <span className="text-sm text-gray-600">AI email generation</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -595,13 +601,13 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-blue-500" />
                       </div>
-                      <span className="text-sm text-gray-600">150 credits/month</span>
+                      <span className="text-sm text-gray-600">Open access to all opportunity details</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-blue-500" />
                       </div>
-                      <span className="text-sm text-gray-600">1-month credit rollover</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">3 Splashes</span> for instant opportunities</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -653,19 +659,19 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-purple-500" />
                       </div>
-                      <span className="text-sm text-gray-600">300 credits/month</span>
+                      <span className="text-sm text-gray-600">Open access to all opportunity details</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-purple-500" />
                       </div>
-                      <span className="text-sm text-gray-600">1-month credit rollover</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">5 Splashes</span> for instant opportunities</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-purple-500" />
                       </div>
-                      <span className="text-sm text-gray-600">Advanced AI recommendations</span>
+                      <span className="text-sm text-gray-600">Premium AI recommendations</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
