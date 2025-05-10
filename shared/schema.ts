@@ -15,8 +15,7 @@ export const users = pgTable("users", {
   splashesAllowed: integer("splashesallowed").default(1),
   splashesUsed: integer("splashesused").default(0),
   lastSplashReset: timestamp("lastsplashreset").defaultNow(),
-  billingAnniversary: timestamp("billinganniversary").defaultNow(),
-  maxWebsites: integer("maxwebsites").default(1),
+  maxWebsites: integer("maxWebsites").default(1),
   createdAt: timestamp("createdAt").defaultNow(),
   websites: json("websites").$type<{
     url: string;
@@ -40,7 +39,6 @@ const baseInsertUserSchema = createInsertSchema(users).omit({
   splashesAllowed: true,
   splashesUsed: true,
   lastSplashReset: true,
-  billingAnniversary: true,
   maxWebsites: true,
   websites: true,
   onboardingCompleted: true,
