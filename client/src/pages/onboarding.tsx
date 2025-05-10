@@ -182,21 +182,23 @@ export default function Onboarding() {
 
   const getDailyOpportunities = () => {
     switch (selectedPlan) {
-      case 'Pro': return 30;
-      case 'Grow': return 20;
-      case 'Starter': return 10;
-      default: return 5;
+      case 'Pro': return '10-15';
+      case 'Grow': return '7-10';
+      case 'Starter': return '3-5';
+      default: return '3-5';
     }
   };
 
   const getSplashesPerMonth = () => {
     switch (selectedPlan) {
-      case 'Pro': return 5;
+      case 'Pro': return 7;
       case 'Grow': return 3;
       case 'Starter': return 1;
       default: return 1;
     }
   };
+  
+  const getMonthlySplashes = getSplashesPerMonth;
 
   const onSubscriptionSubmit = async (data: SubscriptionFormValues) => {
     try {
@@ -621,11 +623,11 @@ export default function Onboarding() {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
-                        <span className="text-sm text-gray-500">Unlock with 1 credit to reveal contact details</span>
+                        <span className="text-sm text-gray-500">All opportunities are now unlocked by default</span>
                       </div>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm" className="w-full">Save for Later</Button>
-                        <Button size="sm" className="w-full">Unlock (1 Credit)</Button>
+                        <Button size="sm" className="w-full">View Details</Button>
                       </div>
                     </div>
                     
