@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Icons } from "@/lib/icons";
 import { Check, CheckCircle, ArrowRight, Link2, Zap, BarChart, Mail, Shield, Droplets } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -69,20 +70,45 @@ export default function LandingPage() {
           
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row items-center gap-12">
-              <div className="lg:w-1/2 space-y-8">
+              <motion.div 
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+                className="lg:w-1/2 space-y-8"
+              >
                 <div>
-                  <div className="inline-flex items-center px-3 py-1 rounded-full gap-x-2 text-sm font-medium bg-primary/10 text-primary mb-4">
+                  <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                    className="inline-flex items-center px-3 py-1 rounded-full gap-x-2 text-sm font-medium bg-primary/10 text-primary mb-4"
+                  >
                     <span className="h-2 w-2 rounded-full bg-primary"></span>
                     <span>AI-Powered Backlink Prospecting</span>
-                  </div>
+                  </motion.div>
                 </div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 leading-tight">
+                <motion.h1 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 leading-tight"
+                >
                   Discover & secure <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">high-quality backlinks</span> on autopilot
-                </h1>
-                <p className="text-lg text-gray-600 max-w-2xl">
+                </motion.h1>
+                <motion.p 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="text-lg text-gray-600 max-w-2xl"
+                >
                   LinkDripAI delivers fresh backlink opportunities daily and helps you reach out with personalized AI-generated emails. Save time, increase response rates, and grow your authority.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
+                </motion.p>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                  className="flex flex-col sm:flex-row gap-4"
+                >
                   <Link href="/auth?tab=register&plan=Free+Trial">
                     <Button size="lg" className="px-8 py-6 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500 shadow-md hover:shadow-lg transition-all duration-200">
                       Start 7-Day Free Trial
@@ -94,8 +120,13 @@ export default function LandingPage() {
                       View Pricing Plans
                     </Button>
                   </a>
-                </div>
-                <div className="flex flex-col sm:flex-row items-center gap-4 text-sm text-gray-600">
+                </motion.div>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                  className="flex flex-col sm:flex-row items-center gap-4 text-sm text-gray-600"
+                >
                   <div className="flex items-center gap-1.5">
                     <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
                       <Check className="h-3 w-3 text-green-600" />
@@ -114,12 +145,22 @@ export default function LandingPage() {
                     </div>
                     <span>5 free opportunities/day</span>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
               
               {/* Hero image with floating elements */}
-              <div className="lg:w-1/2 relative">
-                <div className="relative rounded-xl overflow-hidden shadow-xl">
+              <motion.div 
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="lg:w-1/2 relative"
+              >
+                <motion.div 
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="relative rounded-xl overflow-hidden shadow-xl"
+                >
                   {/* Gradient border effect */}
                   <div className="absolute inset-0 bg-gradient-to-tr from-primary/30 via-purple-500/20 to-blue-400/30 rounded-xl p-0.5">
                     <div className="rounded-[0.7rem] overflow-hidden">
@@ -132,7 +173,12 @@ export default function LandingPage() {
                   </div>
                   
                   {/* Floating elements */}
-                  <div className="absolute -top-4 -right-4 bg-white p-3 rounded-lg shadow-lg flex items-center gap-2 border border-gray-100">
+                  <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.7 }}
+                    className="absolute -top-4 -right-4 bg-white p-3 rounded-lg shadow-lg flex items-center gap-2 border border-gray-100"
+                  >
                     <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600">
                       <ArrowRight className="h-4 w-4" />
                     </div>
@@ -140,9 +186,14 @@ export default function LandingPage() {
                       <div className="text-xs font-medium">Response Rate</div>
                       <div className="text-sm font-bold text-gray-900">+42% Increase</div>
                     </div>
-                  </div>
+                  </motion.div>
                   
-                  <div className="absolute -bottom-4 -left-4 bg-white p-3 rounded-lg shadow-lg flex items-center gap-2 border border-gray-100">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.9 }}
+                    className="absolute -bottom-4 -left-4 bg-white p-3 rounded-lg shadow-lg flex items-center gap-2 border border-gray-100"
+                  >
                     <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                       <Link2 className="h-4 w-4" />
                     </div>
@@ -150,34 +201,76 @@ export default function LandingPage() {
                       <div className="text-xs font-medium">New Backlinks</div>
                       <div className="text-sm font-bold text-gray-900">12 this week</div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-12 bg-white border-y">
+        {/* Quality > Quantity Section */}
+        <section className="py-16 bg-white border-y">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-gray-900">10,000+</div>
-                <div className="text-sm text-gray-600">Backlinks Secured</div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col items-center text-center"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                <span className="text-primary">Quality</span> &gt; <span className="text-gray-700">Quantity</span>
+              </h2>
+              <p className="text-lg text-gray-600 max-w-3xl mb-10">
+                LinkDripAI prioritizes high-quality, relevant backlink opportunities rather than overwhelming you with mediocre leads. Each opportunity is carefully vetted by our AI to ensure the perfect match for your websites.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-6 w-full max-w-4xl">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-4">
+                    <CheckCircle className="h-8 w-8 text-green-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Relevant Matches</h3>
+                  <p className="text-gray-600">
+                    Our AI identifies perfect-fit opportunities based on your website's niche and content.
+                  </p>
+                </motion.div>
+                
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+                    <BarChart className="h-8 w-8 text-blue-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">High Authority</h3>
+                  <p className="text-gray-600">
+                    We focus on domains with strong metrics that will make a real impact on your SEO.
+                  </p>
+                </motion.div>
+                
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center mb-4">
+                    <Mail className="h-8 w-8 text-purple-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Higher Response Rates</h3>
+                  <p className="text-gray-600">
+                    Better targeting and personalized outreach leads to significantly improved response rates.
+                  </p>
+                </motion.div>
               </div>
-              <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-gray-900">5,000+</div>
-                <div className="text-sm text-gray-600">Happy Users</div>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-gray-900">40%</div>
-                <div className="text-sm text-gray-600">Avg. Response Rate</div>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-gray-900">50+</div>
-                <div className="text-sm text-gray-600">DA Average</div>
-              </div>
-            </div>
+            </motion.div>
           </div>
         </section>
 
@@ -404,40 +497,79 @@ export default function LandingPage() {
           <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-100/30 rounded-full blur-3xl -z-10"></div>
           
           <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full gap-x-2 text-sm font-medium bg-primary/10 text-primary mb-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center max-w-3xl mx-auto mb-16"
+            >
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="inline-flex items-center px-4 py-1.5 rounded-full gap-x-2 text-sm font-medium bg-primary/10 text-primary mb-4"
+              >
                 <span className="h-2 w-2 rounded-full bg-primary"></span>
                 <span>Simple, Transparent Pricing</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Choose Your Perfect Plan</h2>
-              <p className="text-lg text-gray-600">
+              </motion.div>
+              <motion.h2 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
+              >
+                Choose Your Perfect Plan
+              </motion.h2>
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="text-lg text-gray-600"
+              >
                 Start with a free trial, then pick the package that works best for your backlink building needs
-              </p>
-            </div>
+              </motion.p>
+            </motion.div>
 
-            <div className="flex justify-center mb-16">
-              <div className="inline-flex items-center p-1.5 bg-white rounded-full border shadow-sm">
-                <button
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="flex justify-center mb-16"
+            >
+              <motion.div 
+                whileHover={{ boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)" }}
+                className="inline-flex items-center p-1.5 bg-white rounded-full border shadow-sm"
+              >
+                <motion.button
                   onClick={() => setPricingInterval("monthly")}
+                  whileTap={{ scale: 0.95 }}
                   className={`px-8 py-2.5 text-sm font-medium rounded-full transition-all duration-200 ${
                     pricingInterval === "monthly" ? "bg-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Monthly
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={() => setPricingInterval("annual")}
+                  whileTap={{ scale: 0.95 }}
                   className={`flex items-center px-8 py-2.5 text-sm font-medium rounded-full transition-all duration-200 ${
                     pricingInterval === "annual" ? "bg-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Annual
                   {pricingInterval !== "annual" && (
-                    <span className="ml-2 text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Save 20%</span>
+                    <motion.span 
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className="ml-2 text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full"
+                    >
+                      Save 20%
+                    </motion.span>
                   )}
-                </button>
-              </div>
-            </div>
+                </motion.button>
+              </motion.div>
+            </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
               {/* Free Trial */}
@@ -571,9 +703,6 @@ export default function LandingPage() {
               {/* Grow Plan */}
               <Card className="relative border-blue-500 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 scale-105 z-10 bg-white">
                 <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 to-blue-400"></div>
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-blue-400 text-white text-[0.7rem] px-4 py-1.5 rounded-full font-semibold shadow-md">
-                  Most Popular
-                </div>
                 <CardContent className="pt-8">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-gray-900">Grow</h3>
