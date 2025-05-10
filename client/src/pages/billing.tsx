@@ -89,10 +89,10 @@ export default function BillingPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string>(user?.subscription || 'Free Trial');
-  const [selectedCredits, setSelectedCredits] = useState<string>("1");
+  const [selectedSplashes, setSelectedSplashes] = useState<string>("1");
   const [selectedDrips, setSelectedDrips] = useState<string>("1");
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
-  const [isAddCreditsDialogOpen, setIsAddCreditsDialogOpen] = useState(false);
+  const [isAddSplashesDialogOpen, setIsAddSplashesDialogOpen] = useState(false);
   const [isAddDripsDialogOpen, setIsAddDripsDialogOpen] = useState(false);
   
   // Fetch billing information
@@ -137,24 +137,24 @@ export default function BillingPage() {
     },
   });
 
-  // Add credits mutation
-  const addCreditsMutation = useMutation({
-    mutationFn: async (credits: string) => {
-      const res = await apiRequest("POST", "/api/credits/add", { credits: parseInt(credits) });
+  // Add splashes mutation
+  const addSplashesMutation = useMutation({
+    mutationFn: async (splashes: string) => {
+      const res = await apiRequest("POST", "/api/splashes/add", { splashes: parseInt(splashes) });
       return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      setIsAddCreditsDialogOpen(false);
+      setIsAddSplashesDialogOpen(false);
       toast({
-        title: "Credits added",
-        description: `${selectedCredits} credits have been added to your account.`,
+        title: "Splashes added",
+        description: `${selectedSplashes} splashes have been added to your account.`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to add credits",
+        title: "Failed to add splashes",
         description: error.message,
         variant: "destructive",
       });
@@ -189,8 +189,8 @@ export default function BillingPage() {
     updateSubscriptionMutation.mutate(selectedPlan);
   };
 
-  const handleAddCredits = () => {
-    addCreditsMutation.mutate(selectedCredits);
+  const handleAddSplashes = () => {
+    addSplashesMutation.mutate(selectedSplashes);
   };
 
   const handleAddDrips = () => {
@@ -450,35 +450,35 @@ export default function BillingPage() {
         {/* Add-ons Tab */}
         <TabsContent value="add-ons">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Credits Card */}
+            {/* Splashes Card */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-xl flex items-center">
-                  <CreditCard className="mr-2 h-5 w-5 text-primary" />
-                  Credits
+                  <Droplets className="mr-2 h-5 w-5 text-primary" />
+                  Splashes
                 </CardTitle>
                 <CardDescription>
-                  Credits are used to unlock prospect information
+                  Splashes give you immediate extra opportunities when you need them
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-5">
                   <div>
                     <div className="flex justify-between mb-1 text-sm">
-                      <span>Credits Used: {creditsUsed} / {creditsTotal}</span>
-                      <span>{stats?.credits?.available || 0} remaining</span>
+                      <span>Splashes Used: {splashesUsed} / {splashesTotal}</span>
+                      <span>{stats?.splashes?.available || 0} remaining</span>
                     </div>
-                    <Progress value={creditsProgress} className="h-2" />
+                    <Progress value={splashesProgress} className="h-2" />
                   </div>
                   
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium mb-2">Get Additional Credits</h4>
+                    <h4 className="text-sm font-medium mb-2">Get Additional Splashes</h4>
                     <p className="text-sm text-gray-600 mb-3">
-                      Need more credits? Purchase additional credits that never expire.
+                      Need an instant boost? Purchase Splashes to immediately get high-quality opportunities.
                     </p>
-                    <Button onClick={() => setIsAddCreditsDialogOpen(true)}>
+                    <Button onClick={() => setIsAddSplashesDialogOpen(true)}>
                       <Plus className="mr-2 h-4 w-4" />
-                      Buy Credits
+                      Buy Splashes
                     </Button>
                   </div>
                 </div>
