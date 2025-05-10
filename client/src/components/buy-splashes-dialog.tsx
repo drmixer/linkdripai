@@ -34,15 +34,11 @@ export default function BuySplashesDialog({
   
   // If open prop is provided, use it (controlled component), otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
-  const [selectedSplashes, setSelectedSplashes] = useState<string>("3");
-
-  // Splash packages
-  const splashPackages = [
-    { value: "3", label: "3 Splashes", price: "$9" },
-    { value: "5", label: "5 Splashes", price: "$14" },
-    { value: "10", label: "10 Splashes", price: "$25" },
-    { value: "20", label: "20 Splashes", price: "$45" },
-  ];
+  const [splashCount, setSplashCount] = useState<number>(1);
+  
+  // Splash price is $3 each
+  const SPLASH_PRICE = 3;
+  const totalPrice = splashCount * SPLASH_PRICE;
 
   // Add splashes mutation
   const addSplashesMutation = useMutation({
@@ -56,7 +52,7 @@ export default function BuySplashesDialog({
       handleOpenChange(false);
       toast({
         title: "Splashes added",
-        description: `${selectedSplashes} splashes have been added to your account.`,
+        description: `${splashCount} ${splashCount === 1 ? 'splash has' : 'splashes have'} been added to your account.`,
       });
     },
     onError: (error: Error) => {
@@ -80,7 +76,15 @@ export default function BuySplashesDialog({
   };
 
   const handleAddSplashes = () => {
-    addSplashesMutation.mutate(selectedSplashes);
+    addSplashesMutation.mutate(splashCount.toString());
+  };
+  
+  const incrementSplash = () => {
+    setSplashCount(prev => prev + 1);
+  };
+  
+  const decrementSplash = () => {
+    setSplashCount(prev => Math.max(1, prev - 1));
   };
 
   return (
@@ -100,38 +104,46 @@ export default function BuySplashesDialog({
         
         <div className="py-4">
           <div className="space-y-4">
-            <Label>Select Splash Package</Label>
-            <div className="grid grid-cols-1 gap-3">
-              {splashPackages.map((pkg) => (
-                <div 
-                  key={pkg.value}
-                  className={cn(
-                    "border rounded-lg p-4 cursor-pointer transition-colors",
-                    selectedSplashes === pkg.value 
-                      ? "border-primary bg-primary-50" 
-                      : "border-border hover:border-primary/50"
-                  )}
-                  onClick={() => setSelectedSplashes(pkg.value)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className={cn(
-                        "w-5 h-5 rounded-full border flex items-center justify-center mr-3",
-                        selectedSplashes === pkg.value 
-                          ? "border-primary bg-primary text-white" 
-                          : "border-gray-300"
-                      )}>
-                        {selectedSplashes === pkg.value && <Check className="h-3 w-3" />}
-                      </div>
-                      <div>
-                        <div className="font-medium">{pkg.label}</div>
-                        <div className="text-sm text-gray-500">One-time purchase</div>
-                      </div>
-                    </div>
-                    <div className="font-medium">{pkg.price}</div>
+            <Label>Select Splash Quantity ($3 each)</Label>
+            <div className="border rounded-lg p-6">
+              <div className="flex flex-col items-center justify-between">
+                <div className="flex items-center space-x-6 mb-6">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={decrementSplash}
+                    disabled={splashCount <= 1}
+                    className="h-10 w-10 rounded-full"
+                  >
+                    <svg width="15" height="2" viewBox="0 0 15 2" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1.16699 1H13.8337" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </Button>
+                  
+                  <div className="flex flex-col items-center">
+                    <div className="text-4xl font-semibold text-gray-900">{splashCount}</div>
+                    <div className="text-sm text-gray-500">Splash{splashCount > 1 ? 'es' : ''}</div>
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={incrementSplash}
+                    className="h-10 w-10 rounded-full"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7.5 1V14M1 7.5H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </Button>
+                </div>
+                
+                <div className="w-full border-t pt-4 mt-2">
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-500">Total Cost:</div>
+                    <div className="text-xl font-semibold text-gray-900">${totalPrice}</div>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>

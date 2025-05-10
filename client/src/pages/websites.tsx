@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import {
   Card,
   CardContent,
@@ -64,6 +65,7 @@ type WebsiteFormValues = z.infer<typeof websiteFormSchema>;
 export default function WebsitesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   const [isNewWebsiteDialogOpen, setIsNewWebsiteDialogOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState<any>(null);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
@@ -241,8 +243,8 @@ export default function WebsitesPage() {
                 Your plan allows you to manage {getPlanWebsiteLimit(user?.subscription || 'Free Trial')} website{getPlanWebsiteLimit(user?.subscription || 'Free Trial') > 1 ? 's' : ''}.
               </p>
             </div>
-            <Button variant="outline">
-              Upgrade Plan
+            <Button variant="outline" onClick={() => navigate("/billing")}>
+              Change Plan
             </Button>
           </div>
         </CardContent>
