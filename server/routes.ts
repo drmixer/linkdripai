@@ -837,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add purchased splashes to user's account
       const [updatedUser] = await db.update(schema.users)
         .set({ 
-          splashesAllowed: (user.splashesAllowed || 0) + splashes,
+          splashesallowed: (user.splashesallowed || 0) + splashes,
         })
         .where(eq(schema.users.id, user.id))
         .returning();
@@ -860,8 +860,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({
           success: true,
           splashesAdded: splashes,
-          splashesTotal: updatedUser.splashesAllowed,
-          splashesRemaining: (updatedUser.splashesAllowed || 0) - (updatedUser.splashesUsed || 0)
+          splashesTotal: updatedUser.splashesallowed,
+          splashesRemaining: (updatedUser.splashesallowed || 0) - (updatedUser.splashesused || 0)
         });
       });
     } catch (error: any) {
