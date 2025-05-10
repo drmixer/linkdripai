@@ -45,6 +45,7 @@ export function ProtectedRoute({
   else if (!skipOnboardingCheck && 
            path !== "/onboarding" && 
            path !== "/onboarding/improved" && 
+           path !== "/websites" && // Allow access to website management page
            user.onboardingCompleted === false) {
     console.log(`ProtectedRoute for ${path}: Redirecting to onboarding because onboardingCompleted is false`);
     return (
