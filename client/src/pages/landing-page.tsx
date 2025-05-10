@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Icons } from "@/lib/icons";
-import { Check, CheckCircle, ArrowRight, Link2, Zap, BarChart, Mail, Shield } from "lucide-react";
+import { Check, CheckCircle, ArrowRight, Link2, Zap, BarChart, Mail, Shield, Droplets } from "lucide-react";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -325,7 +325,7 @@ export default function LandingPage() {
               <Card className="flex flex-col h-full border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="flex-1 pt-6">
                   <div className="p-2 w-12 h-12 rounded-lg bg-primary/10 text-primary mb-5">
-                    <Zap size={24} />
+                    <Droplets size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Splash Feature</h3>
                   <p className="text-gray-600 mb-4">
@@ -635,7 +635,7 @@ export default function LandingPage() {
                 <div className="absolute inset-x-0 top-0 h-2 bg-purple-500"></div>
                 <CardContent className="pt-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
-                  <p className="text-gray-500 mb-6 text-sm">For agencies and serious link builders</p>
+                  <p className="text-gray-500 mb-6 text-sm">For dedicated bloggers and serious link builders</p>
                   <div className="mb-6">
                     <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "39" : "31"}</span>
                     <span className="text-gray-600 ml-1">/month</span>
@@ -692,7 +692,7 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-24 bg-gradient-to-br from-primary to-primary-600 relative overflow-hidden">
+        <section className="py-24 bg-gradient-to-br from-primary-700 to-primary-900 relative overflow-hidden">
           <div className="absolute inset-0 opacity-20">
             <div className="absolute right-0 bottom-0 w-80 h-80 rounded-full bg-white/30 -mr-20 -mb-20"></div>
             <div className="absolute left-[10%] top-[20%] w-64 h-64 rounded-full bg-white/20"></div>
@@ -701,7 +701,7 @@ export default function LandingPage() {
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready to supercharge your link building?</h2>
-              <p className="text-xl text-white/90 mb-10 max-w-3xl mx-auto">
+              <p className="text-xl text-white mb-10 max-w-3xl mx-auto">
                 Join thousands of satisfied users who are building high-quality backlinks faster and more efficiently than ever before.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-6">
@@ -717,7 +717,7 @@ export default function LandingPage() {
                   </Button>
                 </Link>
               </div>
-              <p className="mt-6 text-sm text-white/80 font-medium">No credit card required. 7-day free trial.</p>
+              <p className="mt-6 text-sm text-white font-medium">No credit card required. 7-day free trial.</p>
             </div>
           </div>
         </section>
