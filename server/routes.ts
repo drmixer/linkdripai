@@ -441,6 +441,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Website management endpoints
+  
+  // Website management endpoints
+  
+  // Get user's websites
+  app.get("/api/websites", isAuthenticated, async (req, res) => {
+    try {
+      const websites = await db.select()
+        .from(schema.websites)
+        .where(eq(schema.websites.userId, req.user!.id));
+      
+      res.json(websites);
+    } catch (error: any) {
+      console.error("Error fetching user websites:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Add a new website
+  app.post("/api/websites", isAuthenticated, async (req, res) => {
+    try {
+      const { name, url, niche } = req.body;
+      
+      if (!name || !url || !niche) {
+        return res.status(400).json({ message: "Website name, URL, and niche are required" });
+      }
+      
+      // Calculate website limits based on subscription plan
+      const planLimits = {
+        'Free Trial': 1,
+        'Starter': 1,
+        'Grow': 2,
+        'Pro': 5,
+      };
+      
+      // Check if user has reached their website limit
+      const userWebsites = await db.select()
+        .from(schema.websites)
+        .where(eq(schema.websites.userId, req.user!.id));
+      
+      const planName = req.user!.subscription || 'Free Trial';
+      const limit = planLimits[planName as keyof typeof planLimits] || 1;
+      
+      if (userWebsites.length >= limit) {
+        return res.status(400).json({ 
+          message: `You have reached your limit of ${limit} website${limit > 1 ? 's' : ''} for your current plan.`
+        });
+      }
+      
+      // Add the website
+      const [website] = await db.insert(schema.websites)
+        .values({
+          userId: req.user!.id,
+          name: name,
+          url: url,
+          niche: niche,
+          addedAt: new Date(),
+        })
+        .returning();
+      
+      res.status(201).json(website);
+    } catch (error: any) {
+      console.error("Error adding website:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Update a website
+  app.patch("/api/websites/:id", isAuthenticated, async (req, res) => {
+    try {
+      const websiteId = parseInt(req.params.id);
+      const { name, url, niche } = req.body;
+      
+      if (!name || !url || !niche) {
+        return res.status(400).json({ message: "Website name, URL, and niche are required" });
+      }
+      
+      // Check if website exists and belongs to user
+      const websites = await db.select()
+        .from(schema.websites)
+        .where(and(
+          eq(schema.websites.id, websiteId),
+          eq(schema.websites.userId, req.user!.id)
+        ));
+      
+      if (websites.length === 0) {
+        return res.status(404).json({ message: "Website not found" });
+      }
+      
+      // Update the website
+      const [website] = await db.update(schema.websites)
+        .set({
+          name: name,
+          url: url,
+          niche: niche,
+        })
+        .where(and(
+          eq(schema.websites.id, websiteId),
+          eq(schema.websites.userId, req.user!.id)
+        ))
+        .returning();
+      
+      res.json(website);
+    } catch (error: any) {
+      console.error("Error updating website:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Delete a website
+  app.delete("/api/websites/:id", isAuthenticated, async (req, res) => {
+    try {
+      const websiteId = parseInt(req.params.id);
+      
+      // Check if website exists and belongs to user
+      const websites = await db.select()
+        .from(schema.websites)
+        .where(and(
+          eq(schema.websites.id, websiteId),
+          eq(schema.websites.userId, req.user!.id)
+        ));
+      
+      if (websites.length === 0) {
+        return res.status(404).json({ message: "Website not found" });
+      }
+      
+      // Delete the website
+      await db.delete(schema.websites)
+        .where(and(
+          eq(schema.websites.id, websiteId),
+          eq(schema.websites.userId, req.user!.id)
+        ));
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting website:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
   // Moz API Endpoints
   app.get("/api/moz/domain-metrics", isAuthenticated, async (req, res) => {
     try {

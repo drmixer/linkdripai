@@ -24,39 +24,30 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { Website } from "@shared/schema";
 
 export default function Header() {
   const { user, logoutMutation } = useAuth();
   const [selectedWebsite, setSelectedWebsite] = useState<string>("");
-  const [websites, setWebsites] = useState<Array<{id: number, name: string, url: string}>>([]);
   
-  // Effects for simulation - would be replaced with real data
+  // Fetch user's websites from the API
+  const { data: websites = [], isLoading: isLoadingWebsites } = useQuery({
+    queryKey: ["/api/websites"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/websites");
+      return res.json();
+    },
+    enabled: !!user, // Only run if user is authenticated
+  });
+  
+  // Set the first website as selected when websites load
   useEffect(() => {
-    // Simulate websites based on plan
-    const planWebsites = {
-      'Starter': [{id: 1, name: "My Website", url: "mywebsite.com"}],
-      'Grow': [
-        {id: 1, name: "My Website", url: "mywebsite.com"},
-        {id: 2, name: "My Blog", url: "myblog.com"}
-      ],
-      'Pro': [
-        {id: 1, name: "My Website", url: "mywebsite.com"},
-        {id: 2, name: "My Blog", url: "myblog.com"},
-        {id: 3, name: "My Shop", url: "myshop.com"},
-        {id: 4, name: "My Portfolio", url: "myportfolio.com"},
-        {id: 5, name: "My Magazine", url: "mymagazine.com"}
-      ],
-      'Free Trial': [{id: 1, name: "My Website", url: "mywebsite.com"}]
-    };
-    
-    const planName = user?.subscription || 'Free Trial';
-    const userWebsites = planWebsites[planName as keyof typeof planWebsites] || planWebsites['Free Trial'];
-    
-    setWebsites(userWebsites);
-    if (userWebsites.length > 0 && !selectedWebsite) {
-      setSelectedWebsite(userWebsites[0].url);
+    if (websites.length > 0 && !selectedWebsite) {
+      setSelectedWebsite(websites[0].url);
     }
-  }, [user]);
+  }, [websites, selectedWebsite]);
   
 
   
@@ -88,7 +79,7 @@ export default function Header() {
           <DropdownMenuContent align="start" className="w-72">
             <DropdownMenuLabel>Select Website</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {websites.map(site => (
+            {websites.map((site) => (
               <DropdownMenuItem 
                 key={site.id} 
                 onClick={() => handleWebsiteChange(site.url)}
@@ -96,7 +87,7 @@ export default function Header() {
               >
                 <div className="flex items-center w-full">
                   <div className="h-6 w-6 mr-2 rounded bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
-                    {site.name.charAt(0).toUpperCase()}
+                    {site.url.charAt(0).toUpperCase()}
                   </div>
                   <span className="flex-1 truncate">{site.url}</span>
                 </div>
