@@ -274,221 +274,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="py-20 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Powerful Features</h2>
-              <p className="text-lg text-gray-600">
-                Everything you need to supercharge your backlink acquisition efforts in one platform
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <Card className="flex flex-col h-full border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="flex-1 pt-6">
-                  <div className="p-2 w-12 h-12 rounded-lg bg-primary/10 text-primary mb-5">
-                    <Link2 size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Daily Fresh Opportunities</h3>
-                  <p className="text-gray-600 mb-4">
-                    Receive a daily feed of carefully vetted backlink prospects tailored to your niche and preferences.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Domains with high authority</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Niche-relevant websites</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Verified contact information</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="flex flex-col h-full border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="flex-1 pt-6">
-                  <div className="p-2 w-12 h-12 rounded-lg bg-primary/10 text-primary mb-5">
-                    <Zap size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">AI-Powered Email Outreach</h3>
-                  <p className="text-gray-600 mb-4">
-                    Generate personalized, high-converting outreach emails with our advanced AI technology.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Smart personalization</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Multiple templates by goal</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Automated follow-ups</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="flex flex-col h-full border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="flex-1 pt-6">
-                  <div className="p-2 w-12 h-12 rounded-lg bg-primary/10 text-primary mb-5">
-                    <BarChart size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Comprehensive Analytics</h3>
-                  <p className="text-gray-600 mb-4">
-                    Track your outreach performance with detailed metrics and insights to improve your strategy.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Response rate tracking</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Backlink acquisition reporting</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Domain authority distribution</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="flex flex-col h-full border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="flex-1 pt-6">
-                  <div className="p-2 w-12 h-12 rounded-lg bg-primary/10 text-primary mb-5">
-                    <Mail size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Email Integration</h3>
-                  <p className="text-gray-600 mb-4">
-                    Send emails directly through Gmail, Outlook, or your preferred email provider with seamless integration.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Gmail and Outlook support</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Email tracking and notifications</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">SMTP support</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="flex flex-col h-full border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="flex-1 pt-6">
-                  <div className="p-2 w-12 h-12 rounded-lg bg-primary/10 text-primary mb-5">
-                    <Shield size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Prospect Management</h3>
-                  <p className="text-gray-600 mb-4">
-                    Organize and manage your prospects with a powerful system designed for link builders.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Save and categorize prospects</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Outreach status tracking</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Notes and collaboration tools</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="flex flex-col h-full border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="flex-1 pt-6">
-                  <div className="p-2 w-12 h-12 rounded-lg bg-primary/10 text-primary mb-5">
-                    <Droplets size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Splash Feature</h3>
-                  <p className="text-gray-600 mb-4">
-                    Gain instant access to new quality opportunities whenever you need them with our Splash feature.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Open access to all opportunity details</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Monthly Splash allowance by plan</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600">Add-on Splash packages available</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* How it Works Section */}
-        <section id="how-it-works" className="py-20 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">How LinkDripAI Works</h2>
-              <p className="text-lg text-gray-600">
-                A simple, effective process to help you secure high-quality backlinks with minimal effort
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Discover Opportunities</h3>
-                <p className="text-gray-600">
-                  Browse through your daily feed of fresh backlink prospects tailored to your niche and preferences.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Create Personalized Outreach</h3>
-                <p className="text-gray-600">
-                  Use AI to generate highly personalized emails or choose from proven templates to reach out.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Track & Secure Backlinks</h3>
-                <p className="text-gray-600">
-                  Monitor your campaign performance, follow up automatically, and secure high-quality backlinks.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-16 text-center">
-              <Link href="/auth">
-                <Button size="lg" className="px-8 py-6">
-                  Get Started Now
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
         {/* Pricing Section */}
         <section id="pricing" className="py-20 relative overflow-hidden">
           {/* Background with gradient */}
@@ -497,97 +282,95 @@ export default function LandingPage() {
           <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-100/30 rounded-full blur-3xl -z-10"></div>
           
           <div className="container mx-auto px-4">
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center max-w-3xl mx-auto mb-16"
-            >
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="inline-flex items-center px-4 py-1.5 rounded-full gap-x-2 text-sm font-medium bg-primary/10 text-primary mb-4"
-              >
-                <span className="h-2 w-2 rounded-full bg-primary"></span>
-                <span>Simple, Transparent Pricing</span>
-              </motion.div>
-              <motion.h2 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
-              >
-                Choose Your Perfect Plan
-              </motion.h2>
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="text-lg text-gray-600"
-              >
-                Start with a free trial, then pick the package that works best for your backlink building needs
-              </motion.p>
-            </motion.div>
-
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="flex justify-center mb-16"
-            >
-              <motion.div 
-                whileHover={{ boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)" }}
-                className="inline-flex items-center p-1.5 bg-white rounded-full border shadow-sm"
-              >
-                <motion.button
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Transparent Pricing</h2>
+              <p className="text-lg text-gray-600">
+                Choose the plan that best fits your needs. All plans include open access to opportunity details.
+              </p>
+              
+              {/* Toggle switch for monthly/annual */}
+              <div className="mt-8 flex items-center justify-center space-x-3">
+                <button
                   onClick={() => setPricingInterval("monthly")}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-8 py-2.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     pricingInterval === "monthly" ? "bg-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Monthly
-                </motion.button>
-                <motion.button
+                </button>
+                <button
                   onClick={() => setPricingInterval("annual")}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center px-8 py-2.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     pricingInterval === "annual" ? "bg-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Annual
                   {pricingInterval !== "annual" && (
                     <motion.span 
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.2 }}
-                      className="ml-2 text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="ml-1.5 text-xs font-semibold px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full"
                     >
                       Save 20%
                     </motion.span>
                   )}
-                </motion.button>
-              </motion.div>
-            </motion.div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                </button>
+              </div>
+            </div>
+            
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7 }}
+              className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto"
+            >
               {/* Free Trial */}
-              <Card className="relative border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 bg-white">
-                <div className="absolute inset-x-0 top-0 h-1.5 bg-gray-200"></div>
-                <CardContent className="pt-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">Free Trial</h3>
-                    <span className="px-2.5 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">7 Days</span>
-                  </div>
-                  <p className="text-gray-500 mb-6 text-sm">Try our platform with no commitment</p>
-                  <div className="mb-8">
-                    <div className="flex items-baseline">
-                      <span className="text-4xl font-bold text-gray-900">$0</span>
-                      <span className="text-gray-500 ml-1 text-sm">/7 days</span>
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+              >
+                <Card className="relative border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 bg-white h-full">
+                  <motion.div 
+                    className="absolute inset-x-0 top-0 h-1.5 bg-gray-200"
+                    whileHover={{ backgroundColor: "#e5e7eb" }}
+                  />
+                  <CardContent className="pt-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-gray-900">Free Trial</h3>
+                      <motion.span 
+                        initial={{ scale: 0.8 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                        className="px-2.5 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full"
+                      >
+                        7 Days
+                      </motion.span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">No credit card required</p>
-                  </div>
+                    <p className="text-gray-500 mb-6 text-sm">Try our platform with no commitment</p>
+                    <div className="mb-8">
+                      <div className="flex items-baseline">
+                        <motion.span 
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.3 }}
+                          className="text-4xl font-bold text-gray-900"
+                        >
+                          $0
+                        </motion.span>
+                        <span className="text-gray-500 ml-1 text-sm">/7 days</span>
+                      </div>
+                      <motion.p 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.4 }}
+                        className="text-xs text-gray-500 mt-1"
+                      >
+                        No credit card required
+                      </motion.p>
+                    </div>
 
                   <ul className="space-y-3 mb-8">
                     <li className="flex items-start gap-3">
@@ -630,27 +413,53 @@ export default function LandingPage() {
                   </Link>
                 </CardFooter>
               </Card>
+              </motion.div>
 
               {/* Starter Plan */}
-              <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 bg-white">
-                <div className="absolute inset-x-0 top-0 h-1.5 bg-primary"></div>
-                <CardContent className="pt-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">Starter</h3>
-                  </div>
-                  <p className="text-gray-500 mb-6 text-sm">Perfect for small businesses and bloggers</p>
-                  <div className="mb-8">
-                    <div className="flex items-baseline">
-                      <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "9" : "7"}</span>
-                      <span className="text-gray-500 ml-1 text-sm">/month</span>
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+              >
+                <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 bg-white h-full">
+                  <motion.div 
+                    className="absolute inset-x-0 top-0 h-1.5 bg-primary"
+                    whileHover={{ opacity: 0.8 }}
+                    animate={{ 
+                      background: ['#3b82f6', '#4f46e5', '#3b82f6'],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  />
+                  <CardContent className="pt-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-gray-900">Starter</h3>
                     </div>
-                    {pricingInterval === "annual" && (
-                      <div className="flex items-center mt-1">
-                        <span className="text-xs text-green-600 font-medium">Save $24/year</span>
-                        <span className="text-xs text-gray-500 ml-1">($84 billed annually)</span>
+                    <p className="text-gray-500 mb-6 text-sm">Perfect for small businesses and bloggers</p>
+                    <div className="mb-8">
+                      <div className="flex items-baseline">
+                        <motion.span 
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.3 }}
+                          className="text-4xl font-bold text-gray-900"
+                        >
+                          ${pricingInterval === "monthly" ? "9" : "7"}
+                        </motion.span>
+                        <span className="text-gray-500 ml-1 text-sm">/month</span>
                       </div>
-                    )}
-                  </div>
+                      {pricingInterval === "annual" && (
+                        <motion.div 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: 0.3 }}
+                          className="flex items-center mt-1"
+                        >
+                          <span className="text-xs text-green-600 font-medium">Save $24/year</span>
+                          <span className="text-xs text-gray-500 ml-1">($84 billed annually)</span>
+                        </motion.div>
+                      )}
+                    </div>
 
                   <ul className="space-y-3 mb-8">
                     <li className="flex items-start gap-3">
@@ -699,21 +508,59 @@ export default function LandingPage() {
                   </Link>
                 </CardFooter>
               </Card>
+              </motion.div>
 
               {/* Grow Plan */}
-              <Card className="relative border-blue-500 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 scale-105 z-10 bg-white">
-                <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 to-blue-400"></div>
-                <CardContent className="pt-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">Grow</h3>
-                    <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Best Value</span>
-                  </div>
-                  <p className="text-gray-500 mb-6 text-sm">For growing businesses with active link building</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "19" : "15"}</span>
-                    <span className="text-gray-600 ml-1">/month</span>
-                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${15*12}/year)</div>}
-                  </div>
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                whileHover={{ y: -10, transition: { duration: 0.2 } }}
+                className="z-10"
+              >
+                <Card className="relative border-blue-500 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 scale-105 bg-white h-full">
+                  <motion.div 
+                    className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 to-blue-400"
+                    animate={{ 
+                      background: ['linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)', 
+                                  'linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%)'],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity, repeatType: "reverse" }}
+                  />
+                  <CardContent className="pt-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-gray-900">Grow</h3>
+                      <motion.span 
+                        initial={{ scale: 0.8 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                        className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full"
+                      >
+                        Best Value
+                      </motion.span>
+                    </div>
+                    <p className="text-gray-500 mb-6 text-sm">For growing businesses with active link building</p>
+                    <div className="mb-6">
+                      <motion.span 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.3 }}
+                        className="text-4xl font-bold text-gray-900"
+                      >
+                        ${pricingInterval === "monthly" ? "19" : "15"}
+                      </motion.span>
+                      <span className="text-gray-600 ml-1">/month</span>
+                      {pricingInterval === "annual" && (
+                        <motion.div 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: 0.3 }}
+                          className="mt-1 text-xs text-primary font-medium"
+                        >
+                          Billed annually (${15*12}/year)
+                        </motion.div>
+                      )}
+                    </div>
 
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-start gap-2.5">
@@ -760,18 +607,48 @@ export default function LandingPage() {
                   </Link>
                 </CardFooter>
               </Card>
+              </motion.div>
               
               {/* Pro Plan */}
-              <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
-                <div className="absolute inset-x-0 top-0 h-2 bg-purple-500"></div>
-                <CardContent className="pt-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
-                  <p className="text-gray-500 mb-6 text-sm">For dedicated bloggers and serious link builders</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">${pricingInterval === "monthly" ? "39" : "31"}</span>
-                    <span className="text-gray-600 ml-1">/month</span>
-                    {pricingInterval === "annual" && <div className="mt-1 text-xs text-primary font-medium">Billed annually (${31*12}/year)</div>}
-                  </div>
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+              >
+                <Card className="relative border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 h-full">
+                  <motion.div 
+                    className="absolute inset-x-0 top-0 h-2 bg-purple-500"
+                    whileHover={{ opacity: 0.8 }}
+                    animate={{ 
+                      opacity: [0.7, 1, 0.7],
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                  <CardContent className="pt-8">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
+                    <p className="text-gray-500 mb-6 text-sm">For dedicated bloggers and serious link builders</p>
+                    <div className="mb-6">
+                      <motion.span 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.3 }}
+                        className="text-4xl font-bold text-gray-900"
+                      >
+                        ${pricingInterval === "monthly" ? "39" : "31"}
+                      </motion.span>
+                      <span className="text-gray-600 ml-1">/month</span>
+                      {pricingInterval === "annual" && (
+                        <motion.div 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: 0.3 }}
+                          className="mt-1 text-xs text-primary font-medium"
+                        >
+                          Billed annually (${31*12}/year)
+                        </motion.div>
+                      )}
+                    </div>
 
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-start gap-2.5">
@@ -818,7 +695,8 @@ export default function LandingPage() {
                   </Link>
                 </CardFooter>
               </Card>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </section>
 
