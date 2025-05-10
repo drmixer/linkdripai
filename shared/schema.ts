@@ -7,17 +7,17 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  firstName: text("firstName").notNull(),
-  lastName: text("lastName").notNull(),
+  firstName: text("firstname").notNull(),
+  lastName: text("lastname").notNull(),
   email: text("email").notNull(),
   subscription: text("subscription").default("Free Trial"),
-  dailyOpportunitiesLimit: integer("dailyOpportunitiesLimit").default(5),
+  dailyOpportunitiesLimit: integer("dailyopportunitieslimit").default(5),
   splashesAllowed: integer("splashesallowed").default(1),
   splashesUsed: integer("splashesused").default(0),
-  lastSplashReset: timestamp("lastSplashReset").defaultNow(),
-  billingAnniversary: timestamp("billingAnniversary").defaultNow(),
-  maxWebsites: integer("maxWebsites").default(1),
-  createdAt: timestamp("createdAt").defaultNow(),
+  lastSplashReset: timestamp("lastsplashreset").defaultNow(),
+  billingAnniversary: timestamp("billinganniversary").defaultNow(),
+  maxWebsites: integer("maxwebsites").default(1),
+  createdAt: timestamp("createdat").defaultNow(),
   websites: json("websites").$type<{
     url: string;
     niche: string;
@@ -28,7 +28,7 @@ export const users = pgTable("users", {
       dripPriorities: string[];
     };
   }[]>().default([]),
-  onboardingCompleted: boolean("onboardingCompleted").default(false),
+  onboardingCompleted: boolean("onboardingcompleted").default(false),
 });
 
 // Basic insert schema for user registration
@@ -60,7 +60,7 @@ export const websites = pgTable("websites", {
   description: text("description"),
   niche: text("niche"),
   isActive: boolean("isActive").default(true),
-  createdAt: timestamp("createdAt").defaultNow(),
+  createdAt: timestamp("createdat").defaultNow(),
 });
 
 export const insertWebsiteSchema = createInsertSchema(websites).omit({
@@ -93,8 +93,8 @@ export const prospects = pgTable("prospects", {
   isNew: boolean("isNew").default(true),
   isHidden: boolean("isHidden").default(false),
   unlockedBy: integer("unlockedBy").references(() => users.id),
-  unlockedAt: timestamp("unlockedAt"),
-  createdAt: timestamp("createdAt").defaultNow(),
+  unlockedAt: timestamp("unlockedat"),
+  createdAt: timestamp("createdat").defaultNow(),
 });
 
 export const insertProspectSchema = createInsertSchema(prospects).omit({
