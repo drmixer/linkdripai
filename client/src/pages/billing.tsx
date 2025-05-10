@@ -429,7 +429,7 @@ export default function BillingPage() {
                   Splashes
                 </CardTitle>
                 <CardDescription>
-                  Splashes give you immediate extra opportunities when you need them
+                  Splashes give you immediate extra backlink opportunities when your daily drips aren't enough
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -445,7 +445,7 @@ export default function BillingPage() {
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="text-sm font-medium mb-2">Get Additional Splashes</h4>
                     <p className="text-sm text-gray-600 mb-3">
-                      Need an instant boost? Purchase Splashes to immediately get high-quality opportunities.
+                      Need an instant boost? Purchase Splashes to get high-quality opportunities immediately, beyond your daily drip allocation. Each Splash provides 3 additional opportunities.
                     </p>
                     <Button onClick={() => setIsAddSplashesDialogOpen(true)}>
                       <Plus className="mr-2 h-4 w-4" />
@@ -758,9 +758,15 @@ export default function BillingPage() {
                 <div className="bg-muted p-4 rounded-md mt-2">
                   <h4 className="font-medium mb-2">What are Splashes?</h4>
                   <p className="text-sm text-muted-foreground">
-                    Splashes are special tokens that let you instantly receive additional high-quality opportunities. 
-                    When you use a Splash, our AI will immediately find and deliver relevant opportunities to your dashboard.
+                    Splashes are special tokens that let you instantly receive additional high-quality opportunities beyond your daily drip allocation. 
+                    Each Splash provides 3 additional opportunities. When you use a Splash, our AI will immediately find and deliver relevant opportunities to your dashboard.
                   </p>
+                  <div className="mt-2 flex items-start">
+                    <AlertCircle className="h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-700">
+                      Note: Only 1 Splash can be used per day per website to ensure enough opportunities are queued for the next day.
+                    </p>
+                  </div>
                 </div>
                 
                 <div className="flex justify-between font-medium mt-2">
