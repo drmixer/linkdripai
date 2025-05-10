@@ -737,17 +737,17 @@ export default function Onboarding() {
                             </div>
                           </div>
                           <div className="bg-white rounded-lg p-3 shadow-sm">
-                            <div className="text-sm font-medium text-gray-500">Credits</div>
+                            <div className="text-sm font-medium text-gray-500">Splashes</div>
                             <div className="font-bold text-xl text-gray-900">
                               {(() => {
                                 // Get actual plan from localStorage or state
                                 const actualPlan = localStorage.getItem('selectedPlan') || selectedPlan;
                                 
-                                if (actualPlan === "Free Trial") return "10";
-                                if (actualPlan === "Starter") return "50";
-                                if (actualPlan === "Grow") return "150";
-                                if (actualPlan === "Pro") return "300";
-                                return "10"; // Default
+                                if (actualPlan === "Free Trial") return "1";
+                                if (actualPlan === "Starter") return "1";
+                                if (actualPlan === "Grow") return "3";
+                                if (actualPlan === "Pro") return "7";
+                                return "1"; // Default
                               })()}
                               <span className="text-sm font-normal text-gray-500">
                                 {(localStorage.getItem('selectedPlan') || selectedPlan) === "Free Trial" ? " total" : " / month"}
