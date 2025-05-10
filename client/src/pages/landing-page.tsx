@@ -709,24 +709,65 @@ export default function LandingPage() {
           </div>
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-primary mb-6">Ready to supercharge your link building?</h2>
-              <p className="text-xl text-primary-600 mb-10 max-w-3xl mx-auto">
-                Join thousands of satisfied users who are building high-quality backlinks faster and more efficiently than ever before.
-              </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-6">
-                <Link href="/auth?tab=register&plan=Free+Trial">
-                  <Button size="lg" variant="default" className="px-10 py-6 text-white font-medium shadow-xl hover:shadow-2xl transition-all duration-200 text-lg">
-                    Start Your Free Trial
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link href="/auth?tab=login">
-                  <Button size="lg" variant="outline" className="px-10 py-6 bg-transparent text-primary border-primary/30 hover:bg-primary/5 transition-all duration-200 text-lg">
-                    Log In
-                  </Button>
-                </Link>
-              </div>
-              <p className="mt-6 text-sm text-primary-600 font-medium">No credit card required. 7-day free trial.</p>
+              <motion.h2 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="text-3xl md:text-4xl font-bold text-primary mb-6"
+              >
+                LinkDripAI: Smart Backlinks, Dripped Daily.
+              </motion.h2>
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="text-xl text-primary-600 mb-10 max-w-3xl mx-auto"
+              >
+                Stop searching, start connecting. Get fresh, high-quality backlink opportunities delivered to you every day, with AI-powered outreach to seal the deal.
+              </motion.p>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="flex flex-col sm:flex-row justify-center gap-6"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  <Link href="/auth?tab=register&plan=Free+Trial">
+                    <Button size="lg" variant="default" className="px-10 py-6 text-white font-medium shadow-xl hover:shadow-2xl transition-all duration-200 text-lg bg-gradient-to-r from-primary to-primary-light hover:from-primary/90 hover:to-primary-light/90">
+                      Start Your Free Trial
+                      <motion.span
+                        animate={{ x: [0, 5, 0] }}
+                        transition={{ repeat: Infinity, duration: 2, repeatDelay: 1 }}
+                      >
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </motion.span>
+                    </Button>
+                  </Link>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  <Link href="/auth?tab=login">
+                    <Button size="lg" variant="outline" className="px-10 py-6 bg-transparent text-primary border-primary/30 hover:bg-primary/5 transition-all duration-200 text-lg">
+                      Log In
+                    </Button>
+                  </Link>
+                </motion.div>
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="mt-6 text-sm text-primary-600 font-medium"
+              >
+                No credit card required. 7-day free trial.
+              </motion.p>
             </div>
           </div>
         </section>
