@@ -792,6 +792,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+  
+  // Purchase additional splashes
+  app.post("/api/splashes/add", isAuthenticated, async (req, res) => {
+    try {
+      const { splashes } = req.body;
+      
+      if (!splashes || typeof splashes !== 'number' || splashes <= 0) {
+        return res.status(400).json({ message: "Valid splashes quantity required" });
+      }
+      
+      // In a real implementation, this would process payment via Stripe
+      // For now, just update the user's splashes and return success
+      
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Add purchased splashes to user's account
+      const [updatedUser] = await db.update(schema.users)
+        .set({ 
+          splashesAllowed: (user.splashesAllowed || 0) + splashes,
+        })
+        .where(eq(schema.users.id, user.id))
+        .returning();
+      
+      // Record the purchase in splashUsage table
+      await db.insert(schema.splashUsage).values({
+        userId: user.id,
+        websiteId: null,
+        usedAt: new Date(),
+        source: "purchased",
+        quantity: splashes
+      });
+      
+      // Update the session
+      req.login(updatedUser, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error updating session" });
+        }
+        
+        res.json({
+          success: true,
+          splashesAdded: splashes,
+          splashesTotal: updatedUser.splashesAllowed,
+          splashesRemaining: (updatedUser.splashesAllowed || 0) - (updatedUser.splashesUsed || 0)
+        });
+      });
+    } catch (error: any) {
+      console.error('Purchase splashes error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   const httpServer = createServer(app);
   
