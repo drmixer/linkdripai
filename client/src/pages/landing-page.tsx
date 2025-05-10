@@ -571,7 +571,7 @@ export default function LandingPage() {
               {/* Grow Plan */}
               <Card className="relative border-blue-500 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 scale-105 z-10 bg-white">
                 <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 to-blue-400"></div>
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-500 to-blue-400 text-white text-xs px-4 py-1 rounded-full font-medium">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-blue-400 text-white text-[0.7rem] px-4 py-1.5 rounded-full font-semibold shadow-md">
                   Most Popular
                 </div>
                 <CardContent className="pt-8">
