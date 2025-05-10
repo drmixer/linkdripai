@@ -264,18 +264,13 @@ export default function BillingPage() {
 
   // Splash packages
   const splashPackages = [
-    { value: "1", label: "1 Splash", price: "$19" },
-    { value: "3", label: "3 Splashes", price: "$49" },
-    { value: "5", label: "5 Splashes", price: "$79" },
-    { value: "10", label: "10 Splashes", price: "$149" },
+    { value: "1", label: "1 Splash", price: "$3" },
+    { value: "3", label: "3 Splashes", price: "$9" },
+    { value: "5", label: "5 Splashes", price: "$15" },
+    { value: "10", label: "10 Splashes", price: "$30" },
   ];
 
-  // Drip (opportunity) packages
-  const dripPackages = [
-    { value: "10", label: "10 Daily Opportunities", price: "$15/month" },
-    { value: "25", label: "25 Daily Opportunities", price: "$30/month" },
-    { value: "50", label: "50 Daily Opportunities", price: "$50/month" },
-  ];
+
 
   // Calculate progress
   const splashesUsed = stats?.splashes?.total - stats?.splashes?.available || 0;
@@ -713,22 +708,52 @@ export default function BillingPage() {
           <div className="py-4">
             <div className="space-y-4">
               <div className="flex flex-col space-y-4">
-                <Label htmlFor="splash-package">Select Splash Package</Label>
-                <Select
-                  value={selectedSplashes}
-                  onValueChange={(value) => setSelectedSplashes(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select package" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {splashPackages.map((pkg) => (
-                      <SelectItem key={pkg.value} value={pkg.value}>
-                        {pkg.label} - {pkg.price}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="splash-amount">Select Splash Amount</Label>
+                <div className="flex items-center justify-between rounded-md border p-4">
+                  <div>
+                    <div className="font-medium text-lg">Splashes</div>
+                    <div className="text-sm text-gray-500">$3 per splash</div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        const currentValue = parseInt(selectedSplashes);
+                        if (currentValue > 1) {
+                          setSelectedSplashes((currentValue - 1).toString());
+                        }
+                      }}
+                      disabled={parseInt(selectedSplashes) <= 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Input 
+                      id="splash-amount"
+                      type="number" 
+                      className="w-16 text-center" 
+                      value={selectedSplashes}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value >= 1) {
+                          setSelectedSplashes(value.toString());
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        const currentValue = parseInt(selectedSplashes);
+                        setSelectedSplashes((currentValue + 1).toString());
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
                 
                 <div className="bg-muted p-4 rounded-md mt-2">
                   <h4 className="font-medium mb-2">What are Splashes?</h4>
@@ -740,9 +765,7 @@ export default function BillingPage() {
                 
                 <div className="flex justify-between font-medium mt-2">
                   <span>Total:</span>
-                  <span>
-                    {splashPackages.find(pkg => pkg.value === selectedSplashes)?.price || "$0"}
-                  </span>
+                  <span>${(parseInt(selectedSplashes) * 3).toFixed(2)}</span>
                 </div>
               </div>
             </div>
