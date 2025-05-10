@@ -6,10 +6,16 @@ import { useAuth } from "@/hooks/use-auth";
 interface LayoutProps {
   children: ReactNode;
   title?: string;
+  subtitle?: string;
 }
 
-export default function Layout({ children, title }: LayoutProps) {
+export default function Layout({ children, title, subtitle }: LayoutProps) {
   const { user } = useAuth();
+  
+  // Default subtitle only for the dashboard page
+  const defaultSubtitle = title === "Dashboard" 
+    ? "Here's an overview of your backlink opportunities and outreach progress."
+    : "";
   
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -26,9 +32,11 @@ export default function Layout({ children, title }: LayoutProps) {
                   {title}
                   {user && <span className="hidden sm:inline">, {user.firstName}!</span>}
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
-                  Here's an overview of your backlink opportunities and outreach progress.
-                </p>
+                {(subtitle || defaultSubtitle) && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    {subtitle || defaultSubtitle}
+                  </p>
+                )}
               </div>
             )}
             
