@@ -47,7 +47,7 @@ export default function BuySplashesDialog({
   // Add splashes mutation
   const addSplashesMutation = useMutation({
     mutationFn: async (splashes: string) => {
-      const res = await apiRequest("POST", "/api/purchase-splashes", { splashes: parseInt(splashes) });
+      const res = await apiRequest("POST", "/api/splashes/add", { splashes: parseInt(splashes) });
       return await res.json();
     },
     onSuccess: () => {
