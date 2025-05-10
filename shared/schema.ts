@@ -7,17 +7,17 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  firstName: text("firstname").notNull(),
-  lastName: text("lastname").notNull(),
+  firstName: text("firstName").notNull(),
+  lastName: text("lastName").notNull(),
   email: text("email").notNull(),
   subscription: text("subscription").default("Free Trial"),
-  dailyOpportunitiesLimit: integer("dailyopportunitieslimit").default(5),
+  dailyOpportunitiesLimit: integer("dailyOpportunitiesLimit").default(5),
   splashesAllowed: integer("splashesallowed").default(1),
   splashesUsed: integer("splashesused").default(0),
   lastSplashReset: timestamp("lastsplashreset").defaultNow(),
   billingAnniversary: timestamp("billinganniversary").defaultNow(),
   maxWebsites: integer("maxwebsites").default(1),
-  createdAt: timestamp("createdat").defaultNow(),
+  createdAt: timestamp("createdAt").defaultNow(),
   websites: json("websites").$type<{
     url: string;
     niche: string;
@@ -28,7 +28,7 @@ export const users = pgTable("users", {
       dripPriorities: string[];
     };
   }[]>().default([]),
-  onboardingCompleted: boolean("onboardingcompleted").default(false),
+  onboardingCompleted: boolean("onboardingCompleted").default(false),
 });
 
 // Basic insert schema for user registration
@@ -60,7 +60,7 @@ export const websites = pgTable("websites", {
   description: text("description"),
   niche: text("niche"),
   isActive: boolean("isActive").default(true),
-  createdAt: timestamp("createdat").defaultNow(),
+  createdAt: timestamp("createdAt").defaultNow(),
 });
 
 export const insertWebsiteSchema = createInsertSchema(websites).omit({
@@ -94,7 +94,7 @@ export const prospects = pgTable("prospects", {
   isHidden: boolean("isHidden").default(false),
   unlockedBy: integer("unlockedBy").references(() => users.id),
   unlockedAt: timestamp("unlockedat"),
-  createdAt: timestamp("createdat").defaultNow(),
+  createdAt: timestamp("createdAt").defaultNow(),
 });
 
 export const insertProspectSchema = createInsertSchema(prospects).omit({
