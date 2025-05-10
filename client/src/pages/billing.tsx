@@ -485,40 +485,7 @@ export default function BillingPage() {
               </CardContent>
             </Card>
 
-            {/* Daily Opportunities Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xl flex items-center">
-                  <Droplets className="mr-2 h-5 w-5 text-primary" />
-                  Daily Opportunities (Drips)
-                </CardTitle>
-                <CardDescription>
-                  Get more opportunities for your backlink outreach
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-5">
-                  <div>
-                    <div className="flex justify-between mb-1 text-sm">
-                      <span>Today's Usage: {opportunitiesUsed} / {opportunitiesTotal}</span>
-                      <span>{opportunitiesTotal - opportunitiesUsed} remaining</span>
-                    </div>
-                    <Progress value={opportunitiesProgress} className="h-2" />
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium mb-2">Get more opportunities (One-time)</h4>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Purchase additional daily opportunities (one-time) to find quality backlink prospects.
-                    </p>
-                    <Button onClick={() => setIsAddDripsDialogOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Drips
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
           </div>
 
           {/* Feature Card */}
