@@ -90,10 +90,8 @@ export default function BillingPage() {
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string>(user?.subscription || 'Free Trial');
   const [selectedSplashes, setSelectedSplashes] = useState<string>("1");
-  const [selectedDrips, setSelectedDrips] = useState<string>("1");
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const [isAddSplashesDialogOpen, setIsAddSplashesDialogOpen] = useState(false);
-  const [isAddDripsDialogOpen, setIsAddDripsDialogOpen] = useState(false);
   
   // Fetch billing information
   const { data: billingInfo, isLoading: isLoadingBillingInfo } = useQuery({
@@ -161,29 +159,7 @@ export default function BillingPage() {
     },
   });
 
-  // Add drips (opportunities) mutation
-  const addDripsMutation = useMutation({
-    mutationFn: async (drips: string) => {
-      const res = await apiRequest("POST", "/api/drips/add", { drips: parseInt(drips) });
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      setIsAddDripsDialogOpen(false);
-      toast({
-        title: "Opportunities added",
-        description: `${selectedDrips} additional daily opportunities have been added to your account.`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to add opportunities",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+
 
   const handleUpgradeSubscription = () => {
     updateSubscriptionMutation.mutate(selectedPlan);
@@ -193,9 +169,7 @@ export default function BillingPage() {
     addSplashesMutation.mutate(selectedSplashes);
   };
 
-  const handleAddDrips = () => {
-    addDripsMutation.mutate(selectedDrips);
-  };
+
 
   // Plan details
   const plans = [
@@ -794,101 +768,7 @@ export default function BillingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Drips Dialog */}
-      <Dialog open={isAddDripsDialogOpen} onOpenChange={setIsAddDripsDialogOpen}>
-        <DialogContent className="sm:max-w-[460px]">
-          <DialogHeader>
-            <DialogTitle>Add Daily Drips</DialogTitle>
-            <DialogDescription>
-              Increase your daily opportunity limit with additional drips.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <div className="space-y-4">
-              <div className="flex flex-col space-y-4">
-                <Label htmlFor="drip-amount">Select Drip Amount</Label>
-                <div className="flex items-center justify-between rounded-md border p-4">
-                  <div>
-                    <div className="font-medium text-lg">Daily Drips</div>
-                    <div className="text-sm text-gray-500">$0.50 per drip (one-time)</div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => {
-                        const currentValue = parseInt(selectedDrips);
-                        if (currentValue > 1) {
-                          setSelectedDrips((currentValue - 1).toString());
-                        }
-                      }}
-                      disabled={parseInt(selectedDrips) <= 1}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Input 
-                      id="drip-amount"
-                      type="number" 
-                      className="w-16 text-center" 
-                      value={selectedDrips}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value) && value >= 1) {
-                          setSelectedDrips(value.toString());
-                        }
-                      }}
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => {
-                        const currentValue = parseInt(selectedDrips);
-                        setSelectedDrips((currentValue + 1).toString());
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex justify-between font-medium mt-2">
-                  <span>Total:</span>
-                  <span>${(parseInt(selectedDrips) * 0.5).toFixed(2)}</span>
-                </div>
-              </div>
-              
-              <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4 text-yellow-800 text-sm flex items-start mt-4">
-                <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
-                <div>
-                  This is a one-time purchase. Your extra drips will begin trickling in shortly after purchase.
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter className="flex justify-between sm:justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setIsAddDripsDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleAddDrips}
-              disabled={addDripsMutation.isPending}
-            >
-              {addDripsMutation.isPending && (
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-              )}
-              Add Drips
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </Layout>
   );
 }
