@@ -316,7 +316,7 @@ export default function BillingPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Billing & Add-ons</h1>
           <p className="text-muted-foreground">
-            Manage your subscription, credits, and daily opportunities
+            Manage your subscription, splashes, and daily opportunities
           </p>
         </div>
       </div>
@@ -649,8 +649,8 @@ export default function BillingPage() {
                       </tr>
                       <tr>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Apr 15, 2025</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">100 Credits Purchase</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$29.00</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">5 Splashes Purchase</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$79.00</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Badge variant="outline" className="bg-green-50 text-green-700">Paid</Badge>
                         </td>
@@ -757,68 +757,49 @@ export default function BillingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Credits Dialog */}
-      <Dialog open={isAddCreditsDialogOpen} onOpenChange={setIsAddCreditsDialogOpen}>
+      {/* Add Splashes Dialog */}
+      <Dialog open={isAddSplashesDialogOpen} onOpenChange={setIsAddSplashesDialogOpen}>
         <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
-            <DialogTitle>Purchase Additional Credits</DialogTitle>
+            <DialogTitle>Purchase Additional Splashes</DialogTitle>
             <DialogDescription>
-              Credits are used to unlock prospect information. These credits never expire.
+              Splashes give you immediate extra opportunities when you need them. These never expire.
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
             <div className="space-y-4">
               <div className="flex flex-col space-y-4">
-                <Label htmlFor="credit-amount">Select Credit Amount</Label>
-                <div className="flex items-center justify-between rounded-md border p-4">
-                  <div>
-                    <div className="font-medium text-lg">Credits</div>
-                    <div className="text-sm text-gray-500">$1 per credit</div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => {
-                        const currentValue = parseInt(selectedCredits);
-                        if (currentValue > 1) {
-                          setSelectedCredits((currentValue - 1).toString());
-                        }
-                      }}
-                      disabled={parseInt(selectedCredits) <= 1}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Input 
-                      id="credit-amount"
-                      type="number" 
-                      className="w-16 text-center" 
-                      value={selectedCredits}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value) && value >= 1) {
-                          setSelectedCredits(value.toString());
-                        }
-                      }}
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => {
-                        const currentValue = parseInt(selectedCredits);
-                        setSelectedCredits((currentValue + 1).toString());
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                <Label htmlFor="splash-package">Select Splash Package</Label>
+                <Select
+                  value={selectedSplashes}
+                  onValueChange={(value) => setSelectedSplashes(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {splashPackages.map((pkg) => (
+                      <SelectItem key={pkg.value} value={pkg.value}>
+                        {pkg.label} - {pkg.price}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <div className="bg-muted p-4 rounded-md mt-2">
+                  <h4 className="font-medium mb-2">What are Splashes?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Splashes are special tokens that let you instantly receive additional high-quality opportunities. 
+                    When you use a Splash, our AI will immediately find and deliver relevant opportunities to your dashboard.
+                  </p>
                 </div>
+                
                 <div className="flex justify-between font-medium mt-2">
                   <span>Total:</span>
-                  <span>${parseInt(selectedCredits) || 0}.00</span>
+                  <span>
+                    {splashPackages.find(pkg => pkg.value === selectedSplashes)?.price || "$0"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -828,19 +809,19 @@ export default function BillingPage() {
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => setIsAddCreditsDialogOpen(false)}
+              onClick={() => setIsAddSplashesDialogOpen(false)}
             >
               Cancel
             </Button>
             <Button 
               type="button" 
-              onClick={handleAddCredits}
-              disabled={addCreditsMutation.isPending}
+              onClick={handleAddSplashes}
+              disabled={addSplashesMutation.isPending}
             >
-              {addCreditsMutation.isPending && (
+              {addSplashesMutation.isPending && (
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
               )}
-              Purchase Credits
+              Purchase Splashes
             </Button>
           </DialogFooter>
         </DialogContent>
