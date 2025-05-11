@@ -159,7 +159,7 @@ export default function BillingPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      setIsAddSplashesDialogOpen(false);
+      setIsPremiumSplashesDialogOpen(false);
       toast({
         title: "Premium Splashes added",
         description: `${selectedSplashes} Premium Splashes have been added to your account.`,
@@ -455,7 +455,7 @@ export default function BillingPage() {
                     <p className="text-sm text-gray-600 mb-3">
                       Need an instant boost in quality? Purchase Premium Splashes to get higher quality backlink opportunities instantly. Each Premium Splash delivers 1 top-tier opportunity (DA 40+, relevance 80%+, spam score &lt;2%).
                     </p>
-                    <Button onClick={() => setIsAddSplashesDialogOpen(true)}>
+                    <Button onClick={() => setIsPremiumSplashesDialogOpen(true)}>
                       <Sparkles className="mr-2 h-4 w-4" />
                       Buy Premium Splashes
                     </Button>
@@ -663,9 +663,9 @@ export default function BillingPage() {
 
       {/* Buy Premium Splashes Dialog */}
       <BuySplashesDialog 
-        open={isAddSplashesDialogOpen}
-        onOpenChange={setIsAddSplashesDialogOpen}
-        onClose={() => setIsAddSplashesDialogOpen(false)}
+        open={isPremiumSplashesDialogOpen}
+        onOpenChange={setIsPremiumSplashesDialogOpen}
+        onClose={() => setIsPremiumSplashesDialogOpen(false)}
       />
     </Layout>
   );
