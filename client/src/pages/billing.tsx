@@ -94,7 +94,7 @@ export default function BillingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string>(user?.subscription || 'Free Trial');
   const [selectedSplashes, setSelectedSplashes] = useState<string>("1");
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
-  const [isAddSplashesDialogOpen, setIsAddSplashesDialogOpen] = useState(false);
+  const [isPremiumSplashesDialogOpen, setIsPremiumSplashesDialogOpen] = useState(false);
   
   useEffect(() => {
     // Open Add-ons tab if navigated with ?tab=add-ons parameter
@@ -104,7 +104,7 @@ export default function BillingPage() {
       document.querySelector('[value="add-ons"]')?.dispatchEvent(
         new MouseEvent('click', { bubbles: true })
       );
-      setIsAddSplashesDialogOpen(true);
+      setIsPremiumSplashesDialogOpen(true);
     }
   }, [location]);
   
@@ -444,7 +444,7 @@ export default function BillingPage() {
                 <div className="space-y-5">
                   <div>
                     <div className="flex justify-between mb-1 text-sm">
-                      <span>Splashes Used: {splashesUsed} / {splashesTotal}</span>
+                      <span>Premium Splashes Used: {splashesUsed} / {splashesTotal}</span>
                       <span>{stats?.splashes?.available || 0} remaining</span>
                     </div>
                     <Progress value={splashesProgress} className="h-2" />
@@ -521,19 +521,19 @@ export default function BillingPage() {
                     {/* Sample data - would be replaced with actual usage history */}
                     <tr className="bg-white border-b">
                       <td className="px-6 py-4">May 10, 2025</td>
-                      <td className="px-6 py-4">Splash</td>
-                      <td className="px-6 py-4">Used for premium opportunities</td>
+                      <td className="px-6 py-4">Premium Splash</td>
+                      <td className="px-6 py-4">Used for high-quality opportunities</td>
                       <td className="px-6 py-4">1</td>
                     </tr>
                     <tr className="bg-white border-b">
                       <td className="px-6 py-4">May 8, 2025</td>
-                      <td className="px-6 py-4">Splash</td>
-                      <td className="px-6 py-4">Used for premium opportunities</td>
+                      <td className="px-6 py-4">Premium Splash</td>
+                      <td className="px-6 py-4">Used for high-quality opportunities</td>
                       <td className="px-6 py-4">1</td>
                     </tr>
                     <tr className="bg-white border-b">
                       <td className="px-6 py-4">May 3, 2025</td>
-                      <td className="px-6 py-4">Splash</td>
+                      <td className="px-6 py-4">Premium Splash</td>
                       <td className="px-6 py-4">Monthly allocation</td>
                       <td className="px-6 py-4">3</td>
                     </tr>
@@ -588,8 +588,8 @@ export default function BillingPage() {
                     </tr>
                     <tr className="bg-white border-b">
                       <td className="px-6 py-4">Apr 15, 2025</td>
-                      <td className="px-6 py-4">Additional Splashes - 3 Pack</td>
-                      <td className="px-6 py-4">$9.00</td>
+                      <td className="px-6 py-4">Premium Splashes - 3 Pack</td>
+                      <td className="px-6 py-4">$18.00</td>
                       <td className="px-6 py-4">
                         <Badge variant="success">Paid</Badge>
                       </td>
