@@ -203,20 +203,34 @@ export class ValidationPipeline {
         }
         
         // Calculate text-to-link ratio if HTML is available
-        if (opportunity.rawData && typeof opportunity.rawData === 'object' && 'html' in opportunity.rawData) {
-          const $ = cheerio.load(opportunity.rawData.html as string);
-          const textLength = $('body').text().length;
-          const linkCount = $('a').length;
+        if (opportunity.rawData) {
+          // First try to parse as an object if rawData is stored as a string
+          let rawData: any = opportunity.rawData;
+          if (typeof rawData === 'string') {
+            try {
+              rawData = JSON.parse(rawData);
+            } catch (e) {
+              // Not valid JSON, could be plain HTML
+              rawData = { html: rawData };
+            }
+          }
           
-          metrics.textToLinkRatio = linkCount > 0 ? textLength / linkCount : textLength;
-          
-          // If there's an excessive amount of links compared to text, it's likely a low-quality page
-          if (linkCount > 50 && metrics.textToLinkRatio < 20) {
-            return {
-              isPassing: false,
-              metrics,
-              failReason: 'Excessive links compared to content'
-            };
+          // Now check for HTML content
+          if (typeof rawData === 'object' && rawData && 'html' in rawData && typeof rawData.html === 'string') {
+            const $ = cheerio.load(rawData.html);
+            const textLength = $('body').text().length;
+            const linkCount = $('a').length;
+            
+            metrics.textToLinkRatio = linkCount > 0 ? textLength / linkCount : textLength;
+            
+            // If there's an excessive amount of links compared to text, it's likely a low-quality page
+            if (linkCount > 50 && metrics.textToLinkRatio < 20) {
+              return {
+                isPassing: false,
+                metrics,
+                failReason: 'Excessive links compared to content'
+              };
+            }
           }
         }
       }

@@ -1,6 +1,5 @@
-import { Website, WebsiteProfile, websites, websiteProfiles } from '@shared/schema';
 import { db } from '../db';
-import { getMozApiService } from './moz';
+import { websiteProfiles } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
@@ -8,226 +7,197 @@ import * as cheerio from 'cheerio';
 /**
  * Website Analyzer Service
  * 
- * This service analyzes user websites to create profiles that can be used
- * for matching with backlink opportunities.
+ * This service handles the analysis of user websites to generate
+ * content profiles, keywords, topics, and relevance data used for matching.
  */
 export class WebsiteAnalyzer {
-  private mozService = getMozApiService();
-
-  /**
-   * Get the profile for a website
-   */
-  async getProfile(websiteId: number): Promise<WebsiteProfile | null> {
-    try {
-      const [profile] = await db.select()
-        .from(websiteProfiles)
-        .where(eq(websiteProfiles.websiteId, websiteId));
-      
-      return profile || null;
-    } catch (error) {
-      console.error('Error getting website profile:', error);
-      return null;
-    }
+  constructor() {
+    console.log('[WebsiteAnalyzer] Initialized');
   }
-
+  
   /**
-   * Process a website to create or update its profile
+   * Analyze a website and store content profile
    */
-  async processWebsite(website: Website): Promise<WebsiteProfile> {
+  async analyzeWebsite(websiteId: number, url: string): Promise<any> {
+    console.log(`[WebsiteAnalyzer] Analyzing website: ${url}`);
+    
     try {
-      console.log(`[Analyzer] Processing website: ${website.url}`);
+      // Fetch website content
+      const content = await this.fetchWebsiteContent(url);
       
-      // Get existing profile if any
-      const [existingProfile] = await db.select()
+      // Extract topics and keywords
+      const { topics, keywords, metadata } = this.extractTopicsAndKeywords(content);
+      
+      // Create or update website profile
+      const existingProfile = await db.select()
         .from(websiteProfiles)
-        .where(eq(websiteProfiles.websiteId, website.id));
+        .where(eq(websiteProfiles.websiteId, websiteId))
+        .limit(1);
       
-      // Get domain information from Moz
-      const domain = this.extractDomain(website.url);
-      const mozData = await this.mozService.getDomainMetrics(domain);
-      
-      // Analyze content to extract keywords and topics
-      const { keywords, categories } = await this.analyzeContent(website.url);
-      
-      // Create or update profile
-      if (existingProfile) {
+      if (existingProfile.length > 0) {
         // Update existing profile
-        const [updatedProfile] = await db.update(websiteProfiles)
+        await db.update(websiteProfiles)
           .set({
-            domainAuthority: mozData.domain_authority,
-            pageAuthority: mozData.page_authority,
-            spamScore: mozData.spam_score,
-            backlinks: mozData.root_domains_to_root_domain,
-            lastUpdated: new Date(),
+            content: content.slice(0, 5000), // Store truncated content
+            topics,
             keywords,
-            categories,
-            contentSample: '',
+            metadata,
+            lastAnalyzed: new Date()
           })
-          .where(eq(websiteProfiles.id, existingProfile.id))
-          .returning();
+          .where(eq(websiteProfiles.id, existingProfile[0].id));
         
-        return updatedProfile;
+        return {
+          ...existingProfile[0],
+          content: content.slice(0, 5000),
+          topics,
+          keywords,
+          metadata,
+          lastAnalyzed: new Date()
+        };
       } else {
         // Create new profile
         const [newProfile] = await db.insert(websiteProfiles)
           .values({
-            websiteId: website.id,
-            userId: website.userId,
-            domainAuthority: mozData.domain_authority,
-            pageAuthority: mozData.page_authority,
-            spamScore: mozData.spam_score,
-            backlinks: mozData.root_domains_to_root_domain,
-            lastUpdated: new Date(),
+            websiteId,
+            content: content.slice(0, 5000),
+            topics,
             keywords,
-            categories,
-            contentSample: '',
+            metadata,
+            lastAnalyzed: new Date()
           })
           .returning();
         
         return newProfile;
       }
     } catch (error) {
-      console.error('Error processing website:', error);
-      throw new Error(`Failed to process website: ${error.message}`);
+      console.error(`[WebsiteAnalyzer] Error analyzing website ${url}:`, error);
+      throw new Error(`Failed to analyze website: ${error.message}`);
     }
   }
-
+  
   /**
-   * Extract domain from URL
+   * Fetch website content
    */
-  private extractDomain(url: string): string {
+  private async fetchWebsiteContent(url: string): Promise<string> {
     try {
-      const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
-      return parsed.hostname;
-    } catch (error) {
-      console.error('Error extracting domain:', error);
-      return url;
-    }
-  }
-
-  /**
-   * Analyze website content to extract keywords and categories
-   */
-  private async analyzeContent(url: string): Promise<{ keywords: string[], categories: string[] }> {
-    try {
-      // Fetch the URL content
-      const response = await axios.get(url.startsWith('http') ? url : `https://${url}`, {
-        timeout: 15000,
+      // Ensure URL has protocol
+      const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
+      
+      const response = await axios.get(normalizedUrl, {
+        timeout: 10000,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        },
+          'User-Agent': 'Mozilla/5.0 (compatible; LinkDripAI/1.0; +https://linkdripai.com/bot)'
+        }
       });
       
-      const html = response.data;
-      const $ = cheerio.load(html);
+      return response.data;
+    } catch (error) {
+      console.error(`[WebsiteAnalyzer] Error fetching content for ${url}:`, error);
+      throw new Error(`Failed to fetch website content: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Extract topics and keywords from content
+   */
+  private extractTopicsAndKeywords(content: string): { 
+    topics: string[];
+    keywords: string[];
+    metadata: any;
+  } {
+    try {
+      const $ = cheerio.load(content);
       
-      // Extract text content from main content areas
-      const contentText = $('article, main, .content, #content, .post, .entry, .main')
-        .text()
-        .replace(/\s+/g, ' ')
-        .trim();
+      // Extract text content and normalize
+      const textContent = $('body').text().trim().toLowerCase();
       
-      // If no specific content area, use body text excluding navigation and footer
-      const bodyText = contentText || $('body')
-        .clone()
-        .find('nav, header, footer, script, style')
-        .remove()
-        .end()
-        .text()
-        .replace(/\s+/g, ' ')
-        .trim();
+      // Remove script and style elements
+      $('script, style').remove();
       
-      // Extract keywords from meta tags
-      const metaKeywords = $('meta[name="keywords"]').attr('content') || '';
-      const metaDescription = $('meta[name="description"]').attr('content') || '';
+      // Get metadata
+      const metadata = {
+        title: $('title').text().trim(),
+        description: $('meta[name="description"]').attr('content') || '',
+        h1: $('h1').first().text().trim(),
+        wordCount: textContent.split(/\s+/).length
+      };
       
-      // Get all headings
-      const headings = $('h1, h2, h3')
-        .map((_, el) => $(el).text().trim())
-        .get()
-        .filter(heading => heading.length > 0);
+      // Simple keyword extraction - in a real system, use NLP or keyword extraction API
+      const words = textContent
+        .replace(/[^\w\s]/gi, ' ')
+        .split(/\s+/)
+        .filter(word => word.length > 3)
+        .reduce((acc, word) => {
+          acc[word] = (acc[word] || 0) + 1;
+          return acc;
+        }, {});
       
-      // Extract categories from URL path and classes
-      const pathSegments = new URL(url.startsWith('http') ? url : `https://${url}`).pathname
-        .split('/')
-        .filter(segment => segment.length > 0);
-      
-      const categoryClasses = $('.category, .categories, .tag, .tags')
-        .map((_, el) => $(el).text().trim())
-        .get()
-        .filter(category => category.length > 0);
-      
-      // Process keywords - from meta, headings, and content
-      const keywordSources = [
-        ...metaKeywords.split(',').map(k => k.trim()),
-        ...headings,
-        ...bodyText.split(' ')
-          .filter(word => word.length > 4)
-          .slice(0, 100),
-        ...metaDescription.split(' ').filter(word => word.length > 4),
-      ];
-      
-      // Count keyword frequency
-      const keywordCounts = new Map<string, number>();
-      for (const word of keywordSources) {
-        const normalized = word.toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (normalized.length > 3) {
-          keywordCounts.set(normalized, (keywordCounts.get(normalized) || 0) + 1);
-        }
-      }
-      
-      // Get top keywords
-      const topKeywords = Array.from(keywordCounts.entries())
+      // Get top keywords by frequency
+      const keywords = Object.entries(words)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 20)
-        .map(([keyword]) => keyword);
+        .slice(0, 50)
+        .map(([word]) => word);
       
-      // Combine categories from multiple sources
-      const categories = Array.from(new Set([
-        ...pathSegments,
-        ...categoryClasses,
-      ])).slice(0, 10);
+      // Simplified topic extraction based on heading elements
+      const topics = [];
+      $('h1, h2, h3').each((_, el) => {
+        const text = $(el).text().trim().toLowerCase();
+        if (text && text.length > 3 && topics.length < 15) {
+          topics.push(text);
+        }
+      });
       
       return {
-        keywords: topKeywords,
-        categories,
+        topics: [...new Set(topics)],
+        keywords,
+        metadata
       };
     } catch (error) {
-      console.error('Error analyzing content:', error);
+      console.error('[WebsiteAnalyzer] Error extracting topics:', error);
       return {
+        topics: [],
         keywords: [],
-        categories: [],
+        metadata: { title: '', description: '', h1: '', wordCount: 0 }
       };
     }
   }
-
+  
   /**
-   * Analyze websites for a specific user
+   * Calculate relevance between a website profile and opportunity
    */
-  async analyzeUserWebsites(userId: number): Promise<number> {
-    try {
-      // Get all user's websites
-      const userWebsites = await db.select()
-        .from(websites)
-        .where(eq(websites.userId, userId));
-      
-      let processedCount = 0;
-      
-      // Process each website
-      for (const website of userWebsites) {
-        await this.processWebsite(website);
-        processedCount++;
-      }
-      
-      return processedCount;
-    } catch (error) {
-      console.error('Error analyzing user websites:', error);
+  calculateRelevance(websiteProfile: any, opportunity: any): number {
+    // In a real system, use a more sophisticated algorithm with TF-IDF, cosine similarity, etc.
+    if (!websiteProfile || !opportunity) {
       return 0;
+    }
+    
+    try {
+      const websiteKeywords = new Set(websiteProfile.keywords || []);
+      const opportunityContent = opportunity.pageContent || '';
+      
+      // Count matching keywords
+      let matchCount = 0;
+      
+      websiteKeywords.forEach(keyword => {
+        if (opportunityContent.toLowerCase().includes(keyword.toLowerCase())) {
+          matchCount++;
+        }
+      });
+      
+      // Calculate relevance score (0-100)
+      const relevanceScore = Math.min(
+        100,
+        Math.round((matchCount / Math.max(1, websiteKeywords.size)) * 100)
+      );
+      
+      return relevanceScore;
+    } catch (error) {
+      console.error('[WebsiteAnalyzer] Error calculating relevance:', error);
+      return 30; // Default fallback score
     }
   }
 }
 
-// Create a singleton instance
 let websiteAnalyzer: WebsiteAnalyzer | null = null;
 
 export function getWebsiteAnalyzer(): WebsiteAnalyzer {

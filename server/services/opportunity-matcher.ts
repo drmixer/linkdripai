@@ -1,637 +1,432 @@
-import { WebsiteProfile, DiscoveredOpportunity, OpportunityMatch, Prospect, User } from '@shared/schema';
 import { db } from '../db';
-import { eq, and, gte, lt, sql, desc, asc } from 'drizzle-orm';
-import { websiteProfiles, discoveredOpportunities, opportunityMatches, prospects, users, websites, dailyDrips } from '@shared/schema';
+import { getWebsiteAnalyzer } from './website-analyzer';
+import { 
+  discoveredOpportunities, 
+  opportunityMatches, 
+  websiteProfiles, 
+  websites, 
+  dailyDrips,
+  DiscoveredOpportunity
+} from '@shared/schema';
+import { eq, and, inArray, sql, lte, desc, gte } from 'drizzle-orm';
 
 /**
  * Opportunity Matcher Service
  * 
- * This service matches discovered opportunities to user websites based on:
- * 1. Niche alignment
- * 2. Content relevance
- * 3. Quality metrics (DA, spam score)
- * 4. User preferences
+ * This service handles the matching of validated opportunities to user websites
+ * based on relevance, user preferences, and website profiles.
  */
 export class OpportunityMatcher {
+  private websiteAnalyzer = getWebsiteAnalyzer();
   
-  /**
-   * Calculate match score between a website and an opportunity
-   * Returns a score from 0-100 and reasons for the match
-   */
-  calculateMatchScore(
-    profile: WebsiteProfile, 
-    opportunity: DiscoveredOpportunity, 
-    opportunityData: any
-  ): { score: number, reasons: string[] } {
-    const reasons: string[] = [];
-    let score = 50; // Base score
-    
-    // Extract opportunity data
-    const oppNiche = opportunityData?.niche || '';
-    const oppKeywords = opportunityData?.keywords || [];
-    const oppDa = opportunityData?.mozMetrics?.domain_authority?.score || 0;
-    const oppSpamScore = opportunityData?.mozMetrics?.spam_score || 50;
-    
-    // 1. Check niche alignment (up to +25 points)
-    if (profile.targetNiches?.includes(oppNiche)) {
-      score += 25;
-      reasons.push(`Niche match: ${oppNiche}`);
-    } else if (profile.avoidNiches?.includes(oppNiche)) {
-      score -= 25;
-      reasons.push(`Avoided niche: ${oppNiche}`);
-    }
-    
-    // 2. Check keyword overlap (up to +15 points)
-    const keywordMatches = (profile.keywords || []).filter(kw => 
-      oppKeywords.some((ok: string) => ok.includes(kw))
-    );
-    
-    if (keywordMatches.length > 0) {
-      const keywordBonus = Math.min(15, keywordMatches.length * 3);
-      score += keywordBonus;
-      reasons.push(`${keywordMatches.length} matching keywords`);
-    }
-    
-    // 3. Domain Authority bonus (up to +20 points)
-    if (oppDa >= 50) {
-      score += 20;
-      reasons.push(`High DA: ${oppDa}`);
-    } else if (oppDa >= 30) {
-      score += 10;
-      reasons.push(`Good DA: ${oppDa}`);
-    } else if (oppDa < 20) {
-      score -= 10;
-      reasons.push(`Low DA: ${oppDa}`);
-    }
-    
-    // 4. Spam Score penalty (up to -20 points)
-    if (oppSpamScore > 10) {
-      const spamPenalty = Math.min(20, (oppSpamScore - 10) * 2);
-      score -= spamPenalty;
-      reasons.push(`High spam score: ${oppSpamScore}`);
-    }
-    
-    // 5. Source type bonus (up to +10 points)
-    const sourceType = opportunity.sourceType;
-    if (sourceType === 'resource_page') {
-      score += 10;
-      reasons.push('High-value resource page');
-    } else if (sourceType === 'directory') {
-      score += 5;
-      reasons.push('Directory listing');
-    }
-    
-    // Ensure score is between 0-100
-    score = Math.max(0, Math.min(100, score));
-    
-    return { score, reasons };
+  constructor() {
+    console.log('[OpportunityMatcher] Initialized');
   }
   
   /**
-   * Convert a discovered opportunity to a prospect
+   * Find matching opportunities for a specific website
    */
-  async convertToProspect(opportunity: DiscoveredOpportunity): Promise<Prospect> {
-    // Extract data from opportunity
-    const rawData = opportunity.rawData as any || {};
-    const mozMetrics = rawData.mozMetrics || {};
-    
-    // Generate some general reasons for this opportunity
-    const matchReasons: string[] = [];
-    
-    // Add reasons based on metrics
-    if (mozMetrics?.domain_authority?.score >= 40) {
-      matchReasons.push(`Strong domain authority (${mozMetrics.domain_authority.score})`);
-    }
-    
-    if (mozMetrics?.spam_score <= 5) {
-      matchReasons.push('Low spam score (good quality)');
-    }
-    
-    if (rawData.traffic && parseInt(rawData.traffic) > 5000) {
-      matchReasons.push(`High monthly traffic (${rawData.traffic})`);
-    }
-    
-    if (opportunity.sourceType === 'resource_page') {
-      matchReasons.push('High-value resource page opportunity');
-    } else if (opportunity.sourceType === 'guest_post') {
-      matchReasons.push('Guest posting opportunity');
-    }
-    
-    // Add a default reason if no others apply
-    if (matchReasons.length === 0) {
-      matchReasons.push('Relevant site in your target niche');
-    }
-    
-    // Create prospect record
-    const [prospect] = await db.insert(prospects)
-      .values({
-        siteType: opportunity.sourceType.replace('_', ' '),
-        siteName: opportunity.pageTitle || 'Unknown Site',
-        domain: opportunity.domain,
-        domainAuthority: String(mozMetrics?.domain_authority?.score || 'N/A'),
-        pageAuthority: String(mozMetrics?.page_authority?.score || 'N/A'),
-        spamScore: String(mozMetrics?.spam_score || 'N/A'),
-        totalLinks: String(mozMetrics?.links || 'N/A'),
-        rootDomainsLinking: String(mozMetrics?.root_domains_linking || 'N/A'),
-        lastCrawled: new Date().toISOString(),
-        niche: rawData.niche || 'General',
-        monthlyTraffic: rawData.traffic || 'Unknown',
-        contactEmail: opportunity.contactInfo?.email || null,
-        contactRole: null,
-        contactName: null,
-        targetUrl: opportunity.url,
-        fitScore: 70, // Default fit score, will be updated per user
-        matchReasons: matchReasons,
-        isUnlocked: false,
-        isSaved: false,
-        isNew: true,
-        isHidden: false
-      })
-      .returning();
+  async findMatchesForWebsite(websiteId: number, limit = 10): Promise<DiscoveredOpportunity[]> {
+    try {
+      // Get website profile
+      const [websiteProfile] = await db.select()
+        .from(websiteProfiles)
+        .where(eq(websiteProfiles.websiteId, websiteId));
       
-    return prospect;
-  }
-  
-  /**
-   * Create match record between website and prospect
-   */
-  async createMatch(
-    websiteId: number, 
-    prospectId: number, 
-    score: number, 
-    reasons: string[]
-  ): Promise<OpportunityMatch> {
-    const [match] = await db.insert(opportunityMatches)
-      .values({
-        websiteId,
-        prospectId,
-        matchScore: score,
-        matchReason: reasons,
-        status: 'pending'
-      })
-      .returning();
+      if (!websiteProfile) {
+        console.log(`[OpportunityMatcher] No profile found for website ID ${websiteId}`);
+        return [];
+      }
       
-    return match;
-  }
-  
-  /**
-   * Process new opportunities for matching
-   */
-  async processNewOpportunities(): Promise<number> {
-    // Get analyzed but unmatched opportunities
-    const opportunities = await db.select()
-      .from(discoveredOpportunities)
-      .where(eq(discoveredOpportunities.status, 'analyzed'));
-    
-    let matchesCreated = 0;
-    
-    // Process each opportunity
-    for (const opportunity of opportunities) {
-      try {
-        // Convert to prospect for our system
-        const prospect = await this.convertToProspect(opportunity);
-        
-        // Get all website profiles
-        const profiles = await db.select().from(websiteProfiles);
-        
-        // Match against each profile
-        for (const profile of profiles) {
-          const { score, reasons } = this.calculateMatchScore(
-            profile, 
-            opportunity, 
-            opportunity.rawData
+      // Get website details including preferences
+      const [websiteDetails] = await db.select()
+        .from(websites)
+        .where(eq(websites.id, websiteId));
+      
+      if (!websiteDetails) {
+        console.log(`[OpportunityMatcher] Website ID ${websiteId} not found`);
+        return [];
+      }
+      
+      // Get validated opportunities
+      const validatedOpportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(eq(discoveredOpportunities.status, 'validated'))
+        .limit(100);
+      
+      // Score and rank opportunities
+      const scoredOpportunities = await Promise.all(
+        validatedOpportunities.map(async opportunity => {
+          const relevanceScore = this.websiteAnalyzer.calculateRelevance(
+            websiteProfile,
+            opportunity
           );
           
-          // Only create match if score is above threshold
-          if (score >= 40) {
-            await this.createMatch(profile.websiteId, prospect.id, score, reasons);
-            matchesCreated++;
+          // Apply filters from preferences
+          const preferences = websiteDetails.preferences || {};
+          let qualityScore = 0;
+          
+          // Calculate quality score based on DA and other metrics
+          if (opportunity.domainAuthority) {
+            qualityScore += Math.min(50, opportunity.domainAuthority);
           }
-        }
-        
-        // Update opportunity status to matched
-        await db.update(discoveredOpportunities)
-          .set({ status: 'matched' })
-          .where(eq(discoveredOpportunities.id, opportunity.id));
-        
-      } catch (error) {
-        console.error(`Error processing opportunity ${opportunity.id}:`, error);
-      }
+          
+          if (opportunity.spamScore !== undefined && opportunity.spamScore <= 3) {
+            qualityScore += 20;
+          }
+          
+          // Include business logic filters - for example:
+          let passesFilter = true;
+          
+          // Minimum DA filter
+          if (preferences.minDomainAuthority && 
+              opportunity.domainAuthority < preferences.minDomainAuthority) {
+            passesFilter = false;
+          }
+          
+          // Maximum spam score filter
+          if (preferences.maxSpamScore !== undefined && 
+              opportunity.spamScore !== undefined && 
+              opportunity.spamScore > preferences.maxSpamScore) {
+            passesFilter = false;
+          }
+          
+          // Source type filters
+          if (preferences.excludedSourceTypes && 
+              preferences.excludedSourceTypes.includes(opportunity.sourceType)) {
+            passesFilter = false;
+          }
+          
+          // Calculate final score - weighted combination of relevance and quality
+          const finalScore = passesFilter ? 
+            (relevanceScore * 0.7) + (qualityScore * 0.3) : 0;
+          
+          return {
+            opportunity,
+            relevanceScore,
+            qualityScore,
+            finalScore
+          };
+        })
+      );
+      
+      // Sort by final score and take the top matches
+      const topMatches = scoredOpportunities
+        .filter(item => item.finalScore > 40) // Minimum threshold
+        .sort((a, b) => b.finalScore - a.finalScore)
+        .slice(0, limit);
+      
+      console.log(`[OpportunityMatcher] Found ${topMatches.length} matches for website ID ${websiteId}`);
+      
+      return topMatches.map(match => match.opportunity);
+    } catch (error) {
+      console.error(`[OpportunityMatcher] Error finding matches for website ${websiteId}:`, error);
+      return [];
     }
-    
-    return matchesCreated;
   }
   
   /**
-   * Assign daily opportunities to users based on their plan
+   * Find premium matches for a website (higher quality threshold)
    */
-  async assignDailyOpportunities(): Promise<number> {
-    // Get all users
-    const allUsers = await db.select().from(users);
-    let totalAssigned = 0;
-    
-    for (const user of allUsers) {
-      try {
-        // Get user's websites
-        const userWebsites = await db.select().from(websites)
-          .where(eq(websites.userId, user.id));
-        
-        // For each website, assign daily opportunities
-        for (const website of userWebsites) {
-          // Get daily drip count based on user plan
-          let dailyLimit = 5; // Default Free Trial
-          
-          switch (user.subscription) {
-            case 'Pro':
-              dailyLimit = 15; // Updated based on feasibility analysis
-              break;
-            case 'Grow':
-              dailyLimit = 12; // Updated based on feasibility analysis
-              break;
-            case 'Starter':
-              dailyLimit = 7; // Updated based on feasibility analysis
-              break;
-            default:
-              dailyLimit = 5; // Free Trial or default
-          }
-          
-          // Get today's date (without time)
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          
-          // Check if daily drip exists for today
-          const existingDrips = await db.select()
-            .from(dailyDrips)
-            .where(
-              and(
-                eq(dailyDrips.userId, user.id),
-                eq(dailyDrips.websiteId, website.id),
-                gte(dailyDrips.date, today),
-                lt(dailyDrips.date, tomorrow)
-              )
-            );
-          
-          // If no drip for today, create one
-          if (existingDrips.length === 0) {
-            // Create daily drip record
-            const [drip] = await db.insert(dailyDrips)
-              .values({
-                userId: user.id,
-                websiteId: website.id,
-                date: today,
-                opportunitiesLimit: dailyLimit,
-                opportunitiesDelivered: 0,
-                isPurchasedExtra: false,
-                matches: []
-              })
-              .returning();
-            
-            // Get highest-scoring pending matches for this website
-            const pendingMatches = await db.select()
-              .from(opportunityMatches)
-              .where(
-                and(
-                  eq(opportunityMatches.websiteId, website.id),
-                  eq(opportunityMatches.status, 'pending')
-                )
-              )
-              .orderBy(desc(opportunityMatches.matchScore))
-              .limit(dailyLimit);
-            
-            // If we have matches, assign them
-            if (pendingMatches.length > 0) {
-              const matchIds = pendingMatches.map(m => m.id);
-              
-              // Update daily drip with matches
-              await db.update(dailyDrips)
-                .set({ 
-                  matches: matchIds,
-                  opportunitiesDelivered: matchIds.length
-                })
-                .where(eq(dailyDrips.id, drip.id));
-              
-              // Update match records
-              for (const match of pendingMatches) {
-                await db.update(opportunityMatches)
-                  .set({ 
-                    status: 'assigned',
-                    showDate: today
-                  })
-                  .where(eq(opportunityMatches.id, match.id));
-                  
-                // Update prospect with fit score from match
-                await db.update(prospects)
-                  .set({ fitScore: match.matchScore })
-                  .where(eq(prospects.id, match.prospectId));
-              }
-              
-              totalAssigned += matchIds.length;
-            }
-          }
-        }
-      } catch (error) {
-        console.error(`Error assigning opportunities for user ${user.id}:`, error);
-      }
-    }
-    
-    return totalAssigned;
-  }
-  
-  /**
-   * Get daily opportunities for a user
-   */
-  async getUserDailyOpportunities(userId: number, websiteId?: number): Promise<Prospect[]> {
+  async findPremiumMatchesForWebsite(websiteId: number, limit = 1): Promise<DiscoveredOpportunity[]> {
     try {
+      // Get website profile
+      const [websiteProfile] = await db.select()
+        .from(websiteProfiles)
+        .where(eq(websiteProfiles.websiteId, websiteId));
+      
+      if (!websiteProfile) {
+        return [];
+      }
+      
+      // Get premium opportunities that haven't been assigned yet
+      const premiumOpportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(
+          and(
+            eq(discoveredOpportunities.isPremium, true),
+            eq(discoveredOpportunities.status, 'validated')
+          )
+        )
+        .limit(50);
+      
+      // Score and rank opportunities
+      const scoredOpportunities = await Promise.all(
+        premiumOpportunities.map(async opportunity => {
+          const relevanceScore = this.websiteAnalyzer.calculateRelevance(
+            websiteProfile,
+            opportunity
+          );
+          
+          // Higher quality threshold for premium opportunities
+          const qualityScore = 
+            (opportunity.domainAuthority || 0) * 0.5 + 
+            (100 - (opportunity.spamScore || 0) * 10) * 0.3 +
+            (opportunity.pageAuthority || 0) * 0.2;
+          
+          // Calculate final score with higher emphasis on quality for premium
+          const finalScore = (relevanceScore * 0.4) + (qualityScore * 0.6);
+          
+          return {
+            opportunity,
+            relevanceScore,
+            qualityScore,
+            finalScore
+          };
+        })
+      );
+      
+      // Sort by final score and take the top matches
+      const topMatches = scoredOpportunities
+        .filter(item => item.finalScore > 60) // Higher threshold for premium
+        .sort((a, b) => b.finalScore - a.finalScore)
+        .slice(0, limit);
+      
+      console.log(`[OpportunityMatcher] Found ${topMatches.length} premium matches for website ID ${websiteId}`);
+      
+      return topMatches.map(match => match.opportunity);
+    } catch (error) {
+      console.error(`[OpportunityMatcher] Error finding premium matches for website ${websiteId}:`, error);
+      return [];
+    }
+  }
+  
+  /**
+   * Assign matches to a user's daily feed
+   */
+  async assignDailyMatches(userId: number): Promise<{ count: number, premium: number }> {
+    try {
+      // Get user's websites
+      const userWebsites = await db.select()
+        .from(websites)
+        .where(eq(websites.userId, userId));
+      
+      if (userWebsites.length === 0) {
+        console.log(`[OpportunityMatcher] No websites found for user ID ${userId}`);
+        return { count: 0, premium: 0 };
+      }
+      
       // Get today's date (without time)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      
-      // Build query condition
-      let dripsCondition;
-      if (websiteId) {
-        dripsCondition = and(
-          eq(dailyDrips.userId, userId),
-          eq(dailyDrips.websiteId, websiteId),
-          gte(dailyDrips.date, today),
-          lt(dailyDrips.date, tomorrow)
+      // Check if we already assigned drips today
+      const existingDrips = await db.select()
+        .from(dailyDrips)
+        .where(
+          and(
+            eq(dailyDrips.userId, userId),
+            gte(dailyDrips.dripDate, today)
+          )
         );
-      } else {
-        dripsCondition = and(
-          eq(dailyDrips.userId, userId),
-          gte(dailyDrips.date, today),
-          lt(dailyDrips.date, tomorrow)
-        );
+      
+      if (existingDrips.length > 0) {
+        console.log(`[OpportunityMatcher] Already assigned drips to user ${userId} today`);
+        return { 
+          count: existingDrips.length, 
+          premium: existingDrips.filter(drip => drip.isPremium).length 
+        };
       }
       
-      // Get daily drips for today
-      const drips = await db.select().from(dailyDrips).where(dripsCondition);
+      let regularMatchCount = 0;
+      let premiumMatchCount = 0;
       
-      // No drips found
-      if (drips.length === 0) {
-        return [];
-      }
+      // Get user's plan details (this would come from the user record in a real implementation)
+      const userPlan = await this.getUserPlan(userId);
       
-      // Collect all match IDs
-      const matchIds: number[] = [];
-      for (const drip of drips) {
-        matchIds.push(...(drip.matches || []));
-      }
-      
-      if (matchIds.length === 0) {
-        return [];
-      }
-      
-      // Get matches
-      const matches = await db.select()
-        .from(opportunityMatches)
-        .where(sql`${opportunityMatches.id} IN (${matchIds.join(',')})`);
-      
-      // Get prospect IDs
-      const prospectIds = matches.map(m => m.prospectId);
-      
-      if (prospectIds.length === 0) {
-        return [];
-      }
-      
-      // Get prospects
-      const prospectResults = await db.select()
-        .from(prospects)
-        .where(sql`${prospects.id} IN (${prospectIds.join(',')})`)
-        .orderBy(desc(prospects.fitScore), asc(prospects.id));
-      
-      // For each prospect, add match reasons from the corresponding match
-      const enhancedProspects = prospectResults.map(prospect => {
-        // Find the match for this prospect
-        const prospectMatch = matches.find(m => m.prospectId === prospect.id);
-        
-        // If we found a match with reasons, update the prospect's matchReasons
-        if (prospectMatch && prospectMatch.matchReason && prospectMatch.matchReason.length > 0) {
-          return {
-            ...prospect,
-            // Use match-specific reasons if available, otherwise keep the general ones
-            matchReasons: prospectMatch.matchReason
-          };
+      // Process each website
+      for (const website of userWebsites) {
+        if (regularMatchCount < userPlan.dailyDrips) {
+          // Find regular matches
+          const regularMatches = await this.findMatchesForWebsite(
+            website.id, 
+            userPlan.dailyDrips - regularMatchCount
+          );
+          
+          // Assign matches
+          for (const match of regularMatches) {
+            await this.assignMatch(match, userId, website.id, false);
+            regularMatchCount++;
+          }
         }
         
-        return prospect;
-      });
+        // If user has remaining premium drips, find premium matches
+        if (premiumMatchCount < userPlan.remainingSplashes) {
+          const premiumMatches = await this.findPremiumMatchesForWebsite(
+            website.id,
+            userPlan.remainingSplashes - premiumMatchCount
+          );
+          
+          for (const match of premiumMatches) {
+            await this.assignMatch(match, userId, website.id, true);
+            premiumMatchCount++;
+          }
+        }
+      }
       
-      return enhancedProspects;
+      console.log(`[OpportunityMatcher] Assigned ${regularMatchCount} regular and ${premiumMatchCount} premium matches to user ${userId}`);
+      
+      return { count: regularMatchCount, premium: premiumMatchCount };
     } catch (error) {
-      console.error(`Error getting daily opportunities for user ${userId}:`, error);
-      return [];
+      console.error(`[OpportunityMatcher] Error assigning daily matches for user ${userId}:`, error);
+      return { count: 0, premium: 0 };
     }
   }
   
   /**
-   * Generate immediate opportunities for Splash feature
-   * This method assigns additional opportunities when a user uses a Splash
+   * Assign a specific opportunity to a user
    */
-  async assignImmediateOpportunities(userId: number, websiteId?: number): Promise<Prospect[]> {
+  private async assignMatch(
+    opportunity: DiscoveredOpportunity, 
+    userId: number, 
+    websiteId: number, 
+    isPremium: boolean
+  ): Promise<void> {
     try {
-      // Determine how many opportunities to assign for a Splash
-      const SPLASH_OPPORTUNITY_COUNT = 5; // Default number of opportunities per Splash
+      // Mark opportunity as assigned
+      await db.update(discoveredOpportunities)
+        .set({
+          status: isPremium ? 'premium' : 'assigned',
+          lastChecked: new Date()
+        })
+        .where(eq(discoveredOpportunities.id, opportunity.id));
       
-      // Get all user's websites if no specific websiteId is provided
-      let websiteIds: number[] = [];
-      if (websiteId) {
-        websiteIds = [websiteId];
-      } else {
-        const userWebsites = await db.select()
-          .from(websites)
-          .where(eq(websites.userId, userId));
-        websiteIds = userWebsites.map(web => web.id);
-      }
+      // Create opportunity match record
+      await db.insert(opportunityMatches)
+        .values({
+          opportunityId: opportunity.id,
+          userId,
+          websiteId,
+          assignedAt: new Date(),
+          status: 'active',
+          isPremium
+        });
       
-      if (websiteIds.length === 0) {
-        return [];
-      }
-      
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      
-      let assignedProspects: Prospect[] = [];
-      
-      // For each website, assign additional opportunities
-      for (const webId of websiteIds) {
-        try {
-          // Get website profile
-          const [profile] = await db.select()
-            .from(websiteProfiles)
-            .where(eq(websiteProfiles.websiteId, webId));
-          
-          if (!profile) {
-            console.warn(`No profile found for website ${webId}`);
-            continue;
-          }
-          
-          // Find existing drip for today or create a new one
-          let drip = await db.select()
-            .from(dailyDrips)
-            .where(
-              and(
-                eq(dailyDrips.userId, userId),
-                eq(dailyDrips.websiteId, webId),
-                gte(dailyDrips.date, today),
-                lt(dailyDrips.date, tomorrow)
-              )
-            )
-            .then(results => results[0]);
-          
-          if (!drip) {
-            // Create daily drip record if none exists
-            [drip] = await db.insert(dailyDrips)
-              .values({
-                userId,
-                websiteId: webId,
-                date: today,
-                opportunitiesLimit: SPLASH_OPPORTUNITY_COUNT,
-                opportunitiesDelivered: 0,
-                isPurchasedExtra: true, // Mark this as a purchased/splash extra
-                matches: []
-              })
-              .returning();
-          }
-          
-          // Get pending matches that haven't been assigned yet
-          const pendingMatches = await db.select()
-            .from(opportunityMatches)
-            .where(
-              and(
-                eq(opportunityMatches.websiteId, webId),
-                eq(opportunityMatches.status, 'pending')
-              )
-            )
-            .orderBy(desc(opportunityMatches.matchScore))
-            .limit(SPLASH_OPPORTUNITY_COUNT);
-          
-          // If we don't have enough pending matches, attempt to find new opportunities
-          if (pendingMatches.length < SPLASH_OPPORTUNITY_COUNT) {
-            // Get analyzed opportunities that might not have been matched yet
-            const additionalOpportunities = await db.select()
-              .from(discoveredOpportunities)
-              .where(eq(discoveredOpportunities.status, 'analyzed'))
-              .limit(SPLASH_OPPORTUNITY_COUNT - pendingMatches.length);
-            
-            // Process additional opportunities
-            for (const opportunity of additionalOpportunities) {
-              try {
-                // Convert to prospect if not already done
-                const prospect = await this.convertToProspect(opportunity);
-                
-                // Calculate match score
-                const { score, reasons } = this.calculateMatchScore(
-                  profile, 
-                  opportunity, 
-                  opportunity.rawData
-                );
-                
-                // Create match even with a lower threshold for splash
-                if (score >= 30) { // Lower threshold for splash compared to regular matching
-                  const match = await this.createMatch(webId, prospect.id, score, reasons);
-                  
-                  // Update opportunity status to matched
-                  await db.update(discoveredOpportunities)
-                    .set({ status: 'matched' })
-                    .where(eq(discoveredOpportunities.id, opportunity.id));
-                  
-                  // Add to pending matches
-                  pendingMatches.push(match);
-                  
-                  // Stop if we have enough
-                  if (pendingMatches.length >= SPLASH_OPPORTUNITY_COUNT) {
-                    break;
-                  }
-                }
-              } catch (error) {
-                console.error(`Error processing additional opportunity ${opportunity.id}:`, error);
-              }
-            }
-          }
-          
-          // Get current matches
-          const currentMatches = drip.matches || [];
-          
-          // Add new matches to the list
-          const matchesToAdd = pendingMatches.map(m => m.id);
-          const updatedMatches = [...currentMatches, ...matchesToAdd];
-          
-          // Update the drip record with new matches
-          await db.update(dailyDrips)
-            .set({ 
-              matches: updatedMatches,
-              opportunitiesDelivered: updatedMatches.length
-            })
-            .where(eq(dailyDrips.id, drip.id));
-          
-          // Update match records to 'assigned'
-          for (const match of pendingMatches) {
-            await db.update(opportunityMatches)
-              .set({ 
-                status: 'assigned',
-                showDate: today
-              })
-              .where(eq(opportunityMatches.id, match.id));
-              
-            // Update prospect with fit score from match
-            await db.update(prospects)
-              .set({ fitScore: match.matchScore })
-              .where(eq(prospects.id, match.prospectId));
-          }
-          
-          // Get prospect IDs
-          const prospectIds = pendingMatches.map(m => m.prospectId);
-          
-          // Get the actual prospects for the newly assigned matches
-          const newProspects = await db.select()
-            .from(prospects)
-            .where(sql`${prospects.id} IN (${prospectIds.join(',')})`);
-          
-          // Enhance prospects with match reasons
-          const enhancedProspects = newProspects.map(prospect => {
-            // Find the match for this prospect
-            const prospectMatch = pendingMatches.find(m => m.prospectId === prospect.id);
-            
-            return {
-              ...prospect,
-              matchReasons: (prospectMatch && prospectMatch.matchReason) || []
-            };
-          });
-          
-          // Add to our result list
-          assignedProspects = [
-            ...assignedProspects,
-            ...enhancedProspects
-          ];
-          
-        } catch (error) {
-          console.error(`Error assigning splash opportunities for website ${webId}:`, error);
-        }
-      }
-      
-      return assignedProspects;
+      // Create daily drip record
+      await db.insert(dailyDrips)
+        .values({
+          userId,
+          opportunityId: opportunity.id,
+          dripDate: new Date(),
+          isPremium,
+          status: 'active'
+        });
     } catch (error) {
-      console.error(`Error assigning immediate opportunities for user ${userId}:`, error);
-      return [];
+      console.error(`[OpportunityMatcher] Error assigning opportunity ${opportunity.id}:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Helper method to get user's plan details
+   */
+  private async getUserPlan(userId: number): Promise<{
+    dailyDrips: number;
+    remainingSplashes: number;
+  }> {
+    // This would be fetched from the user record and subscription details in a real impl
+    // Default to free plan limits
+    return {
+      dailyDrips: 5,
+      remainingSplashes: 1
+    };
+  }
+  
+  /**
+   * Calculate and explain why an opportunity was matched to a website
+   */
+  async explainMatch(opportunityId: number, websiteId: number): Promise<{
+    reasons: string[];
+    score: number;
+    metrics: any;
+  }> {
+    try {
+      const [opportunity] = await db.select()
+        .from(discoveredOpportunities)
+        .where(eq(discoveredOpportunities.id, opportunityId));
+      
+      const [websiteProfile] = await db.select()
+        .from(websiteProfiles)
+        .where(eq(websiteProfiles.websiteId, websiteId));
+      
+      if (!opportunity || !websiteProfile) {
+        return {
+          reasons: ['Not enough data to explain match'],
+          score: 0,
+          metrics: {}
+        };
+      }
+      
+      const relevanceScore = this.websiteAnalyzer.calculateRelevance(
+        websiteProfile,
+        opportunity
+      );
+      
+      const reasons = [];
+      const metrics = {
+        relevanceScore,
+        domainAuthority: opportunity.domainAuthority,
+        spamScore: opportunity.spamScore,
+        topics: websiteProfile.topics?.filter(topic => 
+          opportunity.pageContent?.toLowerCase().includes(topic.toLowerCase())
+        ).slice(0, 5)
+      };
+      
+      // Generate explanation
+      if (relevanceScore > 80) {
+        reasons.push('High content relevance to your website');
+      } else if (relevanceScore > 60) {
+        reasons.push('Good content relevance to your website');
+      } else {
+        reasons.push('Some content relevance to your website');
+      }
+      
+      // DA explanation
+      if (opportunity.domainAuthority && opportunity.domainAuthority >= 40) {
+        reasons.push(`High domain authority (${opportunity.domainAuthority})`);
+      } else if (opportunity.domainAuthority && opportunity.domainAuthority >= 20) {
+        reasons.push(`Moderate domain authority (${opportunity.domainAuthority})`);
+      }
+      
+      // Spam score explanation
+      if (opportunity.spamScore !== undefined && opportunity.spamScore < 2) {
+        reasons.push('Very low spam risk');
+      } else if (opportunity.spamScore !== undefined && opportunity.spamScore < 5) {
+        reasons.push('Acceptable spam risk');
+      }
+      
+      // Topic match explanation
+      const matchedTopics = websiteProfile.topics?.filter(topic => 
+        opportunity.pageContent?.toLowerCase().includes(topic.toLowerCase())
+      ) || [];
+      
+      if (matchedTopics.length > 0) {
+        reasons.push(`Matches ${matchedTopics.length} topics from your website`);
+      }
+      
+      return {
+        reasons,
+        score: relevanceScore,
+        metrics
+      };
+    } catch (error) {
+      console.error(`[OpportunityMatcher] Error explaining match:`, error);
+      return {
+        reasons: ['Error generating explanation'],
+        score: 0,
+        metrics: {}
+      };
     }
   }
 }
 
 // Singleton instance
-let matcherInstance: OpportunityMatcher | null = null;
+let opportunityMatcher: OpportunityMatcher | null = null;
 
 export function getOpportunityMatcher(): OpportunityMatcher {
-  if (!matcherInstance) {
-    matcherInstance = new OpportunityMatcher();
+  if (!opportunityMatcher) {
+    opportunityMatcher = new OpportunityMatcher();
   }
-  return matcherInstance;
+  
+  return opportunityMatcher;
 }
