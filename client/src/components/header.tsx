@@ -48,6 +48,9 @@ export default function Header() {
   useEffect(() => {
     if (websites.length > 0 && !selectedWebsite) {
       setSelectedWebsite(websites[0].url);
+    } else if (websites.length === 0 && !selectedWebsite) {
+      // Default placeholder when no websites are available
+      setSelectedWebsite("Select a website");
     }
   }, [websites, selectedWebsite]);
   
@@ -71,8 +74,25 @@ export default function Header() {
       <div className="flex items-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="h-9 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-              <span className="max-w-[180px] truncate">{selectedWebsite}</span>
+            <Button 
+              variant="outline" 
+              className={cn(
+                "h-9 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500",
+                websites && websites.length > 0 ? "text-gray-700" : "text-gray-500"
+              )}
+            >
+              <span className="max-w-[180px] truncate flex items-center">
+                {websites && websites.length > 0 ? (
+                  selectedWebsite
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add a website
+                  </>
+                )}
+              </span>
               <svg className="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -81,20 +101,28 @@ export default function Header() {
           <DropdownMenuContent align="start" className="w-72">
             <DropdownMenuLabel>Select Website</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {websites.map((site: any) => (
-              <DropdownMenuItem 
-                key={site.id} 
-                onClick={() => handleWebsiteChange(site.url)}
-                className={cn("cursor-pointer", selectedWebsite === site.url && "bg-primary-50")}
-              >
-                <div className="flex items-center w-full">
-                  <div className="h-6 w-6 mr-2 rounded bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
-                    {site.url.charAt(0).toUpperCase()}
+            {websites && websites.length > 0 ? (
+              websites.map((site: any) => (
+                <DropdownMenuItem 
+                  key={site.id} 
+                  onClick={() => handleWebsiteChange(site.url)}
+                  className={cn("cursor-pointer", selectedWebsite === site.url && "bg-primary-50")}
+                >
+                  <div className="flex items-center w-full">
+                    <div className="h-6 w-6 mr-2 rounded bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
+                      {site.url ? site.url.charAt(0).toUpperCase() : '?'}
+                    </div>
+                    <span className="flex-1 truncate">{site.url}</span>
                   </div>
-                  <span className="flex-1 truncate">{site.url}</span>
+                </DropdownMenuItem>
+              ))
+            ) : (
+              <DropdownMenuItem disabled className="opacity-70 cursor-not-allowed">
+                <div className="flex items-center w-full">
+                  <span className="text-sm text-gray-500">No websites added yet</span>
                 </div>
               </DropdownMenuItem>
-            ))}
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/websites" className="w-full cursor-pointer">
