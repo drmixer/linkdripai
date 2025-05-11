@@ -1,9 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import OpportunityCard from '@/components/opportunity-card';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { Loader2, Filter, RefreshCw, Sparkles, Info } from 'lucide-react';
+import { 
+  Loader2, 
+  Filter, 
+  RefreshCw, 
+  Sparkles, 
+  Info, 
+  ChevronRight, 
+  BarChart, 
+  PieChart, 
+  Search, 
+  Globe, 
+  Zap, 
+  Star, 
+  ChevronDown, 
+  Check, 
+  LayoutDashboard, 
+  Calendar, 
+  Mail, 
+  FileText,
+  ArrowUpRight,
+  TrendingUp,
+  AlertCircle,
+  User
+} from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +49,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/hooks/use-toast';
 
 export default function OpportunitiesPage() {
@@ -43,6 +75,13 @@ export default function OpportunitiesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
   
+  // New state variables for enhanced dashboard
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [chartPeriod, setChartPeriod] = useState<"week" | "month" | "year">("week");
+  const [activeSection, setActiveSection] = useState<"opportunities" | "analytics" | "contacted">("opportunities");
+  const [showRecent, setShowRecent] = useState(true);
+  const [sortMethod, setSortMethod] = useState<"relevance" | "da" | "date">("relevance");
+  
   // Get user websites
   const { data: websites, isLoading: loadingWebsites } = useQuery({
     queryKey: ['/api/websites'],
@@ -59,6 +98,18 @@ export default function OpportunitiesPage() {
   const { data: opportunities, isLoading: loadingOpportunities, refetch } = useQuery({
     queryKey: ['/api/opportunities', websiteFilter, activeTab, activeFilters],
     enabled: !!user
+  });
+  
+  // Get recent contacts (for contacted section)
+  const { data: recentContacts, isLoading: loadingContacts } = useQuery({
+    queryKey: ['/api/contacts/recent'],
+    enabled: !!user && activeSection === 'contacted'
+  });
+  
+  // Get analytics data
+  const { data: analyticsData, isLoading: loadingAnalytics } = useQuery({
+    queryKey: ['/api/analytics', chartPeriod],
+    enabled: !!user && activeSection === 'analytics'
   });
   
   // Get premium splash
