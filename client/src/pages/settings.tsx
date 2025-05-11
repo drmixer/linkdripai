@@ -95,8 +95,8 @@ export default function SettingsPage() {
     defaultValues: {
       username: user?.username || "",
       email: user?.email || "",
-      name: user?.name || "",
-      company: user?.company || "",
+      name: user?.firstName || "",
+      company: "",
     },
   });
   
@@ -561,16 +561,16 @@ export default function SettingsPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <FormLabel>Current Password</FormLabel>
-                    <Input type="password" />
+                    <label htmlFor="current-password" className="text-sm font-medium">Current Password</label>
+                    <Input id="current-password" type="password" className="mt-1" />
                   </div>
                   <div>
-                    <FormLabel>New Password</FormLabel>
-                    <Input type="password" />
+                    <label htmlFor="new-password" className="text-sm font-medium">New Password</label>
+                    <Input id="new-password" type="password" className="mt-1" />
                   </div>
                   <div>
-                    <FormLabel>Confirm New Password</FormLabel>
-                    <Input type="password" />
+                    <label htmlFor="confirm-password" className="text-sm font-medium">Confirm New Password</label>
+                    <Input id="confirm-password" type="password" className="mt-1" />
                   </div>
                   <Button>Update Password</Button>
                 </div>
