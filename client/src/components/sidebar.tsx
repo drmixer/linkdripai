@@ -12,7 +12,8 @@ import {
   ChevronRightIcon,
   PlusCircleIcon,
   LineChartIcon,
-  UnlockIcon
+  UnlockIcon,
+  SettingsIcon
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,11 @@ export default function Sidebar() {
       label: "Help Center",
       icon: HelpCircleIcon,
       href: "/help",
+    },
+    {
+      label: "Settings",
+      icon: SettingsIcon,
+      href: "/settings",
     },
   ];
 

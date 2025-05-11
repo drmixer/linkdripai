@@ -17,6 +17,8 @@ import PricingPage from "@/pages/pricing-page";
 import Onboarding from "@/pages/onboarding-improved";
 import WebsitesPage from "@/pages/websites";
 import BillingPage from "@/pages/billing";
+import HelpPage from "@/pages/help";
+import SettingsPage from "@/pages/settings";
 
 function Router() {
   return (
@@ -32,6 +34,8 @@ function Router() {
       <ProtectedRoute path="/onboarding/improved" component={Onboarding} skipOnboardingCheck={true} />
       <ProtectedRoute path="/websites" component={WebsitesPage} />
       <ProtectedRoute path="/billing" component={BillingPage} />
+      <ProtectedRoute path="/help" component={HelpPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
