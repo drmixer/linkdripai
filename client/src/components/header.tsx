@@ -8,8 +8,9 @@ import {
   LogOut, 
   Droplet,
   Plus,
+  Sparkles,
 } from "lucide-react";
-import BuySplashesDialog from "./buy-splashes-dialog";
+import { BuySplashesDialog } from "./buy-splashes-dialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -31,6 +32,7 @@ import { Website } from "@shared/schema";
 export default function Header() {
   const { user, logoutMutation } = useAuth();
   const [selectedWebsite, setSelectedWebsite] = useState<string>("");
+  const [showSplashDialog, setShowSplashDialog] = useState<boolean>(false);
   
   // Fetch user's websites from the API
   const { data: websites = [], isLoading: isLoadingWebsites } = useQuery({
@@ -118,15 +120,15 @@ export default function Header() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="hidden md:flex items-center px-3 py-1.5 bg-primary-50 rounded-lg">
-                <Droplet className="h-4 w-4 text-blue-500 mr-1.5" />
-                <span className="text-sm font-medium text-gray-900">{splashesAvailable} splashes</span>
-                <BuySplashesDialog
-                  trigger={
-                    <Button variant="link" className="h-auto p-0 ml-1.5 text-primary-600 text-xs">
-                      Buy
-                    </Button>
-                  }
-                />
+                <Sparkles className="h-4 w-4 text-blue-500 mr-1.5" />
+                <span className="text-sm font-medium text-gray-900">{splashesAvailable} premium</span>
+                <Button 
+                  variant="link" 
+                  className="h-auto p-0 ml-1.5 text-primary-600 text-xs"
+                  onClick={() => setShowSplashDialog(true)}
+                >
+                  Buy
+                </Button>
               </div>
             </TooltipTrigger>
             <TooltipContent>
