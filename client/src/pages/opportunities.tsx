@@ -620,36 +620,18 @@ export default function OpportunitiesPage() {
                 
                 <div className="flex gap-2">
                   {userPlan?.remainingSplashes > 0 ? (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button className="gap-2 relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md">
-                          <Sparkles size={16} className="relative z-10" />
-                          <span className="relative z-10">Use a Splash</span>
-                          <div className="absolute inset-0 bg-gradient-to-r from-purple-400/30 to-indigo-400/30 w-full translate-y-full hover:translate-y-0 transition-transform duration-300" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Use Premium Splash?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will use 1 Splash credit to discover a premium opportunity with DA 40+ and high relevance to your website.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => handleUseSplash(
-                              websites && websites.length > 0 
-                                ? parseInt(websiteFilter === 'all' ? websites[0].id : websiteFilter) 
-                                : 0
-                            )}
-                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                          >
-                            Use Splash
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <Button 
+                      className="gap-2 relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md"
+                      onClick={() => handleUseSplash(
+                        websites && websites.length > 0 
+                          ? parseInt(websiteFilter === 'all' ? websites[0].id : websiteFilter) 
+                          : 0
+                      )}
+                    >
+                      <Sparkles size={16} className="relative z-10" />
+                      <span className="relative z-10">Use a Splash</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-400/30 to-indigo-400/30 w-full translate-y-full hover:translate-y-0 transition-transform duration-300" />
+                    </Button>
                   ) : (
                     <Button 
                       className="gap-2 bg-purple-600 hover:bg-purple-700" 
@@ -1096,7 +1078,9 @@ export default function OpportunitiesPage() {
       </div>
       
       {/* Contact Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        if (!open) setIsDialogOpen(false);
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Contact Information</DialogTitle>
