@@ -33,7 +33,7 @@ export default function Sidebar() {
       href: "/dashboard",
     },
     {
-      label: "Opportunities (Drips)",
+      label: "All Opportunities (Drips)",
       icon: UnlockIcon,
       href: "/opportunities",
     },
