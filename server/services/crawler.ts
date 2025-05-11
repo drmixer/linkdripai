@@ -3,6 +3,7 @@ import { db } from '../db';
 import { eq, inArray } from 'drizzle-orm';
 import { crawlerJobs, discoveredOpportunities } from '@shared/schema';
 import { getMozApiService, MozApiService } from './moz';
+import { getValidationPipeline } from './validation-pipeline';
 import puppeteer from 'puppeteer';
 import * as cheerio from 'cheerio';
 
