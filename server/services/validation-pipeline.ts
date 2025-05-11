@@ -168,9 +168,9 @@ export class ValidationPipeline {
       }
       
       // 3. Basic content quality checks if content is available
-      if (opportunity.content) {
+      if (opportunity.pageContent) {
         // Check content length
-        metrics.contentLength = opportunity.content.length;
+        metrics.contentLength = opportunity.pageContent.length;
         if (metrics.contentLength < 100) {
           return {
             isPassing: false,
@@ -185,7 +185,7 @@ export class ValidationPipeline {
           'diet', 'weight loss', 'free download', 'free offer'
         ];
         
-        const contentLower = opportunity.content.toLowerCase();
+        const contentLower = opportunity.pageContent.toLowerCase();
         const matchedSpamWords = spamPatterns.filter(pattern => contentLower.includes(pattern));
         
         metrics.spamWordsFound = matchedSpamWords.length;
@@ -198,8 +198,8 @@ export class ValidationPipeline {
         }
         
         // Calculate text-to-link ratio if HTML is available
-        if (opportunity.rawData && opportunity.rawData.html) {
-          const $ = cheerio.load(opportunity.rawData.html);
+        if (opportunity.rawData && typeof opportunity.rawData === 'object' && opportunity.rawData.html) {
+          const $ = cheerio.load(opportunity.rawData.html as string);
           const textLength = $('body').text().length;
           const linkCount = $('a').length;
           
@@ -217,7 +217,9 @@ export class ValidationPipeline {
       }
       
       // 4. Check if contact information is available
-      if (!opportunity.hasContactForm && !opportunity.contactEmail) {
+      const contactInfo = opportunity.contactInfo;
+      const hasContact = contactInfo && (contactInfo.email || contactInfo.form || (contactInfo.social && contactInfo.social.length > 0));
+      if (!hasContact) {
         return {
           isPassing: false,
           metrics,
@@ -419,12 +421,12 @@ export class ValidationPipeline {
       if (opportunityIds.length === 0) {
         opportunities = await db.select()
           .from(discoveredOpportunities)
-          .where(eq(discoveredOpportunities.status, 'new'))
+          .where(eq(discoveredOpportunities.status, 'discovered'))
           .limit(20); // Process in smaller batches
       } else {
         opportunities = await db.select()
           .from(discoveredOpportunities)
-          .where(eq(discoveredOpportunities.id, opportunityIds));
+          .where(in_(discoveredOpportunities.id, opportunityIds));
       }
       
       if (opportunities.length === 0) {

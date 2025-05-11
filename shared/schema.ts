@@ -159,8 +159,11 @@ export const sourceTypeEnum = pgEnum('source_type', [
 export const discoveryStatusEnum = pgEnum('discovery_status', [
   'discovered',      // Initial discovery
   'analyzed',        // Analyzed but not yet matched
+  'validated',       // Passed validation pipeline
+  'rejected',        // Failed validation pipeline
   'matched',         // Matched to user(s)
   'assigned',        // Assigned to user's daily feed
+  'premium',         // Reserved for premium splash
   'unlocked',        // Unlocked by user
   'contacted',       // Email sent
   'converted',       // Backlink secured
@@ -197,10 +200,17 @@ export const discoveredOpportunities = pgTable("discoveredOpportunities", {
     form?: string;
     social?: string[];
   }>(),
+  // Metrics from validation process
+  domainAuthority: integer("domainAuthority").default(0),
+  pageAuthority: integer("pageAuthority").default(0),
+  spamScore: integer("spamScore").default(0),
+  isPremium: boolean("isPremium").default(false), // Premium high-quality opportunity for Splash
+  // Tracking fields
   discoveredAt: timestamp("discoveredAt").defaultNow(),
   lastChecked: timestamp("lastChecked").defaultNow(),
   status: discoveryStatusEnum("status").default('discovered'),
   rawData: json("rawData"),
+  validationData: json("validationData"), // Store detailed validation metrics
 });
 
 // Opportunity match records - links users to opportunities
