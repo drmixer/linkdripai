@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { DiscoveredOpportunity, discoveredOpportunities } from '@shared/schema';
 import { db } from '../db';
-import { eq, in_, and, sql } from 'drizzle-orm';
+import { eq, inArray, and, sql } from 'drizzle-orm';
 import { getMozApiService } from './moz-api-service';
 import * as cheerio from 'cheerio';
 import * as dns from 'dns';
@@ -203,7 +203,7 @@ export class ValidationPipeline {
         }
         
         // Calculate text-to-link ratio if HTML is available
-        if (opportunity.rawData && typeof opportunity.rawData === 'object' && opportunity.rawData.html) {
+        if (opportunity.rawData && typeof opportunity.rawData === 'object' && 'html' in opportunity.rawData) {
           const $ = cheerio.load(opportunity.rawData.html as string);
           const textLength = $('body').text().length;
           const linkCount = $('a').length;
@@ -361,17 +361,17 @@ export class ValidationPipeline {
    */
   private meetsStandardQualityThresholds(metrics: any): boolean {
     // Check Domain Authority
-    if (metrics.domainAuthority < this.standardQualityThresholds.minDomainAuthority) {
+    if (!metrics.domainAuthority || metrics.domainAuthority < this.standardQualityThresholds.minDomainAuthority) {
       return false;
     }
     
-    // Check Spam Score
-    if (metrics.spamScore > this.standardQualityThresholds.maxSpamScore) {
+    // Check Spam Score (lower is better)
+    if (metrics.spamScore !== undefined && metrics.spamScore > this.standardQualityThresholds.maxSpamScore) {
       return false;
     }
     
-    // Check Relevance Score
-    if (metrics.relevanceScore < this.standardQualityThresholds.minRelevanceScore) {
+    // Check Relevance Score if available (higher is better)
+    if (metrics.relevanceScore !== undefined && metrics.relevanceScore < this.standardQualityThresholds.minRelevanceScore) {
       return false;
     }
     
@@ -382,31 +382,32 @@ export class ValidationPipeline {
    * Check if metrics meet premium quality thresholds
    */
   private meetsPremiumQualityThresholds(metrics: any): boolean {
-    // Check Domain Authority
-    if (metrics.domainAuthority < this.premiumQualityThresholds.minDomainAuthority) {
+    // Check Domain Authority (must be high)
+    if (!metrics.domainAuthority || metrics.domainAuthority < this.premiumQualityThresholds.minDomainAuthority) {
       return false;
     }
     
-    // Check Spam Score
-    if (metrics.spamScore > this.premiumQualityThresholds.maxSpamScore) {
+    // Check Spam Score (must be very low)
+    if (metrics.spamScore !== undefined && metrics.spamScore > this.premiumQualityThresholds.maxSpamScore) {
       return false;
     }
     
-    // Check Relevance Score
-    if (metrics.relevanceScore < this.premiumQualityThresholds.minRelevanceScore) {
+    // Check Relevance Score if available (must be very high)
+    if (metrics.relevanceScore !== undefined && metrics.relevanceScore < this.premiumQualityThresholds.minRelevanceScore) {
       return false;
     }
     
-    // Additional premium checks
-    if (metrics.estimatedTraffic < 1000) {
+    // Additional premium checks - must have at least some backlinks
+    if (metrics.links !== undefined && metrics.links < 50) {
       return false;
     }
     
-    // Domain age at least 2 years for premium
-    if (metrics.domainAge && metrics.domainAge.years < 2) {
+    // Must have at least 5 root domains linking to it
+    if (metrics.rootDomainsLinking !== undefined && metrics.rootDomainsLinking < 5) {
       return false;
     }
     
+    // Return true if all premium checks pass
     return true;
   }
   
@@ -431,7 +432,7 @@ export class ValidationPipeline {
       } else {
         opportunities = await db.select()
           .from(discoveredOpportunities)
-          .where(in_(discoveredOpportunities.id, opportunityIds));
+          .where(inArray(discoveredOpportunities.id, opportunityIds));
       }
       
       if (opportunities.length === 0) {
