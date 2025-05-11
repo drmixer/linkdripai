@@ -231,7 +231,7 @@ export default function BillingPage() {
         "2 websites",
         "7-10 opportunities per day",
         "Unlock all opportunity details",
-        "3 Splashes per month",
+        "3 Premium Splashes per month",
         "Advanced filters and analytics",
         "Custom email templates",
         "Competitor backlink insights",

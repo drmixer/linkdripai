@@ -120,8 +120,8 @@ export default function OpportunitiesPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Splash used successfully!",
-        description: "A premium opportunity has been added to your list",
+        title: "Premium Splash used successfully!",
+        description: "A high-quality opportunity (DA 40+) has been added to your list",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/opportunities'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user/plan'] });
@@ -210,8 +210,8 @@ export default function OpportunitiesPage() {
       splashMutation.mutate(websiteId);
     } else {
       toast({
-        title: "No Splash credits",
-        description: "You don't have any remaining Splash credits. Upgrade your plan or purchase additional Splash credits.",
+        title: "No Premium Splash credits",
+        description: "You don't have any remaining Premium Splash credits. Upgrade your plan or purchase additional Premium Splash credits.",
         variant: "destructive"
       });
     }
