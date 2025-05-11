@@ -150,10 +150,10 @@ export default function BillingPage() {
     },
   });
 
-  // Add splashes mutation
-  const addSplashesMutation = useMutation({
+  // Add Premium Splashes mutation
+  const addPremiumSplashesMutation = useMutation({
     mutationFn: async (splashes: string) => {
-      const res = await apiRequest("POST", "/api/splashes/add", { splashes: parseInt(splashes) });
+      const res = await apiRequest("POST", "/api/premium-splashes/add", { splashes: parseInt(splashes) });
       return await res.json();
     },
     onSuccess: () => {
@@ -161,13 +161,13 @@ export default function BillingPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       setIsAddSplashesDialogOpen(false);
       toast({
-        title: "Splashes added",
-        description: `${selectedSplashes} splashes have been added to your account.`,
+        title: "Premium Splashes added",
+        description: `${selectedSplashes} Premium Splashes have been added to your account.`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to add splashes",
+        title: "Failed to add Premium Splashes",
         description: error.message,
         variant: "destructive",
       });
@@ -179,7 +179,7 @@ export default function BillingPage() {
   };
 
   const handleAddSplashes = () => {
-    addSplashesMutation.mutate(selectedSplashes);
+    addPremiumSplashesMutation.mutate(selectedSplashes);
   };
 
   // Plan details
@@ -193,7 +193,7 @@ export default function BillingPage() {
         "1 website",
         "3-5 opportunities per day",
         "Unlock all opportunity details",
-        "1 Splash per month",
+        "1 Premium Splash per month",
         "Basic filters and analytics",
         "Standard support",
       ],
@@ -212,7 +212,7 @@ export default function BillingPage() {
         "1 website",
         "3-5 opportunities per day",
         "Unlock all opportunity details",
-        "1 Splash per month",
+        "1 Premium Splash per month",
         "Basic filters and analytics",
         "Standard support",
       ],
@@ -252,7 +252,7 @@ export default function BillingPage() {
         "5 websites",
         "10-15 opportunities per day",
         "Unlock all opportunity details",
-        "7 Splashes per month",
+        "7 Premium Splashes per month",
         "Full filtering options",
         "Advanced analytics and reporting", 
         "Competitor backlink insights",
