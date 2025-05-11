@@ -890,6 +890,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get match explanation for opportunity
+  app.get("/api/opportunities/:id/explain", isAuthenticated, async (req, res) => {
+    try {
+      const opportunityId = parseInt(req.params.id);
+      const websiteId = req.query.websiteId ? parseInt(req.query.websiteId as string) : undefined;
+      
+      if (isNaN(opportunityId)) {
+        return res.status(400).json({ message: "Invalid opportunity ID" });
+      }
+      
+      if (websiteId !== undefined && isNaN(websiteId)) {
+        return res.status(400).json({ message: "Invalid website ID" });
+      }
+      
+      // Check if opportunity exists
+      const opportunities = await db.select()
+        .from(schema.discoveredOpportunities)
+        .where(eq(schema.discoveredOpportunities.id, opportunityId));
+        
+      if (opportunities.length === 0) {
+        return res.status(404).json({ message: "Opportunity not found" });
+      }
+      
+      // Check if website belongs to user if websiteId is provided
+      if (websiteId) {
+        const websites = await db.select()
+          .from(schema.websites)
+          .where(and(
+            eq(schema.websites.id, websiteId),
+            eq(schema.websites.userId, req.user!.id)
+          ));
+          
+        if (websites.length === 0) {
+          return res.status(404).json({ message: "Website not found" });
+        }
+      }
+      
+      const opportunity = opportunities[0];
+      const matcher = getOpportunityMatcher();
+      const explanation = await matcher.explainMatch(opportunity, websiteId);
+      
+      res.json(explanation);
+    } catch (error: any) {
+      console.error('Get match explanation error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Get AI-matched daily opportunities
   app.get("/api/drips/opportunities", isAuthenticated, async (req, res) => {
     try {

@@ -334,22 +334,52 @@ export class OpportunityMatcher {
   
   /**
    * Calculate and explain why an opportunity was matched to a website
+   * @param opportunity Either the opportunity object or the opportunity ID
+   * @param websiteId The website ID
    */
-  async explainMatch(opportunityId: number, websiteId: number): Promise<{
+  async explainMatch(opportunity: DiscoveredOpportunity | number, websiteId?: number): Promise<{
     reasons: string[];
     score: number;
     metrics: any;
   }> {
     try {
-      const [opportunity] = await db.select()
-        .from(discoveredOpportunities)
-        .where(eq(discoveredOpportunities.id, opportunityId));
+      let opportunityObj: DiscoveredOpportunity | undefined;
+      
+      // Handle both object and ID inputs for flexibility
+      if (typeof opportunity === 'number') {
+        const [foundOpportunity] = await db.select()
+          .from(discoveredOpportunities)
+          .where(eq(discoveredOpportunities.id, opportunity));
+        opportunityObj = foundOpportunity;
+      } else {
+        opportunityObj = opportunity;
+      }
+      
+      if (!websiteId && typeof opportunity !== 'number') {
+        // Try to find most relevant website for this opportunity
+        const [match] = await db.select()
+          .from(opportunityMatches)
+          .where(eq(opportunityMatches.opportunityId, opportunityObj.id))
+          .limit(1);
+        
+        if (match) {
+          websiteId = match.websiteId;
+        }
+      }
+      
+      if (!websiteId) {
+        return {
+          reasons: ['No website specified for match explanation'],
+          score: 0,
+          metrics: {}
+        };
+      }
       
       const [websiteProfile] = await db.select()
         .from(websiteProfiles)
         .where(eq(websiteProfiles.websiteId, websiteId));
       
-      if (!opportunity || !websiteProfile) {
+      if (!opportunityObj || !websiteProfile) {
         return {
           reasons: ['Not enough data to explain match'],
           score: 0,
@@ -359,17 +389,64 @@ export class OpportunityMatcher {
       
       const relevanceScore = this.websiteAnalyzer.calculateRelevance(
         websiteProfile,
-        opportunity
+        opportunityObj
       );
+      
+      // Calculate additional metrics for the explanation
+      const contentRelevance = Math.min(100, Math.round(relevanceScore * 1.1)); // Slightly enhanced for UI
+      const topicMatchCount = websiteProfile.topics?.filter(topic => 
+        opportunityObj.pageContent?.toLowerCase().includes(topic.toLowerCase())
+      ).length || 0;
+      const topicMatch = Math.min(100, topicMatchCount > 0 ? 60 + (topicMatchCount * 8) : 50);
+      
+      // Calculate keyword density
+      const keywords = websiteProfile.keywords || [];
+      let keywordMatches = 0;
+      
+      if (keywords.length > 0 && opportunityObj.pageContent) {
+        const content = opportunityObj.pageContent.toLowerCase();
+        keywords.forEach(keyword => {
+          if (content.includes(keyword.toLowerCase())) {
+            keywordMatches++;
+          }
+        });
+      }
+      
+      const keywordDensity = keywords.length > 0 
+        ? Math.min(100, Math.round((keywordMatches / keywords.length) * 100))
+        : 50;
+      
+      // Calculate link potential based on source type
+      let linkPotential = 60; // Default moderate potential
+      
+      switch (opportunityObj.sourceType) {
+        case 'resource_page':
+          linkPotential = 85; // Resource pages have high link potential
+          break;
+        case 'guest_post':
+          linkPotential = 90; // Guest posts have very high link potential
+          break;
+        case 'blog':
+          linkPotential = 75; // Blogs have good link potential
+          break;
+        case 'directory':
+          linkPotential = 65; // Directories have moderate link potential
+          break;
+      }
+      
+      // Calculate overall quality score
+      const daScore = opportunityObj.domainAuthority ? Math.min(100, opportunityObj.domainAuthority * 2) : 50;
+      const spamPenalty = opportunityObj.spamScore ? Math.min(50, opportunityObj.spamScore * 10) : 20;
+      const qualityScore = Math.min(100, Math.round(daScore - spamPenalty + (linkPotential * 0.2)));
       
       const reasons = [];
       const metrics = {
-        relevanceScore,
-        domainAuthority: opportunity.domainAuthority,
-        spamScore: opportunity.spamScore,
-        topics: websiteProfile.topics?.filter(topic => 
-          opportunity.pageContent?.toLowerCase().includes(topic.toLowerCase())
-        ).slice(0, 5)
+        contentRelevance,
+        topicMatch,
+        keywordDensity,
+        linkPotential,
+        domainAuthority: daScore,
+        qualityScore
       };
       
       // Generate explanation
