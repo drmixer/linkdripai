@@ -338,7 +338,7 @@ export default function OpportunitiesPage() {
               onClick={() => setActiveSection('opportunities')}
             >
               <Zap size={16} />
-              Unlocked Opportunities
+              Opportunities
             </Button>
             <Button
               variant={activeSection === 'contacted' ? 'secondary' : 'ghost'}
@@ -418,7 +418,7 @@ export default function OpportunitiesPage() {
                 </Badge>
               </CardTitle>
               <CardDescription className="flex items-center">
-                Remaining Splashes
+                Premium Splashes
                 <Sparkles className="h-4 w-4 text-blue-500 ml-auto" />
               </CardDescription>
             </CardHeader>
