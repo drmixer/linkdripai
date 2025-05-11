@@ -6,7 +6,7 @@ import { z } from "zod";
 import { insertProspectSchema, insertEmailSchema } from "@shared/schema";
 import { db } from "./db";
 import * as schema from "@shared/schema";
-import { desc, sql, eq, and } from "drizzle-orm";
+import { desc, sql, eq, and, gte, lte, or } from "drizzle-orm";
 import { getMozApiService } from "./services/moz";
 import { getOpportunityCrawler } from "./services/crawler";
 import { getWebsiteAnalyzer } from "./services/website-analyzer";
