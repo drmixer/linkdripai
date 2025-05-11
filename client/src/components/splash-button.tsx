@@ -1,105 +1,133 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState } from 'react';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Droplet } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import BuySplashesDialog from "./buy-splashes-dialog";
+import { Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+// Import removed to resolve circular dependency
 
 interface SplashButtonProps {
-  websiteId?: number;
-  onSuccess?: (data: any) => void;
+  remainingSplashes: number;
+  disabled?: boolean;
   className?: string;
-  size?: "default" | "sm" | "lg" | "icon";
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  onUseSplash?: () => void;
 }
 
-export default function SplashButton({
-  websiteId,
-  onSuccess,
+export function SplashButton({ 
+  remainingSplashes, 
+  disabled = false, 
   className = "",
-  size = "default",
-  variant = "default"
+  onUseSplash 
 }: SplashButtonProps) {
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
-  const [showBuyDialog, setShowBuyDialog] = useState(false);
+  const queryClient = useQueryClient();
 
-  // Splash mutation
   const splashMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/splash", { 
-        websiteId: websiteId || null 
-      });
-      return await res.json();
+      const response = await apiRequest('POST', '/api/splashes/use', {});
+      return response.json();
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
-      
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/prospects/daily'] });
+      if (onUseSplash) onUseSplash();
       toast({
-        title: "Splash successful!",
-        description: `New opportunities have been added to your dashboard.`,
+        title: "Splash used successfully!",
+        description: "3 new opportunities have been added to your feed.",
+        variant: "default",
       });
-      
-      if (onSuccess) {
-        onSuccess(data);
-      }
+      setOpen(false);
     },
     onError: (error: Error) => {
-      // Check if error is due to no splashes left
-      if (error.message.includes("No Splashes available")) {
-        setShowBuyDialog(true);
-      } else {
-        toast({
-          title: "Splash failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    },
+      toast({
+        title: "Error using splash",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   });
 
-  const handleSplash = () => {
+  const handleUseSplash = () => {
     splashMutation.mutate();
   };
 
   return (
-    <>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              onClick={handleSplash} 
-              disabled={splashMutation.isPending}
-              size={size}
-              variant={variant}
-              className={`bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white ${className}`}
-            >
-              {splashMutation.isPending ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
-              ) : (
-                <Droplet className="h-4 w-4 mr-2" />
-              )}
-              Splash
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Use a Splash to find new backlink opportunities immediately</p>
-            <p className="text-xs text-gray-400 mt-1">You can get more splashes from your dashboard</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      <BuySplashesDialog 
-        open={showBuyDialog} 
-        onOpenChange={(open) => setShowBuyDialog(open)} 
-      />
-    </>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button 
+          variant={remainingSplashes > 0 ? "premium" : "outline"} 
+          className={`gap-2 ${className}`}
+          disabled={disabled || splashMutation.isPending}
+        >
+          <Sparkles className="h-4 w-4" />
+          <span>Splash {remainingSplashes > 0 ? `(${remainingSplashes} left)` : ""}</span>
+          {splashMutation.isPending && (
+            <span className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          )}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className="max-w-md">
+        {remainingSplashes > 0 ? (
+          <>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Use a Splash?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Use 1 Splash to add 3 premium opportunities to your feed right now. 
+                You have {remainingSplashes} splash{remainingSplashes !== 1 ? 'es' : ''} remaining this month.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleUseSplash}
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+              >
+                Use Splash
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </>
+        ) : (
+          <>
+            <AlertDialogHeader>
+              <AlertDialogTitle>No Splashes Remaining</AlertDialogTitle>
+              <AlertDialogDescription>
+                You've used all your monthly Splashes. Purchase additional Splashes to get more premium opportunities instantly.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:justify-end">
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <Button 
+                variant="premium" 
+                size="sm" 
+                className="gap-2"
+                onClick={() => {
+                  setOpen(false);
+                  // Navigate to billing page with add-ons tab open
+                  window.location.href = '/billing?tab=add-ons';
+                }}
+              >
+                <Sparkles className="h-4 w-4" />
+                Buy Splashes
+              </Button>
+            </AlertDialogFooter>
+          </>
+        )}
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
+
+// Export SplashButton as default
+export default SplashButton;

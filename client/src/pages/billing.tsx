@@ -2,8 +2,9 @@ import Layout from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import {
   Card,
   CardContent,
@@ -40,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import BuySplashesDialog from "@/components/buy-splashes-dialog";
 import { 
   CreditCard, 
   Package2, 
@@ -88,10 +90,23 @@ const Minus = ({ className }: { className?: string }) => (
 export default function BillingPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [location] = useLocation();
   const [selectedPlan, setSelectedPlan] = useState<string>(user?.subscription || 'Free Trial');
   const [selectedSplashes, setSelectedSplashes] = useState<string>("1");
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const [isAddSplashesDialogOpen, setIsAddSplashesDialogOpen] = useState(false);
+  
+  useEffect(() => {
+    // Open Add-ons tab if navigated with ?tab=add-ons parameter
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab === 'add-ons') {
+      document.querySelector('[value="add-ons"]')?.dispatchEvent(
+        new MouseEvent('click', { bubbles: true })
+      );
+      setIsAddSplashesDialogOpen(true);
+    }
+  }, [location]);
   
   // Fetch billing information
   const { data: billingInfo, isLoading: isLoadingBillingInfo } = useQuery({
@@ -159,8 +174,6 @@ export default function BillingPage() {
     },
   });
 
-
-
   const handleUpgradeSubscription = () => {
     updateSubscriptionMutation.mutate(selectedPlan);
   };
@@ -168,8 +181,6 @@ export default function BillingPage() {
   const handleAddSplashes = () => {
     addSplashesMutation.mutate(selectedSplashes);
   };
-
-
 
   // Plan details
   const plans = [
@@ -269,8 +280,6 @@ export default function BillingPage() {
     { value: "5", label: "5 Splashes", price: "$15" },
     { value: "10", label: "10 Splashes", price: "$30" },
   ];
-
-
 
   // Calculate progress
   const splashesUsed = stats?.splashes?.total - stats?.splashes?.available || 0;
@@ -455,89 +464,82 @@ export default function BillingPage() {
                 </div>
               </CardContent>
             </Card>
-
-
+            
+            {/* Drips Card */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-xl flex items-center">
+                  <Package2 className="mr-2 h-5 w-5 text-primary" />
+                  Daily Opportunities
+                </CardTitle>
+                <CardDescription>
+                  Monitor your daily opportunity allocation and usage
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-5">
+                  <div>
+                    <div className="flex justify-between mb-1 text-sm">
+                      <span>Daily Opportunities Used: {opportunitiesUsed} / {opportunitiesTotal}</span>
+                      <span>{opportunitiesTotal - opportunitiesUsed} remaining</span>
+                    </div>
+                    <Progress value={opportunitiesProgress} className="h-2" />
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium mb-2">Increase Your Daily Opportunities</h4>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Want more daily opportunities? Upgrade your subscription plan to increase your daily allocation. Each tier provides more opportunities tailored to your websites.
+                    </p>
+                    <Button variant="outline" onClick={() => document.querySelector('[value="subscription"]')?.dispatchEvent(
+                      new MouseEvent('click', { bubbles: true })
+                    )}>
+                      <ChevronRight className="mr-2 h-4 w-4" />
+                      View Subscription Plans
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-
-          {/* Feature Card */}
+          
           <Card>
             <CardHeader>
-              <CardTitle>Additional Features</CardTitle>
-              <CardDescription>
-                Enhance your backlink prospecting with additional features
-              </CardDescription>
+              <CardTitle>Add-on Usage History</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Competitor Tracking */}
-                <Card>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg">Competitor Tracking</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <p className="text-sm text-gray-600 mb-3">
-                      Track your competitors' backlinks and get insights for your own strategy.
-                    </p>
-                    {userSubscription.toLowerCase() === 'pro' ? (
-                      <div className="text-sm text-primary-600">
-                        3 competitors included in your Pro plan
-                      </div>
-                    ) : userSubscription.toLowerCase() === 'grow' ? (
-                      <div className="text-sm text-primary-600">
-                        1 competitor included in your Grow plan
-                      </div>
-                    ) : (
-                      <Button className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Upgrade for Access
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Advanced AI Templates */}
-                <Card>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg">Advanced AI Templates</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <p className="text-sm text-gray-600 mb-3">
-                      Access premium AI-powered email templates for higher response rates.
-                    </p>
-                    {userSubscription.toLowerCase() === 'pro' || userSubscription.toLowerCase() === 'grow' ? (
-                      <div className="text-sm text-primary-600">
-                        Included in your {currentPlan.name} plan
-                      </div>
-                    ) : (
-                      <Button className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Upgrade for Access
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Priority Support */}
-                <Card>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg">Priority Support</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <p className="text-sm text-gray-600 mb-3">
-                      Get priority support with a dedicated account manager.
-                    </p>
-                    {userSubscription.toLowerCase() === 'pro' ? (
-                      <div className="text-sm text-primary-600">
-                        Included in your Pro plan
-                      </div>
-                    ) : (
-                      <Button className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Upgrade for Access
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
+              <div className="relative overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs uppercase text-gray-500 bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3">Date</th>
+                      <th scope="col" className="px-6 py-3">Type</th>
+                      <th scope="col" className="px-6 py-3">Description</th>
+                      <th scope="col" className="px-6 py-3">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Sample data - would be replaced with actual usage history */}
+                    <tr className="bg-white border-b">
+                      <td className="px-6 py-4">May 10, 2025</td>
+                      <td className="px-6 py-4">Splash</td>
+                      <td className="px-6 py-4">Used for premium opportunities</td>
+                      <td className="px-6 py-4">1</td>
+                    </tr>
+                    <tr className="bg-white border-b">
+                      <td className="px-6 py-4">May 8, 2025</td>
+                      <td className="px-6 py-4">Splash</td>
+                      <td className="px-6 py-4">Used for premium opportunities</td>
+                      <td className="px-6 py-4">1</td>
+                    </tr>
+                    <tr className="bg-white border-b">
+                      <td className="px-6 py-4">May 3, 2025</td>
+                      <td className="px-6 py-4">Splash</td>
+                      <td className="px-6 py-4">Monthly allocation</td>
+                      <td className="px-6 py-4">3</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
@@ -548,258 +550,124 @@ export default function BillingPage() {
           <Card>
             <CardHeader>
               <CardTitle>Payment History</CardTitle>
-              <CardDescription>
-                View your recent payments and invoices
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoadingBillingInfo ? (
-                <div className="py-10 text-center">
-                  <div className="inline-block animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mb-2"></div>
-                  <p>Loading payment history...</p>
-                </div>
-              ) : billingInfo?.payments?.length > 0 ? (
-                <div className="border rounded-md overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {/* Sample payment history items - would be replaced with actual data */}
-                      <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">May 1, 2025</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Pro Monthly Subscription</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$129.00</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant="outline" className="bg-green-50 text-green-700">Paid</Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                          <Button variant="ghost" size="sm" className="h-8 text-primary-600">
-                            Download
-                          </Button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Apr 15, 2025</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">5 Splashes Purchase</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$79.00</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant="outline" className="bg-green-50 text-green-700">Paid</Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                          <Button variant="ghost" size="sm" className="h-8 text-primary-600">
-                            Download
-                          </Button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Apr 1, 2025</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Pro Monthly Subscription</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$129.00</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant="outline" className="bg-green-50 text-green-700">Paid</Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                          <Button variant="ghost" size="sm" className="h-8 text-primary-600">
-                            Download
-                          </Button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="bg-gray-50 rounded-lg p-8 text-center">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
-                    <DollarSign className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">No payment history</h3>
-                  <p className="text-gray-500 mb-4">
-                    You don't have any payment history yet. Your invoices will appear here.
-                  </p>
-                </div>
-              )}
+              <div className="relative overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs uppercase text-gray-500 bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3">Date</th>
+                      <th scope="col" className="px-6 py-3">Description</th>
+                      <th scope="col" className="px-6 py-3">Amount</th>
+                      <th scope="col" className="px-6 py-3">Status</th>
+                      <th scope="col" className="px-6 py-3">Invoice</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Sample data - would be replaced with actual payment history */}
+                    <tr className="bg-white border-b">
+                      <td className="px-6 py-4">May 1, 2025</td>
+                      <td className="px-6 py-4">Monthly Subscription - {userSubscription}</td>
+                      <td className="px-6 py-4">{currentPlan.price}</td>
+                      <td className="px-6 py-4">
+                        <Badge variant="success">Paid</Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Button variant="link" className="p-0 h-auto">View</Button>
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b">
+                      <td className="px-6 py-4">Apr 1, 2025</td>
+                      <td className="px-6 py-4">Monthly Subscription - {userSubscription}</td>
+                      <td className="px-6 py-4">{currentPlan.price}</td>
+                      <td className="px-6 py-4">
+                        <Badge variant="success">Paid</Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Button variant="link" className="p-0 h-auto">View</Button>
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b">
+                      <td className="px-6 py-4">Apr 15, 2025</td>
+                      <td className="px-6 py-4">Additional Splashes - 3 Pack</td>
+                      <td className="px-6 py-4">$9.00</td>
+                      <td className="px-6 py-4">
+                        <Badge variant="success">Paid</Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Button variant="link" className="p-0 h-auto">View</Button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Upgrade Subscription Dialog */}
+      
+      {/* Upgrade Dialog */}
       <Dialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Upgrade to {selectedPlan}</DialogTitle>
+            <DialogTitle>Upgrade Subscription</DialogTitle>
             <DialogDescription>
-              Confirm your subscription upgrade to start accessing more features.
+              You're upgrading from {currentPlan.name} to {selectedPlan}
             </DialogDescription>
           </DialogHeader>
-          
           <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Your new plan will be active immediately after upgrading. You'll be billed the prorated amount for the remainder of your current billing cycle.
+            </p>
+            
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <div className="flex justify-between mb-2">
-                <span className="font-medium">{selectedPlan} Plan</span>
-                <span className="font-medium">
-                  {plans.find(p => p.name === selectedPlan)?.price || '$0'}/month
-                </span>
-              </div>
-              <div className="text-sm text-gray-600">
-                {plans.find(p => p.name === selectedPlan)?.description || ''}
+              <h4 className="text-sm font-medium mb-2">Plan Features</h4>
+              <div className="space-y-2">
+                {plans.find(plan => plan.name === selectedPlan)?.features.map((feature, index) => (
+                  <div key={index} className="flex items-center">
+                    <Check className="mr-2 h-4 w-4 text-primary" />
+                    <span className="text-sm">{feature}</span>
+                  </div>
+                ))}
               </div>
             </div>
             
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium">You'll get access to:</h4>
-              {plans.find(p => p.name === selectedPlan)?.features.map((feature, index) => (
-                <div key={index} className="flex items-center">
-                  <Check className="mr-2 h-4 w-4 text-primary" />
-                  <span className="text-sm">{feature}</span>
-                </div>
-              ))}
-            </div>
-            
-            <Separator className="my-6" />
-            
-            <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4 text-yellow-800 text-sm flex items-start mb-6">
-              <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
-              <div>
-                Your current plan will be upgraded immediately. You will be charged the prorated amount for the remainder of your billing cycle.
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>New Plan</span>
+                <span>{plans.find(plan => plan.name === selectedPlan)?.price}/month</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Current Plan</span>
+                <span>{currentPlan.price}/month</span>
+              </div>
+              <Separator className="my-2" />
+              <div className="flex justify-between font-medium">
+                <span>New Monthly Payment</span>
+                <span>{plans.find(plan => plan.name === selectedPlan)?.price}/month</span>
               </div>
             </div>
           </div>
-          
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setIsUpgradeDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsUpgradeDialogOpen(false)}>
               Cancel
             </Button>
             <Button 
-              type="button" 
               onClick={handleUpgradeSubscription}
               disabled={updateSubscriptionMutation.isPending}
             >
-              {updateSubscriptionMutation.isPending && (
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-              )}
-              Confirm Upgrade
+              {updateSubscriptionMutation.isPending ? "Processing..." : "Confirm Upgrade"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Add Splashes Dialog */}
-      <Dialog open={isAddSplashesDialogOpen} onOpenChange={setIsAddSplashesDialogOpen}>
-        <DialogContent className="sm:max-w-[460px]">
-          <DialogHeader>
-            <DialogTitle>Purchase Additional Splashes</DialogTitle>
-            <DialogDescription>
-              Splashes give you immediate extra opportunities when you need them. These never expire.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <div className="space-y-4">
-              <div className="flex flex-col space-y-4">
-                <Label htmlFor="splash-amount">Select Splash Amount</Label>
-                <div className="flex items-center justify-between rounded-md border p-4">
-                  <div>
-                    <div className="font-medium text-lg">Splashes</div>
-                    <div className="text-sm text-gray-500">$3 per splash</div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => {
-                        const currentValue = parseInt(selectedSplashes);
-                        if (currentValue > 1) {
-                          setSelectedSplashes((currentValue - 1).toString());
-                        }
-                      }}
-                      disabled={parseInt(selectedSplashes) <= 1}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Input 
-                      id="splash-amount"
-                      type="number" 
-                      className="w-16 text-center" 
-                      value={selectedSplashes}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value) && value >= 1) {
-                          setSelectedSplashes(value.toString());
-                        }
-                      }}
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => {
-                        const currentValue = parseInt(selectedSplashes);
-                        setSelectedSplashes((currentValue + 1).toString());
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="bg-muted p-4 rounded-md mt-2">
-                  <h4 className="font-medium mb-2">What are Splashes?</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Splashes are special tokens that let you instantly receive additional high-quality opportunities beyond your daily drip allocation. 
-                    Each Splash provides 3 additional opportunities. When you use a Splash, our AI will immediately find and deliver relevant opportunities to your dashboard.
-                  </p>
-                  <div className="mt-2 flex items-start">
-                    <AlertCircle className="h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-amber-700">
-                      Note: Only 1 Splash can be used per day per website to ensure enough opportunities are queued for the next day.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between font-medium mt-2">
-                  <span>Total:</span>
-                  <span>${(parseInt(selectedSplashes) * 3).toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter className="flex justify-between sm:justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setIsAddSplashesDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleAddSplashes}
-              disabled={addSplashesMutation.isPending}
-            >
-              {addSplashesMutation.isPending && (
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-              )}
-              Purchase Splashes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-
+      {/* Add Splashes Dialog - Use our enhanced component */}
+      {isAddSplashesDialogOpen && (
+        <BuySplashesDialog 
+          onClose={() => setIsAddSplashesDialogOpen(false)}
+        />
+      )}
     </Layout>
   );
 }

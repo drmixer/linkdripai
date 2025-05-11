@@ -1,174 +1,163 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+import React, { useState } from 'react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonProps } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Check, Droplet } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
-interface BuySplashesDialogProps {
-  trigger?: React.ReactNode;
-  defaultOpen?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+// Package options for buying splashes
+interface SplashPackage {
+  id: string;
+  name: string;
+  count: number;
+  price: number;
+  savings?: string;
 }
 
-export default function BuySplashesDialog({
-  trigger,
-  defaultOpen = false,
-  open: controlledOpen,
-  onOpenChange,
-}: BuySplashesDialogProps) {
-  const { toast } = useToast();
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
-  
-  // If open prop is provided, use it (controlled component), otherwise use internal state
-  const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
-  const [splashCount, setSplashCount] = useState<number>(1);
-  
-  // Splash price is $3 each
-  const SPLASH_PRICE = 3;
-  const totalPrice = splashCount * SPLASH_PRICE;
+// Premium button styling for the buy button
+export function BuyButton({ children, ...props }: ButtonProps) {
+  return (
+    <Button variant="premium" size="sm" className="gap-2" {...props}>
+      <Sparkles className="h-4 w-4" />
+      {children}
+    </Button>
+  );
+}
 
-  // Add splashes mutation
-  const addSplashesMutation = useMutation({
-    mutationFn: async (splashes: string) => {
-      const res = await apiRequest("POST", "/api/splashes/add", { splashes: parseInt(splashes) });
-      return await res.json();
+// Buy splashes dialog props
+interface BuySplashesDialogProps {
+  onClose: () => void;
+}
+
+// Splash packages with pricing
+const splashPackages: SplashPackage[] = [
+  { id: "single", name: "Single Splash", count: 1, price: 7 },
+  { id: "pack3", name: "3-Pack", count: 3, price: 18, savings: "Save 14%" },
+  { id: "pack7", name: "7-Pack", count: 7, price: 35, savings: "Save 29%" }
+];
+
+// Buy splashes dialog component
+export function BuySplashesDialog({ onClose }: BuySplashesDialogProps) {
+  const [selectedPackage, setSelectedPackage] = useState<string>(splashPackages[0].id);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Mutation for purchasing splashes
+  const purchaseMutation = useMutation({
+    mutationFn: async (packageId: string) => {
+      const response = await apiRequest("POST", "/api/purchase-splashes", { packageId });
+      return await response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      handleOpenChange(false);
+    onSuccess: (data) => {
       toast({
-        title: "Splashes added",
-        description: `${splashCount} ${splashCount === 1 ? 'splash has' : 'splashes have'} been added to your account.`,
+        title: "Purchase Successful!",
+        description: `You've added ${data.count} Splashes to your account.`,
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/user-stats"] });
+      onClose();
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to add splashes",
+        title: "Purchase Failed",
         description: error.message,
         variant: "destructive",
       });
-    },
+    }
   });
 
-  const handleOpenChange = (newOpen: boolean) => {
-    // Only update internal state if we're not controlled
-    if (controlledOpen === undefined) {
-      setUncontrolledOpen(newOpen);
-    }
-    
-    if (onOpenChange) {
-      onOpenChange(newOpen);
-    }
+  // Get selected package details
+  const getSelectedPackage = () => {
+    return splashPackages.find(pkg => pkg.id === selectedPackage) || splashPackages[0];
   };
 
-  const handleAddSplashes = () => {
-    addSplashesMutation.mutate(splashCount.toString());
-  };
-  
-  const incrementSplash = () => {
-    setSplashCount(prev => prev + 1);
-  };
-  
-  const decrementSplash = () => {
-    setSplashCount(prev => Math.max(1, prev - 1));
+  // Handle purchase submit
+  const handlePurchase = () => {
+    purchaseMutation.mutate(selectedPackage);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      {trigger && (
-        <DialogTrigger asChild>
-          {trigger}
-        </DialogTrigger>
-      )}
-      <DialogContent className="sm:max-w-[460px]">
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Purchase Additional Splashes</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Purchase Premium Splashes
+          </DialogTitle>
           <DialogDescription>
-            Splashes give you immediate access to more fresh opportunities beyond your daily drips. Each splash triggers our AI to find relevant backlink opportunities for your website right away.
+            Premium Splashes give you instant access to high-quality backlink opportunities 
+            (DA 40+, relevance 80%+, spam &lt;2%).
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="py-4">
-          <div className="space-y-4">
-            <Label>Select Splash Quantity ($3 each)</Label>
-            <div className="border rounded-lg p-6">
-              <div className="flex flex-col items-center justify-between">
-                <div className="flex items-center space-x-6 mb-6">
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={decrementSplash}
-                    disabled={splashCount <= 1}
-                    className="h-10 w-10 rounded-full"
-                  >
-                    <svg width="15" height="2" viewBox="0 0 15 2" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1.16699 1H13.8337" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </Button>
-                  
-                  <div className="flex flex-col items-center">
-                    <div className="text-4xl font-semibold text-gray-900">{splashCount}</div>
-                    <div className="text-sm text-gray-500">Splash{splashCount > 1 ? 'es' : ''}</div>
+          <div className="space-y-5">
+            <RadioGroup 
+              defaultValue={selectedPackage}
+              onValueChange={setSelectedPackage}
+              className="space-y-3"
+            >
+              {splashPackages.map((pkg) => (
+                <div 
+                  key={pkg.id}
+                  className={`
+                    flex items-center justify-between space-x-2 rounded-lg border p-4 
+                    ${selectedPackage === pkg.id ? 'border-primary bg-primary/5' : 'border-border'}
+                  `}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value={pkg.id} id={pkg.id} />
+                    <Label 
+                      htmlFor={pkg.id}
+                      className="flex flex-col cursor-pointer"
+                    >
+                      <span className="font-medium">{pkg.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {pkg.count} premium opportunit{pkg.count > 1 ? 'ies' : 'y'}
+                      </span>
+                    </Label>
                   </div>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={incrementSplash}
-                    className="h-10 w-10 rounded-full"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7.5 1V14M1 7.5H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </Button>
-                </div>
-                
-                <div className="w-full border-t pt-4 mt-2">
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-gray-500">Total Cost:</div>
-                    <div className="text-xl font-semibold text-gray-900">${totalPrice}</div>
+                  <div className="flex flex-col items-end">
+                    <span className="font-medium">${pkg.price}</span>
+                    {pkg.savings && (
+                      <span className="text-xs text-green-600">{pkg.savings}</span>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
+              ))}
+            </RadioGroup>
           </div>
         </div>
-        
-        <DialogFooter>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => handleOpenChange(false)}
+
+        <DialogFooter className="flex-col sm:flex-row gap-3">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="sm:w-auto w-full"
           >
             Cancel
           </Button>
-          <Button 
-            type="button" 
-            onClick={handleAddSplashes}
-            disabled={addSplashesMutation.isPending}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+          <BuyButton 
+            onClick={handlePurchase}
+            disabled={purchaseMutation.isPending}
+            className="sm:w-auto w-full"
           >
-            {addSplashesMutation.isPending && (
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-            )}
-            Purchase Splashes
-          </Button>
+            {purchaseMutation.isPending ? "Processing..." : `Buy ${getSelectedPackage().count} Splash${getSelectedPackage().count > 1 ? 'es' : ''}`}
+          </BuyButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+// Export BuySplashesDialog as the default export
+export default BuySplashesDialog;
