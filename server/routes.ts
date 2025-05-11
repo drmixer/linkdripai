@@ -409,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Splash feature - get additional opportunities immediately
-  app.post("/api/splash", isAuthenticated, async (req, res) => {
+  app.post(["/api/splash", "/api/splashes/use", "/api/opportunities/splash"], isAuthenticated, async (req, res) => {
     try {
       const { websiteId } = req.body;
       
