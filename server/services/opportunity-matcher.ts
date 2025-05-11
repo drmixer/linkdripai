@@ -449,36 +449,67 @@ export class OpportunityMatcher {
         qualityScore
       };
       
-      // Generate explanation
-      if (relevanceScore > 80) {
+      // Generate explanation based on the calculated metrics
+      
+      // Content relevance explanation
+      if (contentRelevance > 80) {
         reasons.push('High content relevance to your website');
-      } else if (relevanceScore > 60) {
+      } else if (contentRelevance > 60) {
         reasons.push('Good content relevance to your website');
       } else {
         reasons.push('Some content relevance to your website');
       }
       
-      // DA explanation
-      if (opportunity.domainAuthority && opportunity.domainAuthority >= 40) {
-        reasons.push(`High domain authority (${opportunity.domainAuthority})`);
-      } else if (opportunity.domainAuthority && opportunity.domainAuthority >= 20) {
-        reasons.push(`Moderate domain authority (${opportunity.domainAuthority})`);
+      // Domain authority explanation
+      if (opportunityObj.domainAuthority && opportunityObj.domainAuthority >= 40) {
+        reasons.push(`High domain authority (${opportunityObj.domainAuthority})`);
+      } else if (opportunityObj.domainAuthority && opportunityObj.domainAuthority >= 20) {
+        reasons.push(`Moderate domain authority (${opportunityObj.domainAuthority})`);
+      } else if (opportunityObj.domainAuthority) {
+        reasons.push(`Basic domain authority (${opportunityObj.domainAuthority})`);
       }
       
       // Spam score explanation
-      if (opportunity.spamScore !== undefined && opportunity.spamScore < 2) {
+      if (opportunityObj.spamScore !== undefined && opportunityObj.spamScore < 2) {
         reasons.push('Very low spam risk');
-      } else if (opportunity.spamScore !== undefined && opportunity.spamScore < 5) {
+      } else if (opportunityObj.spamScore !== undefined && opportunityObj.spamScore < 5) {
         reasons.push('Acceptable spam risk');
       }
       
       // Topic match explanation
       const matchedTopics = websiteProfile.topics?.filter(topic => 
-        opportunity.pageContent?.toLowerCase().includes(topic.toLowerCase())
+        opportunityObj.pageContent?.toLowerCase().includes(topic.toLowerCase())
       ) || [];
       
       if (matchedTopics.length > 0) {
         reasons.push(`Matches ${matchedTopics.length} topics from your website`);
+        
+        // Add a few specific topics if available
+        if (matchedTopics.length > 2) {
+          const topThree = matchedTopics.slice(0, 3);
+          reasons.push(`Topics include: ${topThree.join(', ')}`);
+        }
+      }
+      
+      // Source type explanation
+      switch (opportunityObj.sourceType) {
+        case 'resource_page':
+          reasons.push('Resource page: High potential for quality backlinks');
+          break;
+        case 'guest_post':
+          reasons.push('Guest post opportunity: Excellent for authoritative backlinks');
+          break;
+        case 'blog':
+          reasons.push('Blog: Good potential for contextual backlinks');
+          break;
+        case 'directory':
+          reasons.push('Directory: Standard backlink opportunity');
+          break;
+      }
+      
+      // Add keyword match explanation if relevant
+      if (keywordMatches > 0 && keywords.length > 0) {
+        reasons.push(`Matches ${keywordMatches} of your target keywords`);
       }
       
       return {
