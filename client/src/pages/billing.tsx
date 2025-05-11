@@ -309,7 +309,7 @@ export default function BillingPage() {
         
         {/* Subscription Tab */}
         <TabsContent value="subscription">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 subscription-plans">
             {/* Current Plan */}
             <Card className={cn(
               "col-span-1 md:col-span-1 relative overflow-hidden border-2",
@@ -493,15 +493,16 @@ export default function BillingPage() {
                     <Button 
                       variant="outline" 
                       onClick={() => {
-                        const subscriptionTab = document.querySelector('[data-value="subscription"]');
-                        if (subscriptionTab) {
-                          subscriptionTab.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-                        } else {
-                          // Fallback: Try the old selector
-                          document.querySelector('[value="subscription"]')?.dispatchEvent(
-                            new MouseEvent('click', { bubbles: true })
-                          );
+                        // Simple approach - just click the subscription tab
+                        const subscriptionTab = document.querySelector('[value="subscription"]');
+                        if (subscriptionTab instanceof HTMLElement) {
+                          subscriptionTab.click();
                         }
+                        
+                        // Scroll to the subscription section
+                        setTimeout(() => {
+                          document.querySelector('.subscription-plans')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
                       }}
                     >
                       <ChevronRight className="mr-2 h-4 w-4" />
