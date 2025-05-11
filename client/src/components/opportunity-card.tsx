@@ -12,7 +12,8 @@ import {
   Sparkles, 
   AlertTriangle,
   ArrowUpRight,
-  BarChart3
+  BarChart3,
+  PieChart
 } from "lucide-react";
 import { DiscoveredOpportunity } from '@shared/schema';
 import { 
@@ -24,13 +25,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { MatchExplanation as ExplanationComponent, relevanceScoreColor } from './match-explanation';
 
-// Types for match explanation
-interface MatchExplanation {
-  reasons: string[];
-  score: number;
-  metrics: any;
-}
+// Import the interface from match-explanation
+import { MatchExplanation } from './match-explanation';
 
 interface OpportunityCardProps {
   opportunity: DiscoveredOpportunity;
@@ -238,20 +236,11 @@ export default function OpportunityCard({
             )}
             
             {matchExplanation && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm">Relevance score:</span>
-                  <Badge variant="outline" className={relevanceScoreColor(matchExplanation.score)}>
-                    {matchExplanation.score}%
-                  </Badge>
-                </div>
-                
-                <ul className="text-sm space-y-1 list-disc pl-5">
-                  {matchExplanation.reasons.map((reason, i) => (
-                    <li key={i}>{reason}</li>
-                  ))}
-                </ul>
-              </div>
+              <ExplanationComponent 
+                explanation={matchExplanation} 
+                isLoading={false} 
+                isPremium={isPremium}
+              />
             )}
             
             {!matchExplanation && !loadingExplanation && (
@@ -306,10 +295,4 @@ export default function OpportunityCard({
   );
 }
 
-// Helper function to get color based on relevance score
-function relevanceScoreColor(score: number): string {
-  if (score >= 80) return 'bg-green-100 text-green-800';
-  if (score >= 60) return 'bg-blue-100 text-blue-800';
-  if (score >= 40) return 'bg-yellow-100 text-yellow-800';
-  return 'bg-red-100 text-red-800';
-}
+// Using the imported relevanceScoreColor from match-explanation
