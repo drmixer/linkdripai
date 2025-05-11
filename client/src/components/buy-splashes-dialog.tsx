@@ -56,10 +56,11 @@ export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySp
 
   // Safe function to handle dialog closing
   const handleClose = () => {
-    if (onOpenChange) {
+    // Always attempt to close the dialog using both methods for maximum compatibility
+    if (typeof onOpenChange === 'function') {
       onOpenChange(false);
     }
-    if (onClose) {
+    if (typeof onClose === 'function') {
       onClose();
     }
   };
@@ -97,8 +98,20 @@ export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySp
     purchaseMutation.mutate(selectedPackage);
   };
 
+  // If the dialog is not requested to be open, don't render it at all
+  if (open === false) {
+    return null;
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+    <Dialog 
+      open={true} 
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          handleClose();
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
