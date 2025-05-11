@@ -54,6 +54,7 @@ export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySp
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Safe function to handle dialog closing
   const handleClose = () => {
     if (onOpenChange) {
       onOpenChange(false);
