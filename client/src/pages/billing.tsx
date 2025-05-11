@@ -41,7 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import BuySplashesDialog from "@/components/buy-splashes-dialog";
+import { BuySplashesDialog } from "@/components/buy-splashes-dialog";
 import { 
   CreditCard, 
   Package2, 
@@ -275,10 +275,9 @@ export default function BillingPage() {
 
   // Splash packages
   const splashPackages = [
-    { value: "1", label: "1 Splash", price: "$3" },
-    { value: "3", label: "3 Splashes", price: "$9" },
-    { value: "5", label: "5 Splashes", price: "$15" },
-    { value: "10", label: "10 Splashes", price: "$30" },
+    { value: "1", label: "1 Premium Splash", price: "$7" },
+    { value: "3", label: "3 Premium Splashes", price: "$18", savings: "Save 14%" },
+    { value: "7", label: "7 Premium Splashes", price: "$35", savings: "Save 29%" },
   ];
 
   // Calculate progress
@@ -434,11 +433,11 @@ export default function BillingPage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-xl flex items-center">
-                  <Droplets className="mr-2 h-5 w-5 text-primary" />
-                  Splashes
+                  <Sparkles className="mr-2 h-5 w-5 text-primary" />
+                  Premium Splashes
                 </CardTitle>
                 <CardDescription>
-                  Splashes give you immediate extra backlink opportunities when your daily drips aren't enough
+                  Premium Splashes give you instant access to high-quality backlink opportunities (DA 40+, relevance 80%+, spam &lt;2%)
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -452,13 +451,13 @@ export default function BillingPage() {
                   </div>
                   
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium mb-2">Get Additional Splashes</h4>
+                    <h4 className="text-sm font-medium mb-2">Get Premium Splashes</h4>
                     <p className="text-sm text-gray-600 mb-3">
-                      Need an instant boost? Purchase Splashes to get high-quality opportunities immediately, beyond your daily drip allocation. Each Splash provides 3 additional opportunities.
+                      Need an instant boost in quality? Purchase Premium Splashes to get higher quality backlink opportunities instantly. Each Premium Splash delivers 1 top-tier opportunity (DA 40+, relevance 80%+, spam score &lt;2%).
                     </p>
                     <Button onClick={() => setIsAddSplashesDialogOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Buy Splashes
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Buy Premium Splashes
                     </Button>
                   </div>
                 </div>
@@ -662,12 +661,12 @@ export default function BillingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Splashes Dialog - Use our enhanced component */}
-      {isAddSplashesDialogOpen && (
-        <BuySplashesDialog 
-          onClose={() => setIsAddSplashesDialogOpen(false)}
-        />
-      )}
+      {/* Buy Premium Splashes Dialog */}
+      <BuySplashesDialog 
+        open={isAddSplashesDialogOpen}
+        onOpenChange={setIsAddSplashesDialogOpen}
+        onClose={() => setIsAddSplashesDialogOpen(false)}
+      />
     </Layout>
   );
 }
