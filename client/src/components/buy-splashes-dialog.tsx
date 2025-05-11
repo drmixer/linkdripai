@@ -36,7 +36,9 @@ export function BuyButton({ children, ...props }: ButtonProps) {
 
 // Buy splashes dialog props
 interface BuySplashesDialogProps {
-  onClose: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onClose?: () => void;
 }
 
 // Splash packages with pricing
@@ -47,10 +49,19 @@ const splashPackages: SplashPackage[] = [
 ];
 
 // Buy splashes dialog component
-export function BuySplashesDialog({ onClose }: BuySplashesDialogProps) {
+export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySplashesDialogProps) {
   const [selectedPackage, setSelectedPackage] = useState<string>(splashPackages[0].id);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const handleClose = () => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+    if (onClose) {
+      onClose();
+    }
+  };
 
   // Mutation for purchasing splashes
   const purchaseMutation = useMutation({
@@ -64,7 +75,7 @@ export function BuySplashesDialog({ onClose }: BuySplashesDialogProps) {
         description: `You've added ${data.count} Splashes to your account.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user-stats"] });
-      onClose();
+      handleClose();
     },
     onError: (error: Error) => {
       toast({
@@ -86,7 +97,7 @@ export function BuySplashesDialog({ onClose }: BuySplashesDialogProps) {
   };
 
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -141,7 +152,7 @@ export function BuySplashesDialog({ onClose }: BuySplashesDialogProps) {
         <DialogFooter className="flex-col sm:flex-row gap-3">
           <Button
             variant="outline"
-            onClick={onClose}
+            onClick={handleClose}
             className="sm:w-auto w-full"
           >
             Cancel
