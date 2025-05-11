@@ -333,6 +333,73 @@ export class OpportunityMatcher {
   }
   
   /**
+   * Get the opportunities assigned to a user's daily feed
+   * @param userId The user ID
+   * @param websiteId Optional website ID filter
+   */
+  async getUserDailyOpportunities(userId: number, websiteId?: number): Promise<any[]> {
+    try {
+      // Get today's date (without time)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Build the query to fetch daily drips
+      let query = db.select({
+        drip: dailyDrips,
+        opportunity: discoveredOpportunities
+      })
+      .from(dailyDrips)
+      .innerJoin(
+        discoveredOpportunities,
+        eq(dailyDrips.opportunityId, discoveredOpportunities.id)
+      )
+      .where(
+        and(
+          eq(dailyDrips.userId, userId),
+          gte(dailyDrips.dripDate, today)
+        )
+      )
+      .orderBy(desc(dailyDrips.dripDate));
+      
+      // Add website filter if specified
+      if (websiteId) {
+        const matches = db.select()
+          .from(opportunityMatches)
+          .where(
+            and(
+              eq(opportunityMatches.userId, userId),
+              eq(opportunityMatches.websiteId, websiteId)
+            )
+          );
+        
+        query = query.where(
+          inArray(
+            dailyDrips.opportunityId,
+            matches.select({ id: opportunityMatches.opportunityId })
+          )
+        );
+      }
+      
+      // Execute the query
+      const results = await query;
+      
+      // Format the response
+      return results.map(result => {
+        return {
+          ...result.opportunity,
+          dripId: result.drip.id,
+          dripDate: result.drip.dripDate,
+          isPremium: result.drip.isPremium,
+          matchedWebsiteId: websiteId || null
+        };
+      });
+    } catch (error) {
+      console.error(`[OpportunityMatcher] Error fetching daily opportunities for user ${userId}:`, error);
+      return [];
+    }
+  }
+  
+  /**
    * Calculate and explain why an opportunity was matched to a website
    * @param opportunity Either the opportunity object or the opportunity ID
    * @param websiteId The website ID
