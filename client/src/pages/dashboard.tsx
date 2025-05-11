@@ -2,7 +2,7 @@ import Layout from "@/components/layout";
 import OpportunityCard from "@/components/opportunity-card";
 import EmailGenerator from "@/components/email-generator";
 import SplashButton from "@/components/splash-button";
-import BuySplashesDialog from "@/components/buy-splashes-dialog";
+import { BuySplashesDialog } from "@/components/buy-splashes-dialog";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -71,7 +71,8 @@ export default function Dashboard() {
   const [fitScoreRange, setFitScoreRange] = useState<[number, number]>([50, 100]);
   const [searchQuery, setSearchQuery] = useState("");
   const [hideFilters, setHideFilters] = useState(true);
-  const [showBuySplashesDialog, setShowBuySplashesDialog] = useState(false);
+  // Set the dialog to explicitly closed by default
+  const [showBuySplashesDialog, setShowBuySplashesDialog] = useState<boolean>(false);
   
   // Use a ref to track when we need to refresh the data
   const dataRefreshNeeded = useRef(true);
