@@ -285,9 +285,9 @@ export default function OpportunitiesPage() {
         <div className="sticky top-0 z-10 bg-background pt-6 pb-3 border-b">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">LinkDripAI Dashboard</h1>
+              <h1 className="text-3xl font-bold tracking-tight">All Opportunities (Drips)</h1>
               <p className="text-muted-foreground mt-1">
-                Manage your backlink opportunities and track your SEO progress
+                Discover and manage backlink opportunities for your websites
               </p>
             </div>
             
