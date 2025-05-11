@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { DiscoveredOpportunity, discoveredOpportunities } from '@shared/schema';
 import { db } from '../db';
-import { eq } from 'drizzle-orm';
-import { getMozApiService } from './moz';
+import { eq, in_, and, sql } from 'drizzle-orm';
+import { getMozApiService } from './moz-api-service';
 import * as cheerio from 'cheerio';
 import * as dns from 'dns';
 import { promisify } from 'util';
@@ -94,11 +94,16 @@ export class ValidationPipeline {
     // Check if it meets premium quality thresholds
     const isPremiumQuality = this.meetsPremiumQualityThresholds(combinedMetrics);
     
+    if (isPremiumQuality) {
+      console.log(`[ValidationPipeline] Premium opportunity detected: ${opportunity.url} (DA: ${combinedMetrics.domainAuthority}, Spam: ${combinedMetrics.spamScore})`);
+    }
+    
     return {
       isPassing: isStandardQuality,
       isPremium: isPremiumQuality,
       metrics: combinedMetrics,
-      tier: 3
+      tier: 3,
+      failReason: isStandardQuality ? undefined : 'Failed quality thresholds'
     };
   }
   
