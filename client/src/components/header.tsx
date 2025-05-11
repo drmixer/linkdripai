@@ -191,7 +191,7 @@ export default function Header() {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/account" className="flex cursor-pointer">
+              <Link href="/settings" className="flex cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </Link>
