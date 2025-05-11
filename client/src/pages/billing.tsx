@@ -490,9 +490,20 @@ export default function BillingPage() {
                     <p className="text-sm text-gray-600 mb-3">
                       Want more daily opportunities? Upgrade your subscription plan to increase your daily allocation. Each tier provides more opportunities tailored to your websites.
                     </p>
-                    <Button variant="outline" onClick={() => document.querySelector('[value="subscription"]')?.dispatchEvent(
-                      new MouseEvent('click', { bubbles: true })
-                    )}>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        const subscriptionTab = document.querySelector('[data-value="subscription"]');
+                        if (subscriptionTab) {
+                          subscriptionTab.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                        } else {
+                          // Fallback: Try the old selector
+                          document.querySelector('[value="subscription"]')?.dispatchEvent(
+                            new MouseEvent('click', { bubbles: true })
+                          );
+                        }
+                      }}
+                    >
                       <ChevronRight className="mr-2 h-4 w-4" />
                       View Subscription Plans
                     </Button>
