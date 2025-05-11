@@ -254,7 +254,8 @@ export default function Dashboard() {
         
         {/* Splash Button */}
         <SplashButton 
-          onSuccess={(data) => {
+          remainingSplashes={splashesAvailable}
+          onUseSplash={() => {
             toast({
               title: "New opportunities added!",
               description: "New AI-matched opportunities have been added to your dashboard.",
