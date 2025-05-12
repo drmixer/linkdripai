@@ -727,8 +727,142 @@ export default function Onboarding() {
             </Card>
           )}
           
-          {/* Step 3: Review & Finish */}
+          {/* Step 3: Email Setup */}
           {step === 3 && (
+            <Card className="w-full shadow-md">
+              <CardHeader>
+                <CardTitle className="text-2xl">Email Integration</CardTitle>
+                <CardDescription>
+                  Configure your email settings to send outreach emails directly from LinkDripAI
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...emailSettingsForm}>
+                  <form onSubmit={emailSettingsForm.handleSubmit(onEmailSettingsSubmit)} className="space-y-6">
+                    <FormField
+                      control={emailSettingsForm.control}
+                      name="emailProvider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Integration Method</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select email method" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="sendgrid">SendGrid API</SelectItem>
+                              <SelectItem value="smtp">SMTP Server</SelectItem>
+                              <SelectItem value="gmail">Gmail</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Choose how you want to send emails from LinkDripAI
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={emailSettingsForm.control}
+                      name="fromEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>From Email Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="your@email.com" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            This email address will be shown as the sender of your outreach emails
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={emailSettingsForm.control}
+                      name="apiKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API Key</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="Your API Key" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            {emailSettingsForm.getValues().emailProvider === "sendgrid"
+                              ? "Obtain your SendGrid API key from your SendGrid account dashboard"
+                              : emailSettingsForm.getValues().emailProvider === "gmail"
+                                ? "Enter your Google API credentials"
+                                : "Enter your SMTP server credentials"
+                            }
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="border rounded-md p-4 bg-muted/50">
+                      <h4 className="text-sm font-medium mb-2">Terms & Conditions</h4>
+                      <div className="h-40 overflow-y-auto text-xs p-2 border rounded bg-background mb-2">
+                        <p className="mb-2"><strong>Email Outreach Terms and Conditions</strong></p>
+                        <p className="mb-2">By using the LinkDripAI email outreach functionality, you agree to the following terms:</p>
+                        <ol className="list-decimal pl-4 space-y-1">
+                          <li>You will not use this service to send unsolicited commercial emails (spam).</li>
+                          <li>You will comply with all applicable laws including CAN-SPAM, GDPR, and CCPA.</li>
+                          <li>You will only contact individuals with whom you have a legitimate business reason to communicate.</li>
+                          <li>You will include your real contact information in all emails.</li>
+                          <li>You will honor opt-out requests promptly.</li>
+                          <li>You understand that misuse may result in termination of your account.</li>
+                          <li>LinkDripAI is not responsible for the content of emails you send or the consequences thereof.</li>
+                        </ol>
+                      </div>
+                      
+                      <FormField
+                        control={emailSettingsForm.control}
+                        name="termsAccepted"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                I agree to the Terms & Conditions governing email usage
+                              </FormLabel>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
+                      Continue <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Step 4: Review & Finish */}
+          {step === 4 && (
             <Card className="w-full shadow-md border-0">
               <CardHeader className="border-b border-gray-100 pb-6">
                 <div className="flex items-center gap-3 mb-2">
