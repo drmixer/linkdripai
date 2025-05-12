@@ -71,8 +71,11 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-white border-b border-gray-200">
-      {/* Left section with website selector */}
-      <div className="flex items-center">
+      {/* Left section with logo and website selector */}
+      <div className="flex items-center gap-4">
+        <div className="hidden md:block">
+          <Logo size="sm" withText={true} />
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 

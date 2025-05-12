@@ -1,23 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import Lottie from 'lottie-react';
+import React from 'react';
 import { motion } from 'framer-motion';
+import { Droplets, CircleCheck, Sparkles, BarChart3, ShieldCheck } from 'lucide-react';
 
-// We're using a custom Lottie animation that demonstrates the LinkDripAI workflow
-// The animation shows 3 main steps:
+// This component demonstrates the LinkDripAI workflow using interactive elements
+// The animation visualizes 3 main steps:
 // 1. AI discovering opportunities (Daily Drips)
 // 2. Quality metrics analysis (DA, relevance, spam)
 // 3. Premium opportunities accessible via Splashes
 
 const HowItWorksAnimation = () => {
-  const [animationData, setAnimationData] = useState<any>(null);
-
-  useEffect(() => {
-    // Load the animation data
-    fetch('/assets/link-drip-animation.json')
-      .then(response => response.json())
-      .then(data => setAnimationData(data))
-      .catch(error => console.error('Error loading animation:', error));
-  }, []);
 
   return (
     <motion.div
@@ -25,54 +16,176 @@ const HowItWorksAnimation = () => {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7 }}
       viewport={{ once: true }}
-      className="bg-white rounded-xl shadow-lg p-4 mx-auto mb-10 max-w-4xl"
+      className="bg-white rounded-xl shadow-lg p-6 mx-auto mb-10 max-w-4xl"
     >
-      <div className="text-center mb-6">
+      <div className="text-center mb-8">
         <h3 className="text-xl font-bold text-gray-900">How LinkDripAI Works</h3>
         <p className="text-gray-600 mt-1">See the entire process from discovery to results</p>
       </div>
       
-      <div className="relative h-[350px] rounded-lg overflow-hidden">
-        {animationData ? (
-          <Lottie 
-            animationData={animationData} 
-            loop={true}
-            className="w-full h-full"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-          </div>
-        )}
+      {/* Interactive workflow animation */}
+      <div className="relative py-8">
+        {/* Connection lines */}
+        <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
         
-        {/* Overlay explanatory text */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl">
-            <div className="bg-white/90 p-4 rounded-lg shadow-md">
-              <h4 className="font-bold text-primary">Daily Drips</h4>
-              <p className="text-sm text-gray-700">
-                AI discovers fresh backlink opportunities tailored to your website's niche (per-site allocation)
-              </p>
+        {/* Steps */}
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Step 1: AI Discovery */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            viewport={{ once: true }}
+            className="bg-white rounded-xl p-6 shadow-lg border border-primary/10"
+          >
+            <div className="mb-4 flex justify-center">
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: [0.8, 1.1, 0.9, 1] }}
+                transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center"
+              >
+                <Droplets className="h-8 w-8 text-primary" />
+              </motion.div>
             </div>
-            
-            <div className="bg-white/90 p-4 rounded-lg shadow-md">
-              <h4 className="font-bold text-primary">Quality Metrics</h4>
-              <p className="text-sm text-gray-700">
-                Each opportunity is analyzed for Domain Authority, relevance, and spam score
-              </p>
+            <h4 className="text-lg font-bold text-gray-900 text-center mb-2">Daily Fresh Drips</h4>
+            <p className="text-gray-600 text-center text-sm">
+              Our AI discovers fresh backlink opportunities tailored to your website's niche
+            </p>
+            <div className="mt-4 bg-gray-50 rounded-lg p-3">
+              <div className="text-xs text-gray-500 mb-1">Per Website Allocation:</div>
+              <ul className="text-xs space-y-1">
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
+                  <span>Starter: 5 drips/day</span>
+                </li>
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
+                  <span>Grow: 10 drips/day</span>
+                </li>
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
+                  <span>Pro: 15 drips/day</span>
+                </li>
+              </ul>
             </div>
-            
-            <div className="bg-white/90 p-4 rounded-lg shadow-md">
-              <h4 className="font-bold text-primary">Splashes</h4>
-              <p className="text-sm text-gray-700">
-                Premium opportunities (DA 40+, relevance 80%+, spam &lt;2%) available across all your sites
-              </p>
+          </motion.div>
+          
+          {/* Step 2: Quality Metrics */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            viewport={{ once: true }}
+            className="bg-white rounded-xl p-6 shadow-lg border border-green-500/10"
+          >
+            <div className="mb-4 flex justify-center">
+              <motion.div
+                animate={{ 
+                  rotate: [0, 10, -10, 0],
+                  scale: [1, 1.05, 0.95, 1] 
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center"
+              >
+                <BarChart3 className="h-8 w-8 text-green-600" />
+              </motion.div>
             </div>
-          </div>
+            <h4 className="text-lg font-bold text-gray-900 text-center mb-2">Quality Metrics</h4>
+            <p className="text-gray-600 text-center text-sm">
+              Each opportunity is analyzed for key quality factors
+            </p>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs">Domain Authority</span>
+                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: '70%' }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                    className="h-full bg-primary" 
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs">Relevance Score</span>
+                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: '80%' }}
+                    transition={{ duration: 1, delay: 0.8 }}
+                    className="h-full bg-green-500" 
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs">Spam Score</span>
+                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: '15%' }}
+                    transition={{ duration: 1, delay: 1.1 }}
+                    className="h-full bg-red-500" 
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+          
+          {/* Step 3: Splashes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            viewport={{ once: true }}
+            className="bg-white rounded-xl p-6 shadow-lg border border-purple-500/10"
+          >
+            <div className="mb-4 flex justify-center">
+              <motion.div
+                animate={{ 
+                  boxShadow: [
+                    "0 0 0 0 rgba(147, 51, 234, 0.2)",
+                    "0 0 0 15px rgba(147, 51, 234, 0)",
+                    "0 0 0 0 rgba(147, 51, 234, 0)"
+                  ]
+                }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "loop"
+                }}
+                className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center"
+              >
+                <Sparkles className="h-8 w-8 text-purple-600" />
+              </motion.div>
+            </div>
+            <h4 className="text-lg font-bold text-gray-900 text-center mb-2">Splashes</h4>
+            <p className="text-gray-600 text-center text-sm">
+              Premium opportunities available across all your sites
+            </p>
+            <div className="mt-4 bg-purple-50 rounded-lg p-3">
+              <div className="text-xs text-gray-600 mb-1">Premium Quality:</div>
+              <ul className="text-xs space-y-1">
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                  <span>DA 40+</span>
+                </li>
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                  <span>Relevance 80%+</span>
+                </li>
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                  <span>Spam Score &lt;2%</span>
+                </li>
+              </ul>
+            </div>
+          </motion.div>
         </div>
       </div>
       
-      <div className="flex justify-center items-center gap-8 mt-6 text-sm">
+      {/* Legend */}
+      <div className="flex justify-center items-center gap-8 mt-8 text-sm">
         <div className="flex items-center">
           <div className="w-3 h-3 rounded-full bg-primary mr-2"></div>
           <span>Daily Drips (per site)</span>
