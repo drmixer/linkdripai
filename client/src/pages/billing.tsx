@@ -161,13 +161,13 @@ export default function BillingPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       setIsPremiumSplashesDialogOpen(false);
       toast({
-        title: "Premium Splashes added",
-        description: `${selectedSplashes} Premium Splashes have been added to your account.`,
+        title: "Splashes added",
+        description: `${selectedSplashes} Splashes have been added to your account.`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to add Premium Splashes",
+        title: "Failed to add Splashes",
         description: error.message,
         variant: "destructive",
       });
@@ -179,7 +179,7 @@ export default function BillingPage() {
   };
 
   const handleAddSplashes = () => {
-    addPremiumSplashesMutation.mutate(selectedSplashes);
+    addSplashesMutation.mutate(selectedSplashes);
   };
 
   // Plan details
@@ -193,7 +193,7 @@ export default function BillingPage() {
         "1 website",
         "3-5 opportunities per day",
         "Unlock all opportunity details",
-        "1 Premium Splash per month",
+        "1 Splash per month",
         "Basic filters and analytics",
         "Standard support",
       ],
