@@ -45,6 +45,10 @@ const baseInsertUserSchema = createInsertSchema(users).omit({
   lastSplashReset: true,
   websites: true,
   onboardingCompleted: true,
+  emailProvider: true,
+  emailConfigured: true,
+  emailApiKey: true,
+  emailTermsAccepted: true,
 });
 
 // Extended schema with plan information for registration process
