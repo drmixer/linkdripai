@@ -86,7 +86,7 @@ export default function Sidebar() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="mx-auto">
-                    <Link href={route.href}>
+                    <Link href={route.href} key={route.href}>
                       <div 
                         onClick={() => setOpen(false)}
                         className={cn(

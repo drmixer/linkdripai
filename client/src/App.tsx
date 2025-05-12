@@ -26,7 +26,13 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/pricing" component={PricingPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
-      <ProtectedRoute path="/opportunities" component={Opportunities} />
+      {/* Use a custom route for opportunities to ensure it maintains sidebar */}
+      <Route path="/opportunities">
+        {() => {
+          // This ensures the component is rendered directly in the route
+          return <ProtectedRoute path="/opportunities" component={Opportunities} />;
+        }}
+      </Route>
       <ProtectedRoute path="/saved-prospects" component={SavedProspects} />
       <ProtectedRoute path="/email-outreach" component={EmailOutreach} />
       <ProtectedRoute path="/analytics" component={Analytics} />
