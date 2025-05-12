@@ -60,7 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { rows } = await db.execute(`
           SELECT SUM(COALESCE("count", 1)) as total_used
           FROM splashusage
-          WHERE "userId" = $1 AND "usedAt" >= $2
+          WHERE "userid" = $1 AND "usedat" >= $2
         `, [userId, firstDayOfMonth]);
         
         splashesUsed = parseInt(rows[0]?.total_used || '0', 10);
@@ -435,7 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Try-catch to handle potential DB schema mismatch
       try {
         await db.execute(
-          `INSERT INTO splashusage ("userId", "websiteId", "usedAt", "source") 
+          `INSERT INTO splashusage ("userid", "websiteid", "usedat", "source") 
            VALUES ($1, $2, $3, $4)`,
           [user.id, websiteId || null, new Date(), "monthly_allowance"]
         );
@@ -1253,7 +1253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Record the purchase in splashUsage table
       try {
         await db.execute(
-          `INSERT INTO splashusage ("userId", "websiteId", "usedAt", "source", "count") 
+          `INSERT INTO splashusage ("userid", "websiteid", "usedat", "source", "count") 
            VALUES ($1, $2, $3, $4, $5)`,
           [user.id, null, new Date(), "purchased", splashes]
         );
