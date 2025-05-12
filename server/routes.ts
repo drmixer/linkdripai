@@ -6,6 +6,7 @@ import { z } from "zod";
 import { insertProspectSchema, insertEmailSchema } from "@shared/schema";
 import { db } from "./db";
 import * as schema from "@shared/schema";
+import { users } from "@shared/schema";
 import { desc, sql, eq, and, gte, lte, or } from "drizzle-orm";
 import { getMozApiService } from "./services/moz";
 import { getOpportunityCrawler } from "./services/crawler";
@@ -407,19 +408,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get email settings
   app.get("/api/email/settings", isAuthenticated, async (req, res) => {
     try {
-      // This is a placeholder for actual email settings
-      // In a full implementation, we would store and retrieve email settings from the database
+      // Retrieve user with email settings
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, req.user!.id));
       
-      // Return default settings for now
-      const hasEmailSettings = req.user?.emailProvider && req.user?.emailConfigured;
+      // Check if user has configured email settings
+      const hasEmailSettings = user?.emailProvider && user?.emailConfigured;
       
       res.json({
         isConfigured: Boolean(hasEmailSettings),
-        provider: req.user?.emailProvider || null,
-        fromEmail: req.user?.email || null,
-        termsAccepted: Boolean(req.user?.emailTermsAccepted)
+        provider: user?.emailProvider || null,
+        fromEmail: user?.email || null,
+        termsAccepted: Boolean(user?.emailTermsAccepted)
       });
     } catch (error: any) {
+      console.error("Error retrieving email settings:", error);
       res.status(500).json({ message: error.message });
     }
   });
