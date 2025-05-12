@@ -281,7 +281,7 @@ export default function OpportunitiesPage() {
   
   return (
     <Layout title="All Opportunities" subtitle="Discover and manage backlink opportunities for your websites">
-      <div className="container pb-8 max-w-7xl">
+      <div className="pb-8 max-w-7xl">
         <div className="flex flex-col gap-6">
         {/* Enhanced header with tabs navigation */}
         <div className="sticky top-0 z-10 bg-background pt-6 pb-3 border-b">
@@ -1189,7 +1189,7 @@ export default function OpportunitiesPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  </Layout>
+      </div>
+    </Layout>
   );
 }
