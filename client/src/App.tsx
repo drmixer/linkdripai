@@ -8,7 +8,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth-page";
-import Opportunities from "@/pages/opportunities";
+import DripsSimplePage from "@/pages/drips-simple";
 import SavedProspects from "@/pages/saved-prospects";
 import EmailOutreach from "@/pages/email-outreach";
 import Analytics from "@/pages/analytics";
@@ -26,13 +26,7 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/pricing" component={PricingPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
-      {/* Use a custom route for opportunities to ensure it maintains sidebar */}
-      <Route path="/opportunities">
-        {() => {
-          // This ensures the component is rendered directly in the route
-          return <ProtectedRoute path="/opportunities" component={Opportunities} />;
-        }}
-      </Route>
+      <ProtectedRoute path="/opportunities" component={DripsSimplePage} />
       <ProtectedRoute path="/saved-prospects" component={SavedProspects} />
       <ProtectedRoute path="/email-outreach" component={EmailOutreach} />
       <ProtectedRoute path="/analytics" component={Analytics} />
