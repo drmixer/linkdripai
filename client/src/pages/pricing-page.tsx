@@ -47,9 +47,9 @@ export default function PricingPage() {
       description: "Ideal for growing websites and small agencies",
       price: pricingInterval === "monthly" ? "69" : "55",
       features: [
-        "20 daily AI-matched opportunities",
+        "20 daily AI-matched opportunities per site",
         "Open access to all opportunity details",
-        "3 Splashes per month",
+        "3 Splashes per month (total across all sites)",
         "2 websites",
         "Advanced analytics & reporting",
         "Email automation sequences",
@@ -64,9 +64,9 @@ export default function PricingPage() {
       description: "For agencies and multiple website owners",
       price: pricingInterval === "monthly" ? "129" : "103",
       features: [
-        "30 daily AI-matched opportunities",
+        "30 daily AI-matched opportunities per site",
         "Open access to all opportunity details",
-        "5 Splashes per month",
+        "7 Splashes per month (total across all sites)",
         "5 websites",
         "3 competitor tracking",
         "Premium AI features",
@@ -106,8 +106,11 @@ export default function PricingPage() {
           <p className="text-xl text-gray-600 mb-4">
             All plans include <span className="font-medium text-primary">open access to opportunity details</span> - no credits needed!
           </p>
+          <p className="text-lg text-gray-600 mb-4">
+            Get AI-powered link prospecting, domain metrics, email generation, and advanced analytics.
+          </p>
           <p className="text-lg text-gray-600 mb-8">
-            Get AI-powered link prospecting, domain metrics, email generation, and use Splashes for immediate opportunities.
+            <span className="font-medium text-primary">Splashes</span> deliver premium, high-quality opportunities (DA 40+, relevance 80%+, spam &lt;2%) on demand.
           </p>
 
           {/* Pricing Toggle */}
