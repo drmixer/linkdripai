@@ -30,6 +30,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, Link2Icon, ArrowRight, Check } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import Logo from "@/components/logo";
 
 // Subscription plan schema
 const subscriptionSchema = z.object({
@@ -296,10 +297,9 @@ export default function Onboarding() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="container mx-auto flex items-center">
-          <div className="rounded-md bg-primary p-1.5 mr-2">
-            <Link2Icon className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
+          <Link href="/">
+            <Logo size="sm" />
+          </Link>
         </div>
       </header>
       
