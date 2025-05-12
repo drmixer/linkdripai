@@ -160,7 +160,7 @@ export default function Header() {
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Premium Splashes give you access to high-quality opportunities (DA 40+, relevance 80%+)</p>
+              <p>Splashes give you access to high-quality opportunities (DA 40+, relevance 80%+)</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -217,7 +217,7 @@ export default function Header() {
         </DropdownMenu>
       </div>
 
-      {/* Premium Splashes Dialog */}
+      {/* Splashes Dialog */}
       <BuySplashesDialog 
         open={showSplashDialog}
         onOpenChange={setShowSplashDialog}

@@ -74,7 +74,7 @@ export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySp
     onSuccess: (data) => {
       toast({
         title: "Purchase Successful!",
-        description: `You've added ${data.count} Premium Splashes to your account.`,
+        description: `You've added ${data.count} Splashes to your account.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user-stats"] });
       handleClose();
@@ -116,10 +116,10 @@ export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySp
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Purchase Premium Splashes
+            Purchase Splashes
           </DialogTitle>
           <DialogDescription>
-            Premium Splashes give you instant access to high-quality backlink opportunities 
+            Splashes give you instant access to high-quality backlink opportunities 
             (DA 40+, relevance 80%+, spam &lt;2%).
           </DialogDescription>
         </DialogHeader>
@@ -176,7 +176,7 @@ export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySp
             disabled={purchaseMutation.isPending}
             className="sm:w-auto w-full"
           >
-            {purchaseMutation.isPending ? "Processing..." : `Buy ${getSelectedPackage().count} Premium Splash${getSelectedPackage().count > 1 ? 'es' : ''}`}
+            {purchaseMutation.isPending ? "Processing..." : `Buy ${getSelectedPackage().count} Splash${getSelectedPackage().count > 1 ? 'es' : ''}`}
           </BuyButton>
         </DialogFooter>
       </DialogContent>
