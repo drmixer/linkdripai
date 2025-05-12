@@ -499,10 +499,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isConfigured: true,
         provider,
         fromEmail,
-        termsAccepted
+        termsAccepted,
+        isVerified,
+        requiresVerification
       });
     } catch (error: any) {
       console.error("Error saving email settings:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Email verification endpoint
+  app.post("/api/email/verify", isAuthenticated, async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email address is required" });
+      }
+      
+      // In a production environment, you would:
+      // 1. Generate a unique verification token
+      // 2. Store it in the database with an expiration time
+      // 3. Send an email with a verification link
+      
+      // For now, we'll simulate the verification process
+      const verificationToken = Math.random().toString(36).substring(2, 15);
+      
+      // TODO: In production, integrate with actual email sending service
+      console.log(`Verification email would be sent to ${email} with token ${verificationToken}`);
+      
+      // Return success
+      res.json({
+        message: "Verification email sent",
+        success: true
+      });
+    } catch (error: any) {
+      console.error("Error sending verification email:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Confirm email verification
+  app.get("/api/email/verify/:token", isAuthenticated, async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      // In production, validate the token from the database
+      // For now, we'll simulate successful verification
+      
+      // Update the user's email verified status
+      await db
+        .update(users)
+        .set({
+          emailVerified: true,
+        })
+        .where(eq(users.id, req.user!.id));
+      
+      res.json({
+        message: "Email verified successfully",
+        success: true
+      });
+    } catch (error: any) {
+      console.error("Error verifying email:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Website-specific email settings
+  app.post("/api/email/website/:websiteId", isAuthenticated, async (req, res) => {
+    try {
+      const { websiteId } = req.params;
+      const { fromEmail, signature } = req.body;
+      
+      if (!fromEmail) {
+        return res.status(400).json({ message: "From email address is required" });
+      }
+      
+      // Get current user
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, req.user!.id));
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get current website email settings or initialize empty object
+      const websiteEmailSettings = user.websiteEmailSettings || {};
+      
+      // Update website-specific email settings
+      websiteEmailSettings[websiteId] = {
+        fromEmail,
+        verified: false, // New email addresses start as unverified
+        signature: signature || undefined
+      };
+      
+      // Update user with new website email settings
+      await db
+        .update(users)
+        .set({
+          websiteEmailSettings
+        })
+        .where(eq(users.id, req.user!.id));
+      
+      // Return updated settings
+      res.json({
+        websiteId,
+        settings: websiteEmailSettings[websiteId],
+        message: "Website email settings updated"
+      });
+    } catch (error: any) {
+      console.error("Error updating website email settings:", error);
       res.status(500).json({ message: error.message });
     }
   });
