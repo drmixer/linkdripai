@@ -49,7 +49,7 @@ type PreferencesFormValues = z.infer<typeof preferencesSchema>;
 
 export default function Onboarding() {
   const [step, setStep] = useState(1);
-  const [totalSteps, setTotalSteps] = useState(3); // Reduced total steps
+  const [totalSteps, setTotalSteps] = useState(4); // Added email setup step
   const [isLoading, setIsLoading] = useState(false);
   const [websites, setWebsites] = useState<WebsiteFormValues[]>([]);
   const [currentWebsiteIndex, setCurrentWebsiteIndex] = useState(0);
