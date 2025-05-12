@@ -24,7 +24,7 @@ export default function LandingPage() {
       <header className="w-full border-b bg-white sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center">
-            <Logo size="md" withText={true} className="cursor-pointer" />
+            <Logo size="md" className="cursor-pointer" />
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">

@@ -74,7 +74,7 @@ export default function Header() {
       {/* Left section with logo and website selector */}
       <div className="flex items-center gap-4">
         <div className="hidden md:block">
-          <Logo size="sm" withText={true} />
+          <Logo size="md" />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

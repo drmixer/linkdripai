@@ -4,16 +4,15 @@ import logoImage from '@assets/IMG_3844.png';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
-  withText?: boolean;
   className?: string;
 }
 
-export function Logo({ size = 'md', withText = true, className = '' }: LogoProps) {
-  // Determine logo size
+export function Logo({ size = 'md', className = '' }: LogoProps) {
+  // Determine logo size - larger sizes to make the logo more visible
   const sizeClasses = {
-    sm: 'h-6 w-6',
-    md: 'h-8 w-8',
-    lg: 'h-10 w-10',
+    sm: 'h-9 w-auto',
+    md: 'h-12 w-auto',
+    lg: 'h-16 w-auto',
   };
 
   return (
@@ -21,12 +20,9 @@ export function Logo({ size = 'md', withText = true, className = '' }: LogoProps
       <div className={`flex items-center cursor-pointer ${className}`}>
         <img 
           src={logoImage} 
-          alt="LinkDripAI Logo" 
+          alt="LinkDripAI" 
           className={`${sizeClasses[size]} object-contain`}
         />
-        {withText && (
-          <span className="ml-2 text-xl font-bold text-gray-900">LinkDripAI</span>
-        )}
       </div>
     </Link>
   );
