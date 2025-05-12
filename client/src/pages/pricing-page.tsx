@@ -32,9 +32,9 @@ export default function PricingPage() {
       description: "Perfect for individual bloggers and small websites",
       price: pricingInterval === "monthly" ? "39" : "31",
       features: [
-        "10 daily AI-matched opportunities",
+        "10 daily AI-matched opportunities per site",
         "Open access to all opportunity details",
-        "1 Splash per month",
+        "1 Splash per month (total across all sites)",
         "1 website",
         "Full analytics dashboard",
         "Email tracking & templates",
