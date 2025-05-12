@@ -74,7 +74,7 @@ export default function Sidebar() {
     <>
       {/* Only show logo in mobile sidebar or when desktop sidebar is expanded */}
       {(!collapsed || open) && (
-        <div className="flex items-center justify-between h-28 px-4 border-b border-gray-200">
+        <div className="flex items-center justify-between h-24 px-4 border-b border-gray-200">
           <Logo size="sm" />
         </div>
       )}
