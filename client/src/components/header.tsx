@@ -10,6 +10,7 @@ import {
   Plus,
   Sparkles,
 } from "lucide-react";
+import Logo from "@/components/logo";
 import { BuySplashesDialog } from "./buy-splashes-dialog";
 import { 
   DropdownMenu, 
