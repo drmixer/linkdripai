@@ -94,7 +94,7 @@ export default function BillingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string>(user?.subscription || 'Free Trial');
   const [selectedSplashes, setSelectedSplashes] = useState<string>("1");
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
-  const [isPremiumSplashesDialogOpen, setIsPremiumSplashesDialogOpen] = useState(false);
+  const [isSplashesDialogOpen, setIsSplashesDialogOpen] = useState(false);
   
   useEffect(() => {
     // Open Add-ons tab if navigated with ?tab=add-ons parameter
@@ -104,7 +104,7 @@ export default function BillingPage() {
       document.querySelector('[value="add-ons"]')?.dispatchEvent(
         new MouseEvent('click', { bubbles: true })
       );
-      setIsPremiumSplashesDialogOpen(true);
+      setIsSplashesDialogOpen(true);
     }
   }, [location]);
   
@@ -159,7 +159,7 @@ export default function BillingPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      setIsPremiumSplashesDialogOpen(false);
+      setIsSplashesDialogOpen(false);
       toast({
         title: "Splashes added",
         description: `${selectedSplashes} Splashes have been added to your account.`,
@@ -450,7 +450,7 @@ export default function BillingPage() {
                     <p className="text-sm text-gray-600 mb-3">
                       Need an instant boost in quality? Purchase Splashes to get higher quality backlink opportunities instantly. Each Splash delivers 1 top-tier opportunity (DA 40+, relevance 80%+, spam score &lt;2%).
                     </p>
-                    <Button onClick={() => setIsPremiumSplashesDialogOpen(true)}>
+                    <Button onClick={() => setIsSplashesDialogOpen(true)}>
                       <Sparkles className="mr-2 h-4 w-4" />
                       Buy Splashes
                     </Button>
