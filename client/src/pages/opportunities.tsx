@@ -84,13 +84,13 @@ export default function OpportunitiesPage() {
   const [sortMethod, setSortMethod] = useState<"relevance" | "da" | "date">("relevance");
   
   // Get user websites
-  const { data: websites, isLoading: loadingWebsites } = useQuery({
+  const { data: websites = [], isLoading: loadingWebsites } = useQuery<any[]>({
     queryKey: ['/api/websites'],
     enabled: !!user
   });
   
   // Get user's splash credits
-  const { data: userPlan, isLoading: loadingPlan } = useQuery({
+  const { data: userPlan = { remainingSplashes: 0, totalSplashes: 0, plan: '', nextSplashReset: new Date() }, isLoading: loadingPlan } = useQuery<any>({
     queryKey: ['/api/user/plan'],
     enabled: !!user
   });
@@ -102,13 +102,13 @@ export default function OpportunitiesPage() {
   });
   
   // Get recent contacts (for contacted section)
-  const { data: recentContacts, isLoading: loadingContacts } = useQuery({
+  const { data: recentContacts = [], isLoading: loadingContacts } = useQuery<any[]>({
     queryKey: ['/api/contacts/recent'],
     enabled: !!user && activeSection === 'contacted'
   });
   
   // Get analytics data
-  const { data: analyticsData, isLoading: loadingAnalytics } = useQuery({
+  const { data: analyticsData = {}, isLoading: loadingAnalytics } = useQuery<any>({
     queryKey: ['/api/analytics', chartPeriod],
     enabled: !!user && activeSection === 'analytics'
   });
