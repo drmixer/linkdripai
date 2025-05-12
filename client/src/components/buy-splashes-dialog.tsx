@@ -119,8 +119,9 @@ export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySp
             Purchase Splashes
           </DialogTitle>
           <DialogDescription>
-            Splashes give you instant access to high-quality backlink opportunities 
-            (DA 40+, relevance 80%+, spam &lt;2%).
+            Splashes give you instant access to premium, high-quality backlink opportunities
+            (DA 40+, relevance 80%+, spam &lt;2%). Your monthly Splash allocation is shared
+            across all your sites.
           </DialogDescription>
         </DialogHeader>
 

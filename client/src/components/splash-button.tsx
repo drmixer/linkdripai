@@ -86,8 +86,8 @@ export function SplashButton({
               <AlertDialogHeader>
                 <AlertDialogTitle>Use a Splash?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Use 1 Splash to add a high-quality opportunity (DA 40+, relevance 80%+, spam &lt;2%) to your feed right now. 
-                  You have {remainingSplashes} Splash{remainingSplashes !== 1 ? 'es' : ''} remaining this month.
+                  Use 1 Splash to add a premium, high-quality opportunity (DA 40+, relevance 80%+, spam &lt;2%) to your feed right now. 
+                  You have {remainingSplashes} Splash{remainingSplashes !== 1 ? 'es' : ''} remaining this month across all your sites.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="gap-2">
@@ -105,7 +105,7 @@ export function SplashButton({
               <AlertDialogHeader>
                 <AlertDialogTitle>No Splashes Remaining</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You've used all your monthly Splashes. Purchase additional Splashes to get more high-quality opportunities (DA 40+, relevance 80%+, spam &lt;2%) instantly.
+                  You've used all your monthly Splashes across your sites. Purchase additional Splashes to get more premium, high-quality opportunities (DA 40+, relevance 80%+, spam &lt;2%) instantly.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:justify-end">

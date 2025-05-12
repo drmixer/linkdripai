@@ -604,7 +604,7 @@ export default function OpportunitiesPage() {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">Your Splash Credits</span>
+                    <span className="text-sm font-medium">Your Splashes (across all sites)</span>
                     <Badge variant="outline" className="bg-purple-100 text-purple-800">
                       {userPlan?.remainingSplashes || 0} / {userPlan?.totalSplashes || 0}
                     </Badge>
