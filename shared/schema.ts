@@ -28,10 +28,10 @@ export const users = pgTable("users", {
   }[]>().default([]),
   onboardingCompleted: boolean("onboardingCompleted").default(false),
   // Email integration fields
-  emailProvider: text("emailProvider"),
-  emailConfigured: boolean("emailConfigured").default(false),
-  emailApiKey: text("emailApiKey"),
-  emailTermsAccepted: boolean("emailTermsAccepted").default(false),
+  emailProvider: text("emailprovider"),
+  emailConfigured: boolean("emailconfigured").default(false),
+  emailApiKey: text("emailapikey"),
+  emailTermsAccepted: boolean("emailtermsaccepted").default(false),
 });
 
 // Basic insert schema for user registration
