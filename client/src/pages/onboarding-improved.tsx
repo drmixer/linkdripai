@@ -56,10 +56,10 @@ const emailSettingsSchema = z.object({
     required_error: "Please select an email provider",
   }),
   fromEmail: z.string().email("Please enter a valid email address"),
-  apiKey: z.string().min(1, "API key is required"),
+  apiKey: z.string().min(1, "API key or credentials are required"),
   termsAccepted: z.boolean().refine(val => val === true, {
-    message: "You must accept the terms and conditions"
-  })
+    message: "You must accept the terms and conditions to continue",
+  }),
 });
 
 type WebsiteFormValues = z.infer<typeof websiteSchema>;
