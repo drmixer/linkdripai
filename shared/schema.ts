@@ -29,7 +29,7 @@ export const users = pgTable("users", {
   onboardingCompleted: boolean("onboardingCompleted").default(false),
   // Email integration fields
   emailProvider: text("emailprovider"),
-  emailFromAddress: text("emailfromaddress"),
+  fromEmail: text("fromemail"),  // Changed from emailFromAddress to match DB convention
   emailConfigured: boolean("emailconfigured").default(false),
   emailVerified: boolean("emailverified").default(false),
   emailApiKey: text("emailapikey"),
@@ -78,7 +78,7 @@ const baseInsertUserSchema = createInsertSchema(users).omit({
   websites: true,
   onboardingCompleted: true,
   emailProvider: true,
-  emailFromAddress: true,
+  fromEmail: true,
   emailConfigured: true,
   emailVerified: true,
   emailApiKey: true,

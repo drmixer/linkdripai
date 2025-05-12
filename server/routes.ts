@@ -420,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let response = {
         isConfigured: Boolean(hasEmailSettings),
         provider: user?.emailProvider || null,
-        fromEmail: user?.emailFromAddress || user?.email || null,
+        fromEmail: user?.fromEmail || user?.email || null,
         termsAccepted: Boolean(user?.emailTermsAccepted),
         isVerified: Boolean(user?.emailVerified),
         websiteSettings: {},
@@ -486,7 +486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .update(users)
         .set({
           emailProvider: provider,
-          emailFromAddress: fromEmail,
+          fromEmail: fromEmail,
           emailConfigured: true,
           emailVerified: isVerified,
           emailProviderSettings,
