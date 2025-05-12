@@ -29,9 +29,41 @@ export const users = pgTable("users", {
   onboardingCompleted: boolean("onboardingCompleted").default(false),
   // Email integration fields
   emailProvider: text("emailprovider"),
+  emailFromAddress: text("emailfromaddress"),
   emailConfigured: boolean("emailconfigured").default(false),
+  emailVerified: boolean("emailverified").default(false),
   emailApiKey: text("emailapikey"),
   emailTermsAccepted: boolean("emailtermsaccepted").default(false),
+  // Provider-specific settings stored as JSON
+  emailProviderSettings: json("emailprovidersettings").$type<{
+    // SendGrid settings
+    sendgrid?: {
+      apiKey: string;
+    };
+    // SMTP settings
+    smtp?: {
+      server: string;
+      port: string | number;
+      username: string;
+      password: string;
+      secure: boolean;
+    };
+    // Gmail settings
+    gmail?: {
+      clientId: string;
+      clientSecret: string;
+      refreshToken?: string;
+      accessToken?: string;
+    };
+  }>(),
+  // Website-specific email settings
+  websiteEmailSettings: json("websiteemailsettings").$type<{
+    [websiteId: string]: {
+      fromEmail: string;
+      verified: boolean;
+      signature?: string;
+    };
+  }>(),
 });
 
 // Basic insert schema for user registration
@@ -46,14 +78,59 @@ const baseInsertUserSchema = createInsertSchema(users).omit({
   websites: true,
   onboardingCompleted: true,
   emailProvider: true,
+  emailFromAddress: true,
   emailConfigured: true,
+  emailVerified: true,
   emailApiKey: true,
   emailTermsAccepted: true,
+  emailProviderSettings: true,
+  websiteEmailSettings: true,
 });
 
 // Extended schema with plan information for registration process
 export const insertUserSchema = baseInsertUserSchema.extend({
   plan: z.enum(["Free Trial", "Starter", "Grow", "Pro"]).optional(),
+});
+
+// Email settings related schemas
+export const emailSettingsSchema = z.object({
+  provider: z.enum(["sendgrid", "smtp", "gmail"]),
+  fromEmail: z.string().email("Please enter a valid email address"),
+  isConfigured: z.boolean().default(false),
+  isVerified: z.boolean().default(false),
+  termsAccepted: z.boolean(),
+  
+  // Provider-specific settings
+  providerSettings: z.object({
+    // SendGrid
+    sendgrid: z.object({
+      apiKey: z.string()
+    }).optional(),
+    
+    // SMTP
+    smtp: z.object({
+      server: z.string(),
+      port: z.union([z.string(), z.number()]),
+      username: z.string(),
+      password: z.string(),
+      secure: z.boolean().default(true)
+    }).optional(),
+    
+    // Gmail
+    gmail: z.object({
+      clientId: z.string(),
+      clientSecret: z.string(),
+      refreshToken: z.string().optional(),
+      accessToken: z.string().optional()
+    }).optional()
+  }).optional(),
+  
+  // Website specific settings
+  websiteSettings: z.record(z.string(), z.object({
+    fromEmail: z.string().email(),
+    verified: z.boolean().default(false),
+    signature: z.string().optional()
+  })).optional()
 });
 
 // Websites table - for users to manage multiple websites

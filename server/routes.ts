@@ -417,12 +417,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user has configured email settings
       const hasEmailSettings = user?.emailProvider && user?.emailConfigured;
       
-      res.json({
+      let response = {
         isConfigured: Boolean(hasEmailSettings),
         provider: user?.emailProvider || null,
-        fromEmail: user?.email || null,
-        termsAccepted: Boolean(user?.emailTermsAccepted)
-      });
+        fromEmail: user?.emailFromAddress || user?.email || null,
+        termsAccepted: Boolean(user?.emailTermsAccepted),
+        isVerified: Boolean(user?.emailVerified),
+        websiteSettings: {},
+      };
+      
+      // Add provider-specific settings if available
+      if (user?.emailProviderSettings) {
+        response = {
+          ...response,
+          providerSettings: user.emailProviderSettings,
+        };
+      }
+      
+      // Add website-specific email settings if available
+      if (user?.websiteEmailSettings) {
+        response = {
+          ...response,
+          websiteSettings: user.websiteEmailSettings,
+        };
+      }
+      
+      res.json(response);
     } catch (error: any) {
       console.error("Error retrieving email settings:", error);
       res.status(500).json({ message: error.message });
@@ -432,19 +452,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Save email settings
   app.post("/api/email/settings", isAuthenticated, async (req, res) => {
     try {
-      const { provider, fromEmail, apiKey, termsAccepted } = req.body;
+      const { 
+        provider, 
+        fromEmail, 
+        termsAccepted,
+        providerSettings,
+        requiresVerification = true,
+        isVerified = false
+      } = req.body;
       
-      if (!provider || !fromEmail || !apiKey || !termsAccepted) {
+      // Validate required fields
+      if (!provider || !fromEmail || !termsAccepted) {
         return res.status(400).json({ message: "Missing required fields" });
       }
+      
+      // Validate provider-specific settings
+      if (provider === 'sendgrid' && (!providerSettings?.apiKey)) {
+        return res.status(400).json({ message: "SendGrid API key is required" });
+      } else if (provider === 'smtp' && (!providerSettings?.server || !providerSettings?.port || 
+                                          !providerSettings?.username || !providerSettings?.password)) {
+        return res.status(400).json({ message: "SMTP server details are required" });
+      } else if (provider === 'gmail' && (!providerSettings?.clientId || !providerSettings?.clientSecret)) {
+        return res.status(400).json({ message: "Google client ID and secret are required" });
+      }
+      
+      // Structure the email provider settings in the correct format
+      const emailProviderSettings = {
+        [provider]: providerSettings
+      };
       
       // Update user with email settings
       const user = await db
         .update(users)
         .set({
           emailProvider: provider,
+          emailFromAddress: fromEmail,
           emailConfigured: true,
-          emailApiKey: apiKey,
+          emailVerified: isVerified,
+          emailProviderSettings,
           emailTermsAccepted: termsAccepted,
         })
         .where(eq(users.id, req.user!.id))
