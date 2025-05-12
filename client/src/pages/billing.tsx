@@ -191,9 +191,9 @@ export default function BillingPage() {
       price: "$0",
       features: [
         "1 website",
-        "3-5 opportunities per day",
+        "3-5 opportunities per day per site",
         "Unlock all opportunity details",
-        "1 Splash per month",
+        "1 Splash per month (total)",
         "Basic filters and analytics",
         "Standard support",
       ],
@@ -210,9 +210,9 @@ export default function BillingPage() {
       price: "$9",
       features: [
         "1 website",
-        "3-5 opportunities per day",
+        "3-5 opportunities per day per site",
         "Unlock all opportunity details",
-        "1 Splash per month",
+        "1 Splash per month (total)",
         "Basic filters and analytics",
         "Standard support",
       ],
@@ -229,9 +229,9 @@ export default function BillingPage() {
       price: "$19",
       features: [
         "2 websites",
-        "7-10 opportunities per day",
+        "7-10 opportunities per day per site",
         "Unlock all opportunity details",
-        "3 Splashes per month",
+        "3 Splashes per month (total)",
         "Advanced filters and analytics",
         "Custom email templates",
         "Competitor backlink insights",
@@ -250,9 +250,9 @@ export default function BillingPage() {
       price: "$39",
       features: [
         "5 websites",
-        "10-15 opportunities per day",
-        "Unlock all opportunity details",
-        "7 Premium Splashes per month",
+        "10-15 opportunities per day per site",
+        "Unlock all opportunity details", 
+        "7 Splashes per month (total)",
         "Full filtering options",
         "Advanced analytics and reporting", 
         "Competitor backlink insights",
@@ -275,9 +275,9 @@ export default function BillingPage() {
 
   // Splash packages
   const splashPackages = [
-    { value: "1", label: "1 Premium Splash", price: "$7" },
-    { value: "3", label: "3 Premium Splashes", price: "$18", savings: "Save 14%" },
-    { value: "7", label: "7 Premium Splashes", price: "$35", savings: "Save 29%" },
+    { value: "1", label: "1 Splash", price: "$7" },
+    { value: "3", label: "3 Splashes", price: "$18", savings: "Save 14%" },
+    { value: "7", label: "7 Splashes", price: "$35", savings: "Save 29%" },
   ];
 
   // Calculate progress
