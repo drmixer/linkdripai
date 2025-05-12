@@ -26,7 +26,7 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/pricing" component={PricingPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
-      <ProtectedRoute path="/opportunities" component={DripsSimplePage} />
+      <ProtectedRoute path="/drips" component={DripsSimplePage} />
       <ProtectedRoute path="/saved-prospects" component={SavedProspects} />
       <ProtectedRoute path="/email-outreach" component={EmailOutreach} />
       <ProtectedRoute path="/analytics" component={Analytics} />

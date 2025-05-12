@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import OpportunityCard from '@/components/opportunity-card';
+import DripOpportunityCard from '@/components/drip-opportunity-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function DripsSimplePage() {
@@ -134,7 +134,7 @@ export default function DripsSimplePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredOpportunities.map((opportunity: any) => (
-              <OpportunityCard
+              <DripOpportunityCard
                 key={opportunity.id}
                 opportunity={opportunity}
                 websiteId={websiteFilter === 'all' ? opportunity.matchedWebsiteId : parseInt(websiteFilter)}
