@@ -256,7 +256,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Select Opportunities</h3>
                 <p className="text-gray-600">
-                  Review detailed metrics for each opportunity including domain authority, relevance score, and contact information. Use Splashes for instant access to more opportunities.
+                  Review detailed metrics for each opportunity including domain authority, relevance score, and contact information. Use Splashes for instant access to Premium opportunities.
                 </p>
               </motion.div>
               
@@ -572,7 +572,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-gray-700" />
                       </div>
-                      <span className="text-sm text-gray-600">3-5 drips/day</span>
+                      <span className="text-sm text-gray-600">3-5 drips/day per site</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
@@ -768,7 +768,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-blue-500" />
                       </div>
-                      <span className="text-sm text-gray-600">7-10 drips/day</span>
+                      <span className="text-sm text-gray-600">7-10 drips/day per site</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -780,7 +780,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-blue-500" />
                       </div>
-                      <span className="text-sm text-gray-600"><span className="font-medium">3 Splashes</span>/month</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">3 Splashes</span>/month (total across all sites)</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -856,7 +856,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-purple-500" />
                       </div>
-                      <span className="text-sm text-gray-600">10-15 drips/day</span>
+                      <span className="text-sm text-gray-600">10-15 drips/day per site</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
@@ -868,7 +868,7 @@ export default function LandingPage() {
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3.5 w-3.5 text-purple-500" />
                       </div>
-                      <span className="text-sm text-gray-600"><span className="font-medium">7 Splashes</span>/month</span>
+                      <span className="text-sm text-gray-600"><span className="font-medium">7 Splashes</span>/month (total across all sites)</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-5 w-5 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
