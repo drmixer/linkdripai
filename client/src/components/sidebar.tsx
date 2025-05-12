@@ -19,6 +19,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import Logo from "@/components/logo";
 
 export default function Sidebar() {
   const [location] = useLocation();
@@ -74,12 +75,7 @@ export default function Sidebar() {
       {/* Only show logo in mobile sidebar or when desktop sidebar is expanded */}
       {(!collapsed || open) && (
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-          <div className="flex items-center">
-            <div className="rounded-md bg-primary-600 p-1.5 mr-2">
-              <Link2Icon className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-bold text-gray-900">LinkDripAI</span>
-          </div>
+          <Logo size="md" withText={true} />
         </div>
       )}
             

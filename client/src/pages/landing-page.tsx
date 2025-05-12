@@ -6,6 +6,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Icons } from "@/lib/icons";
 import { Check, CheckCircle, ArrowRight, Link2, Zap, BarChart, Mail, Shield, Droplets, LineChart, Globe } from "lucide-react";
 import { motion } from "framer-motion";
+import Logo from "@/components/logo";
+import HowItWorksAnimation from "@/components/HowItWorksAnimation";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -22,14 +24,7 @@ export default function LandingPage() {
       <header className="w-full border-b bg-white sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center">
-            <Link href="/">
-              <div className="flex items-center cursor-pointer">
-                <div className="rounded-md bg-primary p-1.5 mr-2.5">
-                  <Link2 className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
-              </div>
-            </Link>
+            <Logo size="md" withText={true} className="cursor-pointer" />
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
@@ -211,7 +206,7 @@ export default function LandingPage() {
         {/* How It Works Section */}
         <section id="how-it-works" className="py-20 bg-gray-50">
           <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="text-center max-w-3xl mx-auto mb-10">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -223,6 +218,11 @@ export default function LandingPage() {
                   A simple three-step process to transform your link building strategy
                 </p>
               </motion.div>
+            </div>
+            
+            {/* Lottie Animation */}
+            <div className="mb-16">
+              <HowItWorksAnimation />
             </div>
             
             <div className="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto">
