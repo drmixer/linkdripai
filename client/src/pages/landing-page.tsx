@@ -22,7 +22,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen">
       {/* Header */}
       <header className="w-full border-b bg-white sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="container mx-auto flex h-24 items-center justify-between px-4">
           <div className="flex items-center">
             <Logo size="md" className="cursor-pointer" />
           </div>

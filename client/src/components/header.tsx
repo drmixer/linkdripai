@@ -70,11 +70,11 @@ export default function Header() {
   const planName = user?.subscription || 'Free Trial';
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-20 px-4 md:px-6 bg-white border-b border-gray-200">
       {/* Left section with logo and website selector */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
         <div className="hidden md:block">
-          <Logo size="md" />
+          <Logo size="sm" />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
