@@ -8,11 +8,11 @@ interface LogoProps {
 }
 
 export function Logo({ size = 'md', className = '' }: LogoProps) {
-  // Determine logo size - much larger sizes to make the logo very visible
+  // Determine logo size - extremely large sizes to make the logo dominate
   const sizeClasses = {
-    sm: 'h-14 w-auto',
-    md: 'h-20 w-auto',
-    lg: 'h-28 w-auto',
+    sm: 'h-20 w-auto',
+    md: 'h-32 w-auto',
+    lg: 'h-48 w-auto',
   };
 
   return (
