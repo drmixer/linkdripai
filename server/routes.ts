@@ -433,8 +433,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields" });
       }
       
-      // In a full implementation, we would store these settings in the database
-      // For now, we'll just return success
+      // Update user with email settings
+      const user = await db
+        .update(users)
+        .set({
+          emailProvider: provider,
+          emailConfigured: true,
+          emailApiKey: apiKey,
+          emailTermsAccepted: termsAccepted,
+        })
+        .where(eq(users.id, req.user!.id))
+        .returning();
       
       res.json({
         isConfigured: true,
@@ -443,6 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         termsAccepted
       });
     } catch (error: any) {
+      console.error("Error saving email settings:", error);
       res.status(500).json({ message: error.message });
     }
   });
