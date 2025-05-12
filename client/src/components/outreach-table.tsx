@@ -142,25 +142,40 @@ export default function OutreachTable({ emails, onViewEmail }: OutreachTableProp
               </TableCell>
               <TableCell className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
                 <Badge className={`flex items-center ${getStatusInfo(email.status || '').class}`}>
-                  {getStatusInfo(email.status).icon}
-                  {getStatusInfo(email.status).label}
+                  {getStatusInfo(email.status || '').icon}
+                  {getStatusInfo(email.status || '').label}
                 </Badge>
               </TableCell>
               <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                {email.status === 'Awaiting response' || email.status === 'No response' ? (
-                  <Button
-                    variant="link"
-                    onClick={() => handleFollowUp(email.id)}
-                    disabled={followUpMutation.isPending}
-                    className="text-primary"
-                  >
-                    Follow up
-                  </Button>
+                {(email.status?.toLowerCase() === 'awaiting response' || 
+                  email.status?.toLowerCase() === 'no response' || 
+                  email.status?.toLowerCase() === 'sent') ? (
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleFollowUp(email.id)}
+                      disabled={followUpMutation.isPending}
+                      className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                    >
+                      <Repeat className="h-3.5 w-3.5 mr-1.5" />
+                      Follow-up
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onViewEmail(email)}
+                      className="text-slate-600"
+                    >
+                      View
+                    </Button>
+                  </div>
                 ) : (
                   <Button
-                    variant="link"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => onViewEmail(email)}
-                    className="text-primary"
+                    className="text-slate-600"
                   >
                     View
                   </Button>

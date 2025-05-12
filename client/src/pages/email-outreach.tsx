@@ -185,12 +185,45 @@ export default function EmailOutreach() {
           emails={getFilteredEmails()} 
           onViewEmail={handleViewEmail} 
         />
+      ) : !emailSettings?.isConfigured ? (
+        <Card className="p-8 text-center">
+          <CardContent className="flex flex-col items-center justify-center pt-6">
+            <Mail className="mx-auto h-12 w-12 text-amber-500 mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">Set Up Email Integration</h3>
+            <p className="text-base text-gray-600 max-w-lg mx-auto mb-6">
+              You need to configure your email settings to start sending outreach emails directly from LinkDripAI.
+            </p>
+            <Button 
+              size="lg"
+              onClick={() => setShowEmailSetupModal(true)}
+              className="px-6 mb-4"
+            >
+              Configure Email Settings
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              Your email settings are securely stored and used only for sending your outreach emails.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <Card className="p-8">
-          <CardContent className="text-center pt-6">
-            <p className="text-gray-500">
-              No emails match your current filters. Try adjusting your search or start a new outreach.
+          <CardContent className="flex flex-col items-center justify-center text-center pt-6">
+            <Inbox className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No Emails Found</h3>
+            <p className="text-base text-gray-600 max-w-lg mx-auto mb-6">
+              {activeTab === "all" && searchTerm === "" 
+                ? "You haven't sent any outreach emails yet. Get started by browsing your opportunities and sending your first email."
+                : "No emails match your current filters. Try adjusting your search or selecting a different category."}
             </p>
+            {activeTab === "all" && searchTerm === "" ? (
+              <Button onClick={navigateToOpportunities} size="lg" className="px-6">
+                Browse Opportunities
+              </Button>
+            ) : (
+              <Button onClick={() => { setActiveTab("all"); setSearchTerm(""); }} variant="outline" size="lg" className="px-6">
+                Clear Filters
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
