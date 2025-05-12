@@ -11,7 +11,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
+import { 
+  Clock, 
+  CheckCircle2, 
+  X, 
+  AlertTriangle, 
+  Send,
+  MailCheck, 
+  Mail, 
+  Repeat 
+} from "lucide-react";
 
 interface OutreachTableProps {
   emails: OutreachEmail[];
@@ -46,16 +57,51 @@ export default function OutreachTable({ emails, onViewEmail }: OutreachTableProp
     followUpMutation.mutate(emailId);
   };
   
-  const getStatusBadgeClass = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStatusInfo = (status: string | null) => {
+    const statusLower = status?.toLowerCase() || '';
+    switch (statusLower) {
+      case 'sent':
+        return {
+          class: 'bg-blue-100 text-blue-800',
+          icon: <Send className="h-4 w-4 mr-1.5" />,
+          label: 'Sent'
+        };
       case 'responded':
-        return 'bg-green-100 text-green-800';
+        return {
+          class: 'bg-green-100 text-green-800',
+          icon: <CheckCircle2 className="h-4 w-4 mr-1.5" />,
+          label: 'Replied'
+        };
       case 'awaiting response':
-        return 'bg-yellow-100 text-yellow-800';
+        return {
+          class: 'bg-yellow-100 text-yellow-800',
+          icon: <Clock className="h-4 w-4 mr-1.5" />,
+          label: 'Awaiting'
+        };
       case 'no response':
-        return 'bg-red-100 text-red-800';
+        return {
+          class: 'bg-red-100 text-red-800',
+          icon: <AlertTriangle className="h-4 w-4 mr-1.5" />,
+          label: 'No Response'
+        };
+      case 'completed':
+        return {
+          class: 'bg-green-100 text-green-800',
+          icon: <MailCheck className="h-4 w-4 mr-1.5" />,
+          label: 'Completed'
+        };
+      case 'failed':
+        return {
+          class: 'bg-red-100 text-red-800',
+          icon: <X className="h-4 w-4 mr-1.5" />,
+          label: 'Failed'
+        };
       default:
-        return 'bg-gray-100 text-gray-800';
+        return {
+          class: 'bg-gray-100 text-gray-800',
+          icon: <Mail className="h-4 w-4 mr-1.5" />,
+          label: status || 'Unknown'
+        };
     }
   };
   
@@ -92,12 +138,13 @@ export default function OutreachTable({ emails, onViewEmail }: OutreachTableProp
                 <div className="text-xs text-gray-500">{email.contactRole || 'Contact'}</div>
               </TableCell>
               <TableCell className="hidden md:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatDistanceToNow(new Date(email.sentAt), { addSuffix: true })}
+                {email.sentAt ? formatDistanceToNow(new Date(email.sentAt), { addSuffix: true }) : 'Not sent yet'}
               </TableCell>
               <TableCell className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(email.status)}`}>
-                  {email.status}
-                </span>
+                <Badge className={`flex items-center ${getStatusInfo(email.status || '').class}`}>
+                  {getStatusInfo(email.status).icon}
+                  {getStatusInfo(email.status).label}
+                </Badge>
               </TableCell>
               <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 {email.status === 'Awaiting response' || email.status === 'No response' ? (
