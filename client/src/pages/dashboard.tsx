@@ -257,8 +257,8 @@ export default function Dashboard() {
           remainingSplashes={splashesAvailable}
           onUseSplash={() => {
             toast({
-              title: "New opportunities added!",
-              description: "New AI-matched opportunities have been added to your dashboard.",
+              title: "Premium opportunity added!",
+              description: "A high-quality backlink opportunity (DA 40+) has been added to your dashboard.",
             });
             // Force refresh
             dataRefreshNeeded.current = true;
@@ -274,10 +274,10 @@ export default function Dashboard() {
           <CardContent className="p-0">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Splashes Available</h3>
+                <h3 className="text-sm font-medium text-gray-500">Splashes Available (across all sites)</h3>
                 <p className="text-2xl font-bold mt-1">{splashesAvailable} / {splashesTotal}</p>
                 <p className="text-xs text-blue-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Click to get more splashes
+                  Click to get premium opportunities (DA 40+)
                 </p>
               </div>
               <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
