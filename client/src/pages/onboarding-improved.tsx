@@ -44,8 +44,20 @@ const preferencesSchema = z.object({
   dripPriorities: z.array(z.string()).default(["high_da", "relevance", "opportunity_type"]),
 });
 
+const emailSettingsSchema = z.object({
+  emailProvider: z.enum(["sendgrid", "smtp", "gmail"], {
+    required_error: "Please select an email provider",
+  }),
+  fromEmail: z.string().email("Please enter a valid email address"),
+  apiKey: z.string().min(1, "API key is required"),
+  termsAccepted: z.boolean().refine(val => val === true, {
+    message: "You must accept the terms and conditions"
+  })
+});
+
 type WebsiteFormValues = z.infer<typeof websiteSchema>;
 type PreferencesFormValues = z.infer<typeof preferencesSchema>;
+type EmailSettingsFormValues = z.infer<typeof emailSettingsSchema>;
 
 export default function Onboarding() {
   const [step, setStep] = useState(1);
@@ -54,6 +66,7 @@ export default function Onboarding() {
   const [websites, setWebsites] = useState<WebsiteFormValues[]>([]);
   const [currentWebsiteIndex, setCurrentWebsiteIndex] = useState(0);
   const [preferences, setPreferences] = useState<(PreferencesFormValues & { websiteId: number })[]>([]);
+  const [emailSettings, setEmailSettings] = useState<EmailSettingsFormValues | null>(null);
   const { user } = useAuth();
   const [_, navigate] = useLocation();
   const { toast } = useToast();
@@ -95,6 +108,17 @@ export default function Onboarding() {
       avoidNiches: "",
       competitors: [""],
       dripPriorities: ["high_da", "relevance", "opportunity_type"],
+    },
+  });
+  
+  // Initialize email settings form
+  const emailSettingsForm = useForm<EmailSettingsFormValues>({
+    resolver: zodResolver(emailSettingsSchema),
+    defaultValues: {
+      emailProvider: "sendgrid",
+      fromEmail: "",
+      apiKey: "",
+      termsAccepted: false,
     },
   });
 
@@ -175,13 +199,34 @@ export default function Onboarding() {
       // Store preferences for the current website
       setPreferences([...preferences, { ...data, websiteId: currentWebsiteIndex }]);
       
-      // Move to the review step
+      // Move to the email setup step
       setStep(3);
     } catch (error) {
       console.error("Error:", error);
       toast({
         title: "Error",
         description: "Failed to save preferences",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Handler for email settings form submission
+  const onEmailSettingsSubmit = async (data: EmailSettingsFormValues) => {
+    setIsLoading(true);
+    try {
+      // Save email settings
+      setEmailSettings(data);
+      
+      // Move to the review step
+      setStep(4);
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save email settings",
         variant: "destructive",
       });
     } finally {
@@ -255,6 +300,26 @@ export default function Onboarding() {
         },
         body: JSON.stringify({ websites: websitesWithPreferences }),
       });
+      
+      // Save email settings if they exist
+      if (emailSettings) {
+        const emailResponse = await fetch("/api/email/settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            provider: emailSettings.emailProvider,
+            fromEmail: emailSettings.fromEmail,
+            apiKey: emailSettings.apiKey,
+            termsAccepted: emailSettings.termsAccepted
+          }),
+        });
+        
+        if (!emailResponse.ok) {
+          throw new Error("Failed to save email configuration");
+        }
+      }
       
       // Mark onboarding as complete - ensure the API called successfully
       const completeResponse = await fetch("/api/onboarding/complete", {
