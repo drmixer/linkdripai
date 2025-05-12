@@ -174,15 +174,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <Layout title="Settings">
-      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account preferences and application settings
-          </p>
-        </div>
-      </div>
+    <Layout 
+      title="Settings" 
+      subtitle="Manage your account preferences and application settings"
+    >
       
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="mb-6">
