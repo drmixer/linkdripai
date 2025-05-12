@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { insertUserSchema } from "@shared/schema";
 import { Link } from "wouter";
-import { Loader2, Link as LinkIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 // Helper function to parse URL search parameters
 function useSearchParams() {
@@ -125,10 +126,7 @@ export default function AuthPage() {
       {/* Left side - Auth forms */}
       <div className="flex flex-col justify-center w-full max-w-md p-8 bg-white">
         <Link to="/" className="flex items-center mb-8 cursor-pointer hover:opacity-90 transition-opacity">
-          <div className="rounded-md bg-primary p-1.5 mr-2">
-            <LinkIcon className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
+          <Logo size="sm" />
         </Link>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
