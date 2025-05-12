@@ -378,6 +378,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+  
+  // Get all emails
+  app.get("/api/emails", isAuthenticated, async (req, res) => {
+    try {
+      const emails = await storage.getUserEmails(req.user!.id);
+      res.json(emails);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Create follow-up email
+  app.post("/api/emails/:id/follow-up", isAuthenticated, async (req, res) => {
+    try {
+      const emailId = parseInt(req.params.id);
+      if (isNaN(emailId)) {
+        return res.status(400).json({ message: "Invalid email ID" });
+      }
+      
+      const email = await storage.createFollowUpEmail(emailId, req.user!.id);
+      res.json(email);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Get email settings
+  app.get("/api/email/settings", isAuthenticated, async (req, res) => {
+    try {
+      // This is a placeholder for actual email settings
+      // In a full implementation, we would store and retrieve email settings from the database
+      
+      // Return default settings for now
+      const hasEmailSettings = req.user?.emailProvider && req.user?.emailConfigured;
+      
+      res.json({
+        isConfigured: Boolean(hasEmailSettings),
+        provider: req.user?.emailProvider || null,
+        fromEmail: req.user?.email || null,
+        termsAccepted: Boolean(req.user?.emailTermsAccepted)
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Save email settings
+  app.post("/api/email/settings", isAuthenticated, async (req, res) => {
+    try {
+      const { provider, fromEmail, apiKey, termsAccepted } = req.body;
+      
+      if (!provider || !fromEmail || !apiKey || !termsAccepted) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // In a full implementation, we would store these settings in the database
+      // For now, we'll just return success
+      
+      res.json({
+        isConfigured: true,
+        provider,
+        fromEmail,
+        termsAccepted
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Get prospects with contact information
+  app.get("/api/prospects/contacts", isAuthenticated, async (req, res) => {
+    try {
+      // For now, we'll use the same endpoint as unlocked prospects
+      const prospects = await storage.getUnlockedProspects(req.user!.id);
+      res.json(prospects);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   // Analytics API
   app.get("/api/analytics", isAuthenticated, async (req, res) => {

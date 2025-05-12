@@ -27,7 +27,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Mail, Inbox, PlusCircle } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function EmailOutreach() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,6 +39,9 @@ export default function EmailOutreach() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
   const [showEmailSetupModal, setShowEmailSetupModal] = useState(false);
+  const [, setLocation] = useLocation();
+  
+  const navigateToOpportunities = () => setLocation('/opportunities');
 
   // Check if email is set up
   const { data: emailSettings, isLoading: isEmailSettingsLoading } = useQuery({
