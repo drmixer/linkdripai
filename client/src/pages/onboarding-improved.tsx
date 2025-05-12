@@ -346,6 +346,27 @@ export default function Onboarding() {
       
       // Save email settings if they exist
       if (emailSettings) {
+        // Build provider-specific settings based on the selected provider
+        let providerSettings = {};
+        
+        if (emailSettings.emailProvider === 'sendgrid') {
+          providerSettings = {
+            apiKey: emailSettings.sendgridApiKey || emailSettings.apiKey // Support both new and old format
+          };
+        } else if (emailSettings.emailProvider === 'smtp') {
+          providerSettings = {
+            server: emailSettings.smtpServer,
+            port: emailSettings.smtpPort,
+            username: emailSettings.smtpUsername,
+            password: emailSettings.smtpPassword
+          };
+        } else if (emailSettings.emailProvider === 'gmail') {
+          providerSettings = {
+            clientId: emailSettings.gmailClientId,
+            clientSecret: emailSettings.gmailClientSecret
+          };
+        }
+        
         const emailResponse = await fetch("/api/email/settings", {
           method: "POST",
           headers: {
@@ -354,13 +375,38 @@ export default function Onboarding() {
           body: JSON.stringify({
             provider: emailSettings.emailProvider,
             fromEmail: emailSettings.fromEmail,
-            apiKey: emailSettings.apiKey,
-            termsAccepted: emailSettings.termsAccepted
+            termsAccepted: emailSettings.termsAccepted,
+            providerSettings, // Include provider-specific settings
+            requiresVerification: true, // All emails require verification
+            isVerified: false // Initial state before verification
           }),
         });
         
         if (!emailResponse.ok) {
           throw new Error("Failed to save email configuration");
+        }
+        
+        // After saving the email settings, trigger verification email
+        if (emailSettings.fromEmail) {
+          try {
+            await fetch("/api/email/verify", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: emailSettings.fromEmail
+              }),
+            });
+            
+            toast({
+              title: "Verification email sent",
+              description: `Please check ${emailSettings.fromEmail} to verify your email address`,
+            });
+          } catch (error) {
+            console.error("Failed to send verification email:", error);
+            // Don't throw error here, we want to continue onboarding
+          }
         }
       }
       
@@ -782,7 +828,11 @@ export default function Onboarding() {
                         <FormItem>
                           <FormLabel>Email Integration Method</FormLabel>
                           <Select 
-                            onValueChange={field.onChange} 
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              // Force re-render to show the correct provider fields
+                              emailSettingsForm.trigger("emailProvider");
+                            }} 
                             defaultValue={field.value}
                           >
                             <FormControl>
@@ -821,27 +871,132 @@ export default function Onboarding() {
                       )}
                     />
                     
-                    <FormField
-                      control={emailSettingsForm.control}
-                      name="apiKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>API Key</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="Your API Key" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            {emailSettingsForm.getValues().emailProvider === "sendgrid"
-                              ? "Obtain your SendGrid API key from your SendGrid account dashboard"
-                              : emailSettingsForm.getValues().emailProvider === "gmail"
-                                ? "Enter your Google API credentials"
-                                : "Enter your SMTP server credentials"
-                            }
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {/* Conditional fields based on email provider */}
+                    {emailSettingsForm.getValues().emailProvider === "sendgrid" && (
+                      <FormField
+                        control={emailSettingsForm.control}
+                        name="sendgridApiKey"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>SendGrid API Key</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="Your SendGrid API Key" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Obtain your SendGrid API key from your SendGrid account dashboard
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    {emailSettingsForm.getValues().emailProvider === "smtp" && (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={emailSettingsForm.control}
+                            name="smtpServer"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>SMTP Server</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="smtp.example.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={emailSettingsForm.control}
+                            name="smtpPort"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Port</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="587" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={emailSettingsForm.control}
+                            name="smtpUsername"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Username</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="SMTP username" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={emailSettingsForm.control}
+                            name="smtpPassword"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="SMTP password" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </>
+                    )}
+                    
+                    {emailSettingsForm.getValues().emailProvider === "gmail" && (
+                      <>
+                        <FormField
+                          control={emailSettingsForm.control}
+                          name="gmailClientId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Google Client ID</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Your Google Client ID" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={emailSettingsForm.control}
+                          name="gmailClientSecret"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Google Client Secret</FormLabel>
+                              <FormControl>
+                                <Input type="password" placeholder="Your Google Client Secret" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
+                    
+                    <div className="border rounded-md p-4 bg-muted/50 mb-4">
+                      <h4 className="text-sm font-medium mb-2">Email Verification</h4>
+                      <p className="text-sm mb-2">
+                        To ensure deliverability and prevent abuse, we need to verify your sending email address.
+                      </p>
+                      <p className="text-xs text-amber-600 mb-2">
+                        <strong>Important:</strong> Verification will be sent during setup and each email address must be verified before sending messages.
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs text-gray-600">
+                          A verification link will be sent to {emailSettingsForm.getValues().fromEmail || "your email address"} during setup.
+                        </span>
+                      </div>
+                    </div>
                     
                     <div className="border rounded-md p-4 bg-muted/50">
                       <h4 className="text-sm font-medium mb-2">Terms & Conditions</h4>
