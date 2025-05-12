@@ -629,7 +629,7 @@ export default function OpportunitiesPage() {
                       )}
                     >
                       <Sparkles size={16} className="relative z-10" />
-                      <span className="relative z-10">Use Premium Splash</span>
+                      <span className="relative z-10">Use Splash</span>
                       <div className="absolute inset-0 bg-gradient-to-r from-purple-400/30 to-indigo-400/30 w-full translate-y-full hover:translate-y-0 transition-transform duration-300" />
                     </Button>
                   ) : (
@@ -638,7 +638,7 @@ export default function OpportunitiesPage() {
                       onClick={() => window.location.href = '/pricing'}
                     >
                       <Sparkles size={16} />
-                      Get Premium Splashes
+                      Get More Splashes
                     </Button>
                   )}
                 </div>

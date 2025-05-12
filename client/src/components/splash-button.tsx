@@ -44,7 +44,7 @@ export function SplashButton({
       queryClient.invalidateQueries({ queryKey: ['/api/prospects/daily'] });
       if (onUseSplash) onUseSplash();
       toast({
-        title: "Premium Splash used successfully!",
+        title: "Splash used successfully!",
         description: "A high-quality opportunity (DA 40+) has been added to your feed.",
         variant: "default",
       });
@@ -82,10 +82,10 @@ export function SplashButton({
         {remainingSplashes > 0 ? (
           <>
             <AlertDialogHeader>
-              <AlertDialogTitle>Use a Premium Splash?</AlertDialogTitle>
+              <AlertDialogTitle>Use a Splash?</AlertDialogTitle>
               <AlertDialogDescription>
-                Use 1 Premium Splash to add a high-quality opportunity (DA 40+, relevance 80%+, spam &lt;2%) to your feed right now. 
-                You have {remainingSplashes} Premium Splash{remainingSplashes !== 1 ? 'es' : ''} remaining this month.
+                Use 1 Splash to add a high-quality opportunity (DA 40+, relevance 80%+, spam &lt;2%) to your feed right now. 
+                You have {remainingSplashes} Splash{remainingSplashes !== 1 ? 'es' : ''} remaining this month.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="gap-2">
@@ -101,9 +101,9 @@ export function SplashButton({
         ) : (
           <>
             <AlertDialogHeader>
-              <AlertDialogTitle>No Premium Splashes Remaining</AlertDialogTitle>
+              <AlertDialogTitle>No Splashes Remaining</AlertDialogTitle>
               <AlertDialogDescription>
-                You've used all your monthly Premium Splashes. Purchase additional Premium Splashes to get more high-quality opportunities (DA 40+, relevance 80%+) instantly.
+                You've used all your monthly Splashes. Purchase additional Splashes to get more high-quality opportunities (DA 40+, relevance 80%+, spam &lt;2%) instantly.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:justify-end">
@@ -119,7 +119,7 @@ export function SplashButton({
                 }}
               >
                 <Sparkles className="h-4 w-4" />
-                Buy Premium Splashes
+                Buy Splashes
               </Button>
             </AlertDialogFooter>
           </>
