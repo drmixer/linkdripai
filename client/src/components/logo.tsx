@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'wouter';
-import logoImage from '@assets/IMG_3844.png';
+// Import the new neon blue logo
+import logoImage from '@assets/ChatGPT Image May 11, 2025, 09_17_57 PM.png';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -21,7 +22,7 @@ export function Logo({ size = 'md', className = '' }: LogoProps) {
         <img 
           src={logoImage} 
           alt="LinkDripAI" 
-          className={`${sizeClasses[size]} object-contain`}
+          className={`${sizeClasses[size]} object-contain drop-shadow-[0_0_10px_rgba(0,157,255,0.7)] hover:drop-shadow-[0_0_15px_rgba(0,157,255,0.9)] transition-all duration-300`}
         />
       </div>
     </Link>
