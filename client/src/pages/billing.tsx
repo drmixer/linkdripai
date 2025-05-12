@@ -153,7 +153,7 @@ export default function BillingPage() {
   // Add Splashes mutation
   const addSplashesMutation = useMutation({
     mutationFn: async (splashes: string) => {
-      const res = await apiRequest("POST", "/api/premium-splashes/add", { splashes: parseInt(splashes) });
+      const res = await apiRequest("POST", "/api/splashes/add", { splashes: parseInt(splashes) });
       return await res.json();
     },
     onSuccess: () => {
@@ -668,11 +668,11 @@ export default function BillingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Buy Premium Splashes Dialog */}
+      {/* Buy Splashes Dialog */}
       <BuySplashesDialog 
-        open={isPremiumSplashesDialogOpen}
-        onOpenChange={setIsPremiumSplashesDialogOpen}
-        onClose={() => setIsPremiumSplashesDialogOpen(false)}
+        open={isSplashesDialogOpen}
+        onOpenChange={setIsSplashesDialogOpen}
+        onClose={() => setIsSplashesDialogOpen(false)}
       />
     </Layout>
   );
