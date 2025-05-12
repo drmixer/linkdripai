@@ -290,15 +290,10 @@ export default function BillingPage() {
   const opportunitiesProgress = opportunitiesTotal > 0 ? (opportunitiesUsed / opportunitiesTotal) * 100 : 0;
 
   return (
-    <Layout title="Billing & Add-ons">
-      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Billing & Add-ons</h1>
-          <p className="text-muted-foreground">
-            Manage your subscription, splashes, and daily opportunities
-          </p>
-        </div>
-      </div>
+    <Layout 
+      title="Billing & Add-ons" 
+      subtitle="Manage your subscription, splashes, and daily opportunities"
+    >
 
       <Tabs defaultValue="subscription" className="w-full">
         <TabsList className="mb-6">

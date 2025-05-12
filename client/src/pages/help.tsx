@@ -33,15 +33,10 @@ export default function HelpPage() {
   );
 
   return (
-    <Layout title="Help & Documentation">
-      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Help & Support</h1>
-          <p className="text-muted-foreground">
-            Find answers to common questions and learn how to get the most out of LinkDripAI
-          </p>
-        </div>
-      </div>
+    <Layout 
+      title="Help & Support" 
+      subtitle="Find answers to common questions and learn how to get the most out of LinkDripAI"
+    >
       
       <div className="relative mb-6">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -75,7 +70,7 @@ export default function HelpPage() {
                   </Button>
                   <Button variant="ghost" className="w-full justify-start" onClick={() => setSearchQuery('splashes')}>
                     <ChevronRight className="mr-2 h-4 w-4" />
-                    Premium Splashes
+                    Splashes
                   </Button>
                   <Button variant="ghost" className="w-full justify-start" onClick={() => setSearchQuery('opportunity')}>
                     <ChevronRight className="mr-2 h-4 w-4" />
@@ -262,9 +257,9 @@ export default function HelpPage() {
 // Sample FAQ data
 const faqs = [
   {
-    question: "What are Premium Splashes and how do they work?",
-    answer: "Premium Splashes are a feature that delivers higher quality backlink opportunities to your dashboard. When you use a Premium Splash, you'll receive an opportunity with a Domain Authority of 40+, relevance score of 80%+, and spam score below 2%.",
-    additionalInfo: "Premium Splashes are included in your subscription plan and can also be purchased separately. The number of Premium Splashes you receive depends on your plan level."
+    question: "What are Splashes and how do they work?",
+    answer: "Splashes are a feature that delivers higher quality backlink opportunities to your dashboard. When you use a Splash, you'll receive an opportunity with a Domain Authority of 40+, relevance score of 80%+, and spam score below 2%.",
+    additionalInfo: "Splashes are included in your subscription plan and can also be purchased separately. The number of Splashes you receive depends on your plan level."
   },
   {
     question: "How many opportunities do I get each day?",
@@ -292,13 +287,13 @@ const faqs = [
   },
   {
     question: "What is the difference between the subscription plans?",
-    answer: "LinkDripAI offers three subscription plans: Free Trial/Starter ($9/mo), Grow ($19/mo), and Pro ($39/mo). The main differences are the number of daily opportunities (5, 10, or 15), number of Premium Splashes per month (1, 3, or 7), number of websites you can manage (1, 2, or 5), and access to advanced filtering and analytics features.",
+    answer: "LinkDripAI offers three subscription plans: Free Trial/Starter ($9/mo), Grow ($19/mo), and Pro ($39/mo). The main differences are the number of daily opportunities (5, 10, or 15), number of Splashes per month (1, 3, or 7), number of websites you can manage (1, 2, or 5), and access to advanced filtering and analytics features.",
     additionalInfo: "Pro plan users also get priority support and early access to new features."
   },
   {
-    question: "How can I purchase additional Premium Splashes?",
-    answer: "You can purchase additional Premium Splashes from the Add-ons tab in the Billing section. Premium Splashes can be purchased individually for $7 each, or in bundles of 3 for $18 or 7 for $35 for better value.",
-    additionalInfo: "Premium Splashes never expire, so you can use them whenever you need them."
+    question: "How can I purchase additional Splashes?",
+    answer: "You can purchase additional Splashes from the Add-ons tab in the Billing section. Splashes can be purchased individually for $7 each, or in bundles of 3 for $18 or 7 for $35 for better value.",
+    additionalInfo: "Splashes never expire, so you can use them whenever you need them."
   },
   {
     question: "Can I cancel my subscription at any time?",
@@ -325,7 +320,7 @@ const tutorials = [
       "Adding your first website",
       "Understanding your dashboard",
       "Finding your first opportunities",
-      "Using Premium Splashes effectively"
+      "Using Splashes effectively"
     ]
   },
   {
@@ -336,7 +331,7 @@ const tutorials = [
       "Using filters effectively",
       "Understanding quality metrics",
       "Prioritizing high-value opportunities",
-      "When to use Premium Splashes",
+      "When to use Splashes",
       "Evaluating opportunity relevance"
     ]
   },
