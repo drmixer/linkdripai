@@ -27,7 +27,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "wouter";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ArrowRight, Check, Globe, PanelRight, Link2 } from "lucide-react";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, ArrowRight, Check, Globe, PanelRight, Link2, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
