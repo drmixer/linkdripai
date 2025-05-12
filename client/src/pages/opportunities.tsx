@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import OpportunityCard from '@/components/opportunity-card';
+import Layout from '@/components/layout';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { 
@@ -279,8 +280,9 @@ export default function OpportunitiesPage() {
   }
   
   return (
-    <div className="container pb-8 max-w-7xl">
-      <div className="flex flex-col gap-6">
+    <Layout title="All Opportunities" subtitle="Discover and manage backlink opportunities for your websites">
+      <div className="container pb-8 max-w-7xl">
+        <div className="flex flex-col gap-6">
         {/* Enhanced header with tabs navigation */}
         <div className="sticky top-0 z-10 bg-background pt-6 pb-3 border-b">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -1188,5 +1190,6 @@ export default function OpportunitiesPage() {
         </DialogContent>
       </Dialog>
     </div>
+  </Layout>
   );
 }
