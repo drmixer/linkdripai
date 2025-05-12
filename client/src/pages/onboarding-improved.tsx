@@ -56,10 +56,39 @@ const emailSettingsSchema = z.object({
     required_error: "Please select an email provider",
   }),
   fromEmail: z.string().email("Please enter a valid email address"),
-  apiKey: z.string().min(1, "API key or credentials are required"),
+  
+  // SendGrid specific fields
+  sendgridApiKey: z.string().optional(),
+  
+  // SMTP specific fields
+  smtpServer: z.string().optional(),
+  smtpPort: z.string().optional(),
+  smtpUsername: z.string().optional(),
+  smtpPassword: z.string().optional(),
+  
+  // Gmail specific fields
+  gmailClientId: z.string().optional(),
+  gmailClientSecret: z.string().optional(),
+  
+  // For backward compatibility
+  apiKey: z.string().optional(),
+  
   termsAccepted: z.boolean().refine(val => val === true, {
     message: "You must accept the terms and conditions to continue",
   }),
+}).refine((data) => {
+  // Validate that the appropriate credentials are provided based on the selected provider
+  if (data.emailProvider === 'sendgrid') {
+    return !!data.sendgridApiKey || !!data.apiKey;
+  } else if (data.emailProvider === 'smtp') {
+    return !!data.smtpServer && !!data.smtpPort && !!data.smtpUsername && !!data.smtpPassword;
+  } else if (data.emailProvider === 'gmail') {
+    return !!data.gmailClientId && !!data.gmailClientSecret;
+  }
+  return false;
+}, {
+  message: "Please provide all required credentials for your selected email provider",
+  path: ["emailProvider"], // Shows the error on the emailProvider field
 });
 
 type WebsiteFormValues = z.infer<typeof websiteSchema>;
@@ -124,7 +153,14 @@ export default function Onboarding() {
     defaultValues: {
       emailProvider: "sendgrid",
       fromEmail: "",
-      apiKey: "",
+      sendgridApiKey: "",
+      smtpServer: "",
+      smtpPort: "587", // Default SMTP port for TLS
+      smtpUsername: "",
+      smtpPassword: "",
+      gmailClientId: "",
+      gmailClientSecret: "",
+      apiKey: "", // For backward compatibility
       termsAccepted: false,
     },
   });
