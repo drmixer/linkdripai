@@ -120,7 +120,7 @@ export default function OpportunitiesPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Premium Splash used successfully!",
+        title: "Splash used successfully!",
         description: "A high-quality opportunity (DA 40+) has been added to your list",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/opportunities'] });
@@ -210,8 +210,8 @@ export default function OpportunitiesPage() {
       splashMutation.mutate(websiteId);
     } else {
       toast({
-        title: "No Premium Splash credits",
-        description: "You don't have any remaining Premium Splash credits. Upgrade your plan or purchase additional Premium Splash credits.",
+        title: "No Splash credits",
+        description: "You don't have any remaining Splash credits. Upgrade your plan or purchase additional Splash credits.",
         variant: "destructive"
       });
     }
@@ -418,7 +418,7 @@ export default function OpportunitiesPage() {
                 </Badge>
               </CardTitle>
               <CardDescription className="flex items-center">
-                Premium Splashes
+                Splashes
                 <Sparkles className="h-4 w-4 text-blue-500 ml-auto" />
               </CardDescription>
             </CardHeader>
@@ -576,7 +576,7 @@ export default function OpportunitiesPage() {
           </div>
         </div>
         
-        {/* Premium Splash Section (Upgraded UI) */}
+        {/* Splash Section (Upgraded UI) */}
         <Card className="relative overflow-hidden border-0 shadow-md">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-indigo-600/10" />
           <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
@@ -591,7 +591,7 @@ export default function OpportunitiesPage() {
                 </div>
               </div>
               <div>
-                <CardTitle className="text-xl font-bold">Premium Splash</CardTitle>
+                <CardTitle className="text-xl font-bold">Splash</CardTitle>
                 <CardDescription>
                   Discover top-tier opportunities with superior metrics and relevance
                 </CardDescription>

@@ -150,8 +150,8 @@ export default function BillingPage() {
     },
   });
 
-  // Add Premium Splashes mutation
-  const addPremiumSplashesMutation = useMutation({
+  // Add Splashes mutation
+  const addSplashesMutation = useMutation({
     mutationFn: async (splashes: string) => {
       const res = await apiRequest("POST", "/api/premium-splashes/add", { splashes: parseInt(splashes) });
       return await res.json();
