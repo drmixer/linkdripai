@@ -9,6 +9,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth-page";
 import DripsSimplePage from "@/pages/drips-simple";
+import RedirectWrapper from "@/pages/redirect-wrapper";
 import SavedProspects from "@/pages/saved-prospects";
 import EmailOutreach from "@/pages/email-outreach";
 import Analytics from "@/pages/analytics";
@@ -27,6 +28,10 @@ function Router() {
       <Route path="/pricing" component={PricingPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/drips" component={DripsSimplePage} />
+      <ProtectedRoute 
+        path="/opportunities" 
+        component={() => <RedirectWrapper to="/drips" />} 
+      />
       <ProtectedRoute path="/saved-prospects" component={SavedProspects} />
       <ProtectedRoute path="/email-outreach" component={EmailOutreach} />
       <ProtectedRoute path="/analytics" component={Analytics} />

@@ -36,7 +36,7 @@ export default function Sidebar() {
     {
       label: "All Opportunities (Drips)",
       icon: UnlockIcon,
-      href: "/drips",
+      href: "/opportunities",
     },
     {
       label: "Outreach",
