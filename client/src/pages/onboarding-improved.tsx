@@ -37,6 +37,7 @@ import {
 import { Loader2, ArrowRight, Check, Globe, PanelRight, Link2, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import Logo from "@/components/logo";
 
 const websiteSchema = z.object({
   url: z.string().url("Please enter a valid URL").min(1, "Website URL is required"),
@@ -479,11 +480,8 @@ export default function Onboarding() {
       {/* Header with modern design */}
       <header className="bg-white border-b border-gray-200 px-4 py-4 shadow-sm">
         <div className="container mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center cursor-pointer hover:opacity-90 transition-opacity">
-            <div className="rounded-md bg-primary p-1.5 mr-2.5">
-              <Link2 className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">LinkDripAI</span>
+          <Link href="/">
+            <Logo size="sm" />
           </Link>
           
           <div className="flex items-center gap-3">
