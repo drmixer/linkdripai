@@ -288,23 +288,23 @@ export default function EmailOutreach() {
       </Dialog>
       
       {/* Email Setup Modal */}
-      <Dialog open={showEmailSetupModal || (!isEmailSettingsLoading && emailSettings && !emailSettings.isConfigured)}>
+      <Dialog open={showEmailSetupModal}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Email Configuration</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium">Set Up Email Integration</h3>
+              <h3 className="text-lg font-medium">Manage Email Settings</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Configure your email settings to start sending outreach emails directly from LinkDripAI.
+                You can manage your email integration settings for outreach campaigns here, or update them in your account settings.
               </p>
             </div>
             
             <div className="grid gap-4">
               <div>
                 <label className="text-sm font-medium block mb-1">Email Integration Method</label>
-                <Select defaultValue="sendgrid">
+                <Select defaultValue={emailSettings?.provider || "sendgrid"}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select email method" />
                   </SelectTrigger>
@@ -318,53 +318,81 @@ export default function EmailOutreach() {
               
               <div>
                 <label className="text-sm font-medium block mb-1">From Email Address</label>
-                <Input placeholder="your@email.com" />
+                <Input placeholder="your@email.com" defaultValue={emailSettings?.fromEmail || ""} />
                 <p className="text-xs text-muted-foreground mt-1">
                   This email address will be shown as the sender of your outreach emails.
                 </p>
               </div>
               
-              <div>
-                <label className="text-sm font-medium block mb-1">API Key</label>
-                <Input type="password" placeholder="Your SendGrid API Key" />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Obtain your SendGrid API key from your SendGrid account dashboard.
-                </p>
-              </div>
+              {/* Show different fields based on provider */}
+              {(emailSettings?.provider === "sendgrid" || !emailSettings?.provider) && (
+                <div>
+                  <label className="text-sm font-medium block mb-1">SendGrid API Key</label>
+                  <Input type="password" placeholder="Your SendGrid API Key" />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Obtain your SendGrid API key from your SendGrid account dashboard.
+                  </p>
+                </div>
+              )}
+              
+              {emailSettings?.provider === "smtp" && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium block mb-1">SMTP Server</label>
+                      <Input placeholder="smtp.example.com" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium block mb-1">Port</label>
+                      <Input placeholder="587" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium block mb-1">Username</label>
+                      <Input placeholder="smtp_username" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium block mb-1">Password</label>
+                      <Input type="password" placeholder="smtp_password" />
+                    </div>
+                  </div>
+                </>
+              )}
+              
+              {emailSettings?.provider === "gmail" && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium block mb-1">Google Client ID</label>
+                    <Input placeholder="Your Google Client ID" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium block mb-1">Google Client Secret</label>
+                    <Input type="password" placeholder="Your Google Client Secret" />
+                  </div>
+                </>
+              )}
               
               <div className="border rounded-md p-4 bg-muted/50">
-                <h4 className="text-sm font-medium mb-2">Terms & Conditions</h4>
-                <div className="h-40 overflow-y-auto text-xs p-2 border rounded bg-background mb-2">
-                  <p className="mb-2"><strong>Email Outreach Terms and Conditions</strong></p>
-                  <p className="mb-2">By using the LinkDripAI email outreach functionality, you agree to the following terms:</p>
-                  <ol className="list-decimal pl-4 space-y-1">
-                    <li>You will not use this service to send unsolicited commercial emails (spam).</li>
-                    <li>You will comply with all applicable email marketing laws and regulations, including CAN-SPAM, GDPR, and other relevant legislation.</li>
-                    <li>You will not use this service to send emails containing misleading, harmful, or illegal content.</li>
-                    <li>You understand that LinkDripAI acts as a technical service provider and is not responsible for the content of the emails you send.</li>
-                    <li>You are responsible for handling any unsubscribe requests or complaints related to your email campaigns.</li>
-                    <li>You will maintain accurate and up-to-date contact information in your account.</li>
-                    <li>You will respect the intellectual property rights of others in the content of your emails.</li>
-                    <li>You will not attempt to hide or misrepresent your identity as the sender of the emails.</li>
-                    <li>You understand that abuse of this service may result in suspension or termination of your account.</li>
-                    <li>You will indemnify and hold harmless LinkDripAI from any claims arising from your use of the email outreach functionality.</li>
-                  </ol>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="terms-agreement" className="rounded" />
-                  <label htmlFor="terms-agreement" className="text-xs">
-                    I agree to the Terms & Conditions governing email usage
-                  </label>
+                <h4 className="text-sm font-medium mb-2">Email Verification</h4>
+                <p className="text-sm mb-2">
+                  To ensure deliverability and prevent abuse, we need to verify your sending email address.
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Button size="sm" variant="outline">Send Verification Email</Button>
+                  <span className="text-xs text-muted-foreground">
+                    {emailSettings?.isConfigured ? "Email verified" : "Email not verified"}
+                  </span>
                 </div>
               </div>
             </div>
             
             <div className="flex justify-end space-x-2">
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => setShowEmailSetupModal(false)}>
                 Cancel
               </Button>
               <Button>
-                Save & Continue
+                Save Changes
               </Button>
             </div>
           </div>
