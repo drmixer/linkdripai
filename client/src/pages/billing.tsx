@@ -429,30 +429,30 @@ export default function BillingPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-xl flex items-center">
                   <Sparkles className="mr-2 h-5 w-5 text-primary" />
-                  Premium Splashes
+                  Splashes
                 </CardTitle>
                 <CardDescription>
-                  Premium Splashes give you instant access to high-quality backlink opportunities (DA 40+, relevance 80%+, spam &lt;2%)
+                  Splashes give you instant access to high-quality backlink opportunities (DA 40+, relevance 80%+, spam &lt;2%)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-5">
                   <div>
                     <div className="flex justify-between mb-1 text-sm">
-                      <span>Premium Splashes Used: {splashesUsed} / {splashesTotal}</span>
+                      <span>Splashes Used: {splashesUsed} / {splashesTotal}</span>
                       <span>{stats?.splashes?.available || 0} remaining</span>
                     </div>
                     <Progress value={splashesProgress} className="h-2" />
                   </div>
                   
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium mb-2">Get Premium Splashes</h4>
+                    <h4 className="text-sm font-medium mb-2">Get Splashes</h4>
                     <p className="text-sm text-gray-600 mb-3">
-                      Need an instant boost in quality? Purchase Premium Splashes to get higher quality backlink opportunities instantly. Each Premium Splash delivers 1 top-tier opportunity (DA 40+, relevance 80%+, spam score &lt;2%).
+                      Need an instant boost in quality? Purchase Splashes to get higher quality backlink opportunities instantly. Each Splash delivers 1 top-tier opportunity (DA 40+, relevance 80%+, spam score &lt;2%).
                     </p>
                     <Button onClick={() => setIsPremiumSplashesDialogOpen(true)}>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Buy Premium Splashes
+                      Buy Splashes
                     </Button>
                   </div>
                 </div>
