@@ -96,7 +96,7 @@ export default function OpportunitiesPage() {
   });
   
   // Get opportunities
-  const { data: opportunities, isLoading: loadingOpportunities, refetch } = useQuery({
+  const { data: opportunities = [], isLoading: loadingOpportunities, refetch } = useQuery<any[]>({
     queryKey: ['/api/opportunities', websiteFilter, activeTab, activeFilters],
     enabled: !!user
   });

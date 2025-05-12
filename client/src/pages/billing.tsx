@@ -464,26 +464,24 @@ export default function BillingPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-xl flex items-center">
                   <Package2 className="mr-2 h-5 w-5 text-primary" />
-                  Daily Opportunities
+                  Drips
                 </CardTitle>
                 <CardDescription>
-                  Monitor your daily opportunity allocation and usage
+                  Monitor your daily drip allocation based on your subscription plan
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-5">
                   <div>
                     <div className="flex justify-between mb-1 text-sm">
-                      <span>Daily Opportunities Used: {opportunitiesUsed} / {opportunitiesTotal}</span>
-                      <span>{opportunitiesTotal - opportunitiesUsed} remaining</span>
+                      <span>Your subscription includes up to {opportunitiesTotal} drips per day per site</span>
                     </div>
-                    <Progress value={opportunitiesProgress} className="h-2" />
                   </div>
                   
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium mb-2">Increase Your Daily Opportunities</h4>
+                    <h4 className="text-sm font-medium mb-2">Access More Daily Drips</h4>
                     <p className="text-sm text-gray-600 mb-3">
-                      Want more daily opportunities? Upgrade your subscription plan to increase your daily allocation. Each tier provides more opportunities tailored to your websites.
+                      Want more daily drips? Upgrade your subscription plan to increase your daily allocation. Each tier provides more drips per site.
                     </p>
                     <Button 
                       variant="outline" 
