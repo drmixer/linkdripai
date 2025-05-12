@@ -57,15 +57,15 @@ const HowItWorksAnimation = () => {
               <ul className="text-xs space-y-1">
                 <li className="flex items-center">
                   <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
-                  <span>Starter: 5 drips/day</span>
+                  <span>Starter: Up to 5 drips/day</span>
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
-                  <span>Grow: 10 drips/day</span>
+                  <span>Grow: Up to 10 drips/day</span>
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
-                  <span>Pro: 15 drips/day</span>
+                  <span>Pro: Up to 15 drips/day</span>
                 </li>
               </ul>
             </div>

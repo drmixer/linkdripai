@@ -1,14 +1,12 @@
 import React from 'react';
 import { Link } from 'wouter';
+import logoImage from '@assets/IMG_3844.png';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   withText?: boolean;
   className?: string;
 }
-
-// Get logo path
-const logoPath = '/assets/IMG_3844.png';
 
 export function Logo({ size = 'md', withText = true, className = '' }: LogoProps) {
   // Determine logo size
@@ -22,7 +20,7 @@ export function Logo({ size = 'md', withText = true, className = '' }: LogoProps
     <Link href="/">
       <div className={`flex items-center cursor-pointer ${className}`}>
         <img 
-          src={logoPath} 
+          src={logoImage} 
           alt="LinkDripAI Logo" 
           className={`${sizeClasses[size]} object-contain`}
         />
