@@ -256,6 +256,35 @@ export class OpportunityCrawler {
         domain = this.extractDomain(data.url);
       }
       
+      // Process categories - ensure it's a valid format for storage
+      // We need to convert arrays to strings for storage if needed
+      let processedCategories = data.categories;
+      if (Array.isArray(processedCategories)) {
+        // Limit to 10 categories max, and each to 30 chars max to keep data manageable
+        processedCategories = processedCategories
+          .filter(Boolean)
+          .map(cat => String(cat).substring(0, 30))
+          .slice(0, 10);
+      }
+      
+      // Process metadata - store any additional fields
+      const metadataObj: Record<string, any> = {
+        crawlDate: new Date().toISOString(),
+        relevanceScore: data.relevanceScore || 0
+      };
+      
+      if (typeof data.metadataRaw === 'string' && data.metadataRaw) {
+        try {
+          const existingMetadata = JSON.parse(data.metadataRaw);
+          Object.assign(metadataObj, existingMetadata);
+        } catch {
+          // Invalid JSON, ignore existing metadata
+        }
+      }
+      
+      // Determine if it might be a premium opportunity based on relevance score
+      const isPotentialPremium = (data.relevanceScore && data.relevanceScore >= 7);
+      
       // Check if URL already exists to avoid duplicates
       const existingOpps = await db.select()
         .from(discoveredOpportunities)
@@ -269,9 +298,13 @@ export class OpportunityCrawler {
             title: data.title || existingOpps[0].title,
             description: data.description || existingOpps[0].description,
             contactEmail: data.contactEmail || existingOpps[0].contactEmail,
-            hasContactForm: data.hasContactForm,
+            hasContactForm: data.hasContactForm !== undefined ? data.hasContactForm : existingOpps[0].hasContactForm,
             content: data.content || existingOpps[0].content,
-            categories: data.categories || existingOpps[0].categories,
+            categories: processedCategories || existingOpps[0].categories,
+            sourceType: data.sourceType || existingOpps[0].sourceType,
+            metadataRaw: JSON.stringify(metadataObj),
+            // Only update status if it's potentially premium and not already assigned
+            ...(isPotentialPremium && existingOpps[0].status === 'discovered' ? { status: 'analyzed' } : {})
           })
           .where(eq(discoveredOpportunities.id, existingOpps[0].id))
           .returning();
@@ -286,7 +319,9 @@ export class OpportunityCrawler {
           domain,
           discoveredAt: new Date(),
           lastChecked: new Date(),
-          status: 'discovered',
+          status: isPotentialPremium ? 'analyzed' : 'discovered', // Mark high-relevance scores for faster analysis
+          categories: processedCategories,
+          metadataRaw: JSON.stringify(metadataObj)
         })
         .returning();
         
@@ -813,28 +848,48 @@ export class OpportunityCrawler {
               continue;
             }
             
-            // If it's a valid opportunity, store it
-            if (
-              (type === 'all' || result.opportunityType === type) &&
-              (result.emails.length > 0 || result.hasContactForm)
-            ) {
+            // Check if it's a valid opportunity with more comprehensive quality filtering
+            const isRequestedType = type === 'all' || result.opportunityType === type;
+            const hasContactMethod = result.emails.length > 0 || result.hasContactForm;
+            const hasGoodContent = result.title && 
+                                  (result.description || (result.content && result.content.length > 100));
+            
+            // Additional quality checks to reduce low-value opportunities
+            const isHighQuality = result.relevanceScore && result.relevanceScore >= 4;
+            
+            if (isRequestedType && hasContactMethod && hasGoodContent) {
+              // Store the opportunity with all available metadata
               const opportunity = await this.storeDiscoveredOpportunity({
                 url: result.url,
                 domain: this.extractDomain(result.url),
                 sourceType: result.opportunityType,
                 title: result.title,
                 description: result.description,
-                contactEmail: result.emails[0] || null,
+                contactEmail: result.emails.length > 0 ? result.emails[0] : null,
                 hasContactForm: result.hasContactForm,
                 content: result.content,
                 categories: result.categories,
                 domainAuthority: 0, // Will be updated by processDiscoveredBatch
                 pageAuthority: 0,   // Will be updated by processDiscoveredBatch
                 spamScore: 0,       // Will be updated by processDiscoveredBatch
+                relevanceScore: result.relevanceScore || 0,
+                metadataRaw: JSON.stringify({
+                  crawlDate: result.crawlDate || new Date().toISOString(),
+                  allEmails: result.emails, // Store all discovered emails
+                  wordCount: result.content ? result.content.split(/\s+/).length : 0,
+                  relevance: result.relevanceScore || 0,
+                  opportunityQuality: isHighQuality ? 'high' : 'standard'
+                })
               });
               
               results.discovered++;
               results.opportunities.push(opportunity);
+              
+              // If this is a particularly high quality opportunity, 
+              // process it immediately for faster availability
+              if (isHighQuality && opportunity.id) {
+                await this.processDiscoveredBatch([opportunity.id]);
+              }
             }
             
             // Process additional links if available
@@ -856,28 +911,48 @@ export class OpportunityCrawler {
                   continue;
                 }
                 
-                // If it's a valid opportunity, store it
-                if (
-                  (type === 'all' || subResult.opportunityType === type) &&
-                  (subResult.emails.length > 0 || subResult.hasContactForm)
-                ) {
+                // Check if it's a valid opportunity with more comprehensive quality filtering
+                const isRequestedSubType = type === 'all' || subResult.opportunityType === type;
+                const hasSubContactMethod = subResult.emails.length > 0 || subResult.hasContactForm;
+                const hasSubGoodContent = subResult.title && 
+                                      (subResult.description || (subResult.content && subResult.content.length > 100));
+                
+                // Additional quality checks to reduce low-value opportunities
+                const isSubHighQuality = subResult.relevanceScore && subResult.relevanceScore >= 4;
+                
+                if (isRequestedSubType && hasSubContactMethod && hasSubGoodContent) {
+                  // Store the opportunity with all available metadata
                   const opportunity = await this.storeDiscoveredOpportunity({
                     url: subResult.url,
                     domain: this.extractDomain(subResult.url),
                     sourceType: subResult.opportunityType,
                     title: subResult.title,
                     description: subResult.description,
-                    contactEmail: subResult.emails[0] || null,
+                    contactEmail: subResult.emails.length > 0 ? subResult.emails[0] : null,
                     hasContactForm: subResult.hasContactForm,
                     content: subResult.content,
                     categories: subResult.categories,
-                    domainAuthority: 0,
-                    pageAuthority: 0,
-                    spamScore: 0,
+                    domainAuthority: 0, // Will be updated by processDiscoveredBatch
+                    pageAuthority: 0,   // Will be updated by processDiscoveredBatch
+                    spamScore: 0,       // Will be updated by processDiscoveredBatch
+                    relevanceScore: subResult.relevanceScore || 0,
+                    metadataRaw: JSON.stringify({
+                      crawlDate: subResult.crawlDate || new Date().toISOString(),
+                      allEmails: subResult.emails, // Store all discovered emails
+                      wordCount: subResult.content ? subResult.content.split(/\s+/).length : 0,
+                      relevance: subResult.relevanceScore || 0,
+                      opportunityQuality: isSubHighQuality ? 'high' : 'standard'
+                    })
                   });
                   
                   results.discovered++;
                   results.opportunities.push(opportunity);
+                  
+                  // If this is a particularly high quality opportunity, 
+                  // process it immediately for faster availability
+                  if (isSubHighQuality && opportunity.id) {
+                    await this.processDiscoveredBatch([opportunity.id]);
+                  }
                 }
               }
             }
