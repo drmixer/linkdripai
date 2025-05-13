@@ -354,96 +354,328 @@ export class OpportunityCrawler {
       // Use cheerio to parse the HTML
       const $ = cheerio.load(html);
       
-      // Extract page title
-      const title = $('title').text().trim();
+      // Extract page title - try multiple ways to get the most accurate title
+      let title = $('title').text().trim();
+      if (!title || title.length < 5) {
+        // If no title or very short title, try h1
+        title = $('h1').first().text().trim() || title;
+      }
       
       // Extract meta description
-      const metaDescription = $('meta[name="description"]').attr('content') || '';
+      let metaDescription = $('meta[name="description"]').attr('content') || '';
+      // Try Open Graph description if no meta description
+      if (!metaDescription) {
+        metaDescription = $('meta[property="og:description"]').attr('content') || '';
+      }
       
-      // Check for contact links
-      const contactLinks = $('a[href*="contact"]').toArray().map(el => $(el).attr('href') || '');
-      const hasContactForm = contactLinks.length > 0;
+      // Check for contact links (more comprehensive approach)
+      const contactSelectors = [
+        'a[href*="contact"]', 
+        'a[href*="about"]', 
+        'a:contains("Contact")', 
+        'a:contains("About")',
+        'a[href*="reach-us"]',
+        'a[href*="reach-out"]',
+        'a[href*="get-in-touch"]',
+        'form[action*="contact"]',
+        'input[name*="email"]',
+        'textarea'
+      ];
       
-      // Extract page text
-      const bodyText = $('body').text();
-      
-      // Check for email addresses
-      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-      const emails = bodyText.match(emailRegex) || [];
-      
-      // Check URL path for opportunity type indicators
-      const urlObj = new URL(formattedUrl);
-      const urlPath = urlObj.pathname.toLowerCase();
-      let opportunityType = 'blog'; // Default to blog as it's a valid enum value
-      
-      for (const [type, patterns] of Object.entries(this.targetPatterns)) {
-        if (patterns.some(pattern => urlPath.includes(pattern))) {
-          opportunityType = type;
+      let hasContactForm = false;
+      for (const selector of contactSelectors) {
+        const elements = $(selector).length;
+        if (elements > 0) {
+          hasContactForm = true;
           break;
         }
       }
       
-      // Check for guest post indicators
+      // Extract page text with better noise filtering
+      // Remove script, style, and common footer/header elements
+      $('script, style, nav, footer, .footer, .header, .nav, .menu, .sidebar').remove();
+      const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
       const lowerBodyText = bodyText.toLowerCase();
-      const isGuestPost = lowerBodyText.includes('guest post') || 
-                          lowerBodyText.includes('write for us') ||
-                          lowerBodyText.includes('submit article') ||
-                          lowerBodyText.includes('submission guidelines');
       
-      if (isGuestPost) {
-        opportunityType = 'guest_post';
+      // Check for email addresses (improved regex)
+      const emailRegex = /[a-zA-Z0-9._%+-]{1,64}@(?:[a-zA-Z0-9-]{1,63}\.){1,125}[a-zA-Z]{2,63}/g;
+      const tempEmails = bodyText.match(emailRegex) || [];
+      
+      // Filter out common false positives and limit to reasonable number
+      const emails = tempEmails
+        .filter(email => !email.includes('example.com') && !email.includes('domain.com') && !email.startsWith('email@'))
+        .slice(0, 5); // Limit to 5 emails
+      
+      // Check URL path for opportunity type indicators
+      const urlObj = new URL(formattedUrl);
+      const urlPath = urlObj.pathname.toLowerCase();
+      const urlQuery = urlObj.search.toLowerCase();
+      const fullUrl = formattedUrl.toLowerCase();
+      
+      // Default to blog as it's a valid enum value
+      let opportunityType = 'blog';
+      
+      // Weighted pattern matching
+      const typeWeights: Record<string, number> = {
+        resource_page: 0,
+        guest_post: 0,
+        directory: 0,
+        forum: 0,
+        blog: 0,
+        competitor_backlink: 0,
+        social_mention: 0,
+        comment_section: 0
+      };
+      
+      // Check URL patterns first (stronger signal)
+      for (const [type, patterns] of Object.entries(this.targetPatterns)) {
+        for (const pattern of patterns) {
+          if (urlPath.includes(pattern) || urlQuery.includes(pattern)) {
+            typeWeights[type] += 2; // URL match is a strong signal
+          }
+        }
       }
       
-      // Check for resource page indicators
-      const externalLinks = $('a[href^="http"]').length;
-      const isResourcePage = lowerBodyText.includes('resources') || 
-                            lowerBodyText.includes('useful links') ||
-                            externalLinks > 20;
+      // Check for guest post indicators in content (comprehensive)
+      const guestPostTerms = [
+        'guest post', 'write for us', 'submit article', 'submission guidelines',
+        'guest author', 'guest contributor', 'contribute to', 'become a contributor',
+        'guest blogging', 'accept guest posts', 'contribution guidelines',
+        'submit a guest post', 'submit content', 'write for', 'contribute an article'
+      ];
       
+      for (const term of guestPostTerms) {
+        if (lowerBodyText.includes(term)) {
+          typeWeights['guest_post'] += 1;
+        }
+      }
+      
+      // Look for specific guest post sections
+      if ($('h1, h2, h3, h4').text().toLowerCase().match(/guest|contributor|write for|submit/)) {
+        typeWeights['guest_post'] += 2;
+      }
+      
+      // Check for resource page indicators (comprehensive)
+      const resourceTerms = [
+        'resources', 'useful links', 'helpful links', 'recommended', 'tools',
+        'recommended resources', 'resource list', 'useful resources', 'best resources',
+        'helpful resources', 'resource library', 'resource center', 'resource hub',
+        'useful tools', 'helpful tools', 'recommended tools', 'best tools'
+      ];
+      
+      for (const term of resourceTerms) {
+        if (lowerBodyText.includes(term)) {
+          typeWeights['resource_page'] += 1;
+        }
+      }
+      
+      // Count external links - many external links often indicate a resource page
+      const externalLinksCount = $('a[href^="http"]').length;
+      if (externalLinksCount > 20) {
+        typeWeights['resource_page'] += 2;
+      }
+      
+      // Check if this is a resource page based on content and link count
+      const isResourcePage = (typeWeights['resource_page'] >= 2) || 
+                           (lowerBodyText.includes('resources') && externalLinksCount > 15);
+      
+      // Check for directory indicators
+      const directoryTerms = [
+        'directory', 'listings', 'businesses', 'sites', 'catalog', 
+        'business directory', 'find a', 'browse by', 'listing', 'listings',
+        'companies', 'providers', 'agencies', 'services'
+      ];
+      
+      for (const term of directoryTerms) {
+        if (lowerBodyText.includes(term)) {
+          typeWeights['directory'] += 1;
+        }
+      }
+      
+      // Check for forum indicators
+      const forumTerms = [
+        'forum', 'community', 'discussion', 'thread', 'post a reply',
+        'join the conversation', 'discussion board', 'message board',
+        'members', 'replies', 'posts'
+      ];
+      
+      for (const term of forumTerms) {
+        if (lowerBodyText.includes(term)) {
+          typeWeights['forum'] += 1;
+        }
+      }
+      
+      // If the page has a commenting system, it might be good for comment section outreach
+      if ($('form[id*="comment"], div[id*="comment"], section[id*="comment"]').length > 0) {
+        typeWeights['comment_section'] += 2;
+      }
+      
+      // Determine the highest weighted opportunity type
+      let highestWeight = 0;
+      for (const [type, weight] of Object.entries(typeWeights)) {
+        if (weight > highestWeight) {
+          highestWeight = weight;
+          opportunityType = type;
+        }
+      }
+      
+      // Special case for resource pages - they're particularly valuable
       if (isResourcePage && opportunityType === 'blog') {
         opportunityType = 'resource_page';
       }
       
-      // Extract niche/category info
-      const categoryElements = $('.category, .categories, .tag, .tags').toArray();
+      // Extract niche/category info (many ways to find the page's category)
+      const categoryElements = $('.category, .categories, .tag, .tags, [class*="category"], [class*="tag"]').toArray();
       const categories = categoryElements.map(el => $(el).text().trim()).filter(Boolean);
+      
+      // Try to extract topics from headings
+      const headings = $('h1, h2, h3').map((_, el) => $(el).text().trim()).get();
       
       // Check meta keywords
       const metaKeywords = $('meta[name="keywords"]').attr('content') || '';
       const keywordsList = metaKeywords ? metaKeywords.split(',').map(k => k.trim()) : [];
       
-      const uniqueCategories = [...new Set([...categories, ...keywordsList])];
+      // Also check Open Graph tags for topics
+      const ogTags = $('meta[property^="og:"]').map((_, el) => $(el).attr('content') || '').get();
+      
+      // Combine all sources and deduplicate
+      const allCategories = [...categories, ...headings, ...keywordsList, ...ogTags];
+      const uniqueCategories = Array.from(new Set(allCategories.filter(Boolean)));
       
       // If we haven't reached max depth, collect additional URLs to crawl
       let linksToFollow: string[] = [];
       
       if (depth < maxDepth) {
-        // Get all links
+        // Get all links with improved pattern matching
         const allPatterns = Object.values(this.targetPatterns).flat();
         
-        $('a[href]').each((_, element) => {
-          const href = $(element).attr('href');
-          if (!href) return;
+        // Extract all links
+        const links = $('a[href]').map((_, el) => ({
+          href: $(el).attr('href') || '',
+          text: $(el).text().trim()
+        })).get();
+        
+        // Prioritize links based on their content and patterns
+        for (const link of links) {
+          if (!link.href) continue;
           
           try {
             // Make sure it's a full URL
-            const fullUrl = href.startsWith('http') ? href : new URL(href, formattedUrl).toString();
+            const fullUrl = link.href.startsWith('http') ? link.href : new URL(link.href, formattedUrl).toString();
             const linkUrl = new URL(fullUrl);
             
-            // Only follow internal links
-            if (linkUrl.hostname !== urlObj.hostname) return;
+            // Skip external links, image files, PDFs, and already seen URLs
+            if (linkUrl.hostname !== urlObj.hostname || 
+                /\.(jpg|jpeg|png|gif|pdf)$/i.test(linkUrl.pathname)) {
+              continue;
+            }
             
-            // Check if path matches any target pattern
-            if (allPatterns.some(pattern => linkUrl.pathname.toLowerCase().includes(pattern))) {
+            // Higher priority if the link text contains target patterns
+            const linkTextLower = link.text.toLowerCase();
+            const pathLower = linkUrl.pathname.toLowerCase();
+            
+            // Calculate a relevance score for each link to prioritize the most promising ones
+            let relevanceScore = 0;
+            
+            // Path matches any target pattern
+            if (allPatterns.some(pattern => pathLower.includes(pattern))) {
+              relevanceScore += 3;
+            }
+            
+            // Link text suggests useful content
+            if (/resources|directory|blog|guest post|about|contact/i.test(linkTextLower)) {
+              relevanceScore += 2;
+            }
+            
+            // Priority to deeper paths as they tend to be more specific
+            relevanceScore += (linkUrl.pathname.split('/').length - 1) / 2; // 0.5 per level
+            
+            // Skip links with query parameters that look like paging or sorting
+            if (linkUrl.search.match(/[?&](page|p|sort|filter|s|q)=/)) {
+              relevanceScore -= 1;
+            }
+            
+            // Add relevant links
+            if (relevanceScore > 0) {
               linksToFollow.push(fullUrl);
             }
           } catch {
             // Invalid URL, skip
           }
+        }
+        
+        // Sort links by unique hostname + path to avoid duplicates with minor differences
+        const uniqueLinks = new Map<string, string>();
+        linksToFollow.forEach(url => {
+          try {
+            const urlObj = new URL(url);
+            const key = urlObj.hostname + urlObj.pathname.replace(/\/$/, '');
+            uniqueLinks.set(key, url);
+          } catch {
+            // Skip invalid URLs
+          }
         });
+        
+        // Get the final list of links to follow
+        linksToFollow = Array.from(uniqueLinks.values());
       }
       
-      // Return the results
+      // Determine relevance score for the opportunity
+      const relevanceScore = (() => {
+        let score = 0;
+        
+        // Quality signals
+        if (title && title.length > 10) score += 1;
+        if (metaDescription && metaDescription.length > 30) score += 1;
+        if (emails.length > 0) score += 2;
+        if (hasContactForm) score += 1;
+        if (opportunityType === 'resource_page') score += 2;
+        if (opportunityType === 'guest_post') score += 2;
+        if (uniqueCategories.length > 2) score += 1;
+        
+        // Content quality
+        const wordCount = bodyText.split(/\s+/).length;
+        if (wordCount > 500) score += 1;
+        if (wordCount > 1000) score += 1;
+        
+        return Math.min(10, score); // Cap at 10
+      })();
+      
+      // Extract a useful summary from the content
+      const contentSummary = (() => {
+        // Find the most informative paragraphs
+        const paragraphs: string[] = [];
+        
+        // Try different selectors to find good content blocks
+        const contentSelectors = [
+          'p', 'article p', '.content p', '.post-content p', 
+          '.entry-content p', 'main p', '.main-content p'
+        ];
+        
+        for (const selector of contentSelectors) {
+          const elements = $(selector).filter((_, el) => {
+            const text = $(el).text().trim();
+            return text.length > 60 && text.split(' ').length > 10; // Only meaningful paragraphs
+          }).slice(0, 3);
+          
+          if (elements.length > 0) {
+            elements.each((_, el) => {
+              paragraphs.push($(el).text().trim());
+            });
+            
+            if (paragraphs.length >= 2) break; // Found enough content
+          }
+        }
+        
+        // If we couldn't extract structured paragraphs, fall back to full text
+        if (paragraphs.length === 0) {
+          return bodyText.substring(0, 1000);
+        }
+        
+        return paragraphs.join('\n\n').substring(0, 1000);
+      })();
+      
+      // Return the results with enhanced metadata
       return {
         status: 'success',
         url: formattedUrl,
@@ -453,8 +685,10 @@ export class OpportunityCrawler {
         hasContactForm,
         opportunityType,
         categories: uniqueCategories,
-        content: bodyText.substring(0, 1000),
-        linksToFollow: linksToFollow.slice(0, 5),  // Limit to 5 links
+        content: contentSummary,
+        relevanceScore,
+        linksToFollow: linksToFollow.slice(0, Math.min(10, linksToFollow.length)), // Allow up to 10 links for higher quality pages
+        crawlDate: new Date().toISOString()
       };
     } catch (error) {
       console.error(`Error processing ${url}:`, error);
