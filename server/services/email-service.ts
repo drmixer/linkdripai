@@ -309,18 +309,18 @@ export async function createEmailServiceForUser(userId: number): Promise<EmailSe
       fromName: userSettings.fromName || `${user.firstName} ${user.lastName}`.trim(),
     };
     
-    // Add provider-specific settings
+    // Add provider-specific settings and convert null to undefined
     if (userSettings.provider === 'sendgrid') {
-      config.sendgridApiKey = userSettings.sendgridApiKey || undefined;
+      config.sendgridApiKey = userSettings.sendgridApiKey === null ? undefined : userSettings.sendgridApiKey;
     } else if (userSettings.provider === 'smtp') {
-      config.smtpHost = userSettings.smtpHost || undefined;
-      config.smtpPort = userSettings.smtpPort || undefined;
-      config.smtpUsername = userSettings.smtpUsername || undefined;
-      config.smtpPassword = userSettings.smtpPassword || undefined;
+      config.smtpHost = userSettings.smtpHost === null ? undefined : userSettings.smtpHost;
+      config.smtpPort = userSettings.smtpPort === null ? undefined : userSettings.smtpPort;
+      config.smtpUsername = userSettings.smtpUsername === null ? undefined : userSettings.smtpUsername;
+      config.smtpPassword = userSettings.smtpPassword === null ? undefined : userSettings.smtpPassword;
     } else if (userSettings.provider === 'gmail') {
-      config.gmailClientId = userSettings.gmailClientId || undefined;
-      config.gmailClientSecret = userSettings.gmailClientSecret || undefined;
-      config.gmailRefreshToken = userSettings.gmailRefreshToken || undefined;
+      config.gmailClientId = userSettings.gmailClientId === null ? undefined : userSettings.gmailClientId;
+      config.gmailClientSecret = userSettings.gmailClientSecret === null ? undefined : userSettings.gmailClientSecret;
+      config.gmailRefreshToken = userSettings.gmailRefreshToken === null ? undefined : userSettings.gmailRefreshToken;
     }
     
     // Create and return the email service
