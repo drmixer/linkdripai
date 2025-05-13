@@ -475,8 +475,50 @@ export function OutreachTable({ emails, isLoading, onRefresh }: OutreachTablePro
             </DialogDescription>
           </DialogHeader>
           <div className="my-6 border rounded-md p-4 bg-white">
-            <div dangerouslySetInnerHTML={{ __html: selectedEmail?.body || '' }} />
+            <div className="email-content" dangerouslySetInnerHTML={{ 
+              __html: DOMPurify.sanitize(selectedEmail?.body || '') 
+            }} />
           </div>
+          <div className="my-4">
+            {selectedEmail?.parentEmailId && (
+              <div className="flex items-center mb-4 text-sm">
+                <div className="w-7 h-0.5 bg-blue-200 mr-2"></div>
+                <span className="text-muted-foreground">This is a follow-up email to a previous message</span>
+                <Button
+                  variant="link"
+                  className="text-blue-600 p-0 h-auto ml-2"
+                  onClick={() => {
+                    const parentEmail = emails.find(e => e.id === selectedEmail.parentEmailId);
+                    if (parentEmail) {
+                      setSelectedEmail(parentEmail);
+                    }
+                  }}
+                >
+                  View original email
+                </Button>
+              </div>
+            )}
+            
+            {emails.some(e => e.parentEmailId === selectedEmail?.id) && (
+              <div className="flex items-center mb-4 text-sm">
+                <div className="w-7 h-0.5 bg-green-200 mr-2"></div>
+                <span className="text-muted-foreground">A follow-up email was sent for this message</span>
+                <Button
+                  variant="link"
+                  className="text-green-600 p-0 h-auto ml-2"
+                  onClick={() => {
+                    const followUpEmail = emails.find(e => e.parentEmailId === selectedEmail?.id);
+                    if (followUpEmail) {
+                      setSelectedEmail(followUpEmail);
+                    }
+                  }}
+                >
+                  View follow-up email
+                </Button>
+              </div>
+            )}
+          </div>
+          
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button 
               variant="outline" 
@@ -522,7 +564,9 @@ export function OutreachTable({ emails, isLoading, onRefresh }: OutreachTablePro
             </DialogDescription>
           </DialogHeader>
           <div className="my-6 border rounded-md p-4 bg-white">
-            <div dangerouslySetInnerHTML={{ __html: (selectedEmail?.replyContent || 'No reply content available.') as string }} />
+            <div className="email-content" dangerouslySetInnerHTML={{ 
+              __html: DOMPurify.sanitize(selectedEmail?.replyContent || 'No reply content available.') 
+            }} />
           </div>
           <DialogFooter>
             <Button 
