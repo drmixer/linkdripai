@@ -1,6 +1,6 @@
 import axios from 'axios';
-import HmacSHA1 from 'crypto-js/hmac-sha1';
-import Base64 from 'crypto-js/enc-base64';
+import HmacSHA1 from 'crypto-js/hmac-sha1.js';
+import Base64 from 'crypto-js/enc-base64.js';
 
 // Moz API service for fetching domain metrics
 export class MozApiService {
