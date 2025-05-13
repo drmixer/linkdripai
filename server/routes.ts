@@ -13,6 +13,8 @@ import { getOpportunityCrawler } from "./services/crawler";
 import { getWebsiteAnalyzer } from "./services/website-analyzer";
 import { getOpportunityMatcher } from "./services/opportunity-matcher";
 import { getDiscoveryScheduler } from "./services/discovery-scheduler";
+import { EmailService, createEmailServiceForUser } from "./services/email-service";
+import emailWebhookRoutes from "./routes/email-webhook";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
