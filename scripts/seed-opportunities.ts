@@ -153,12 +153,10 @@ async function seedDiscoveredOpportunities() {
     return;
   }
   
-  const opportunities = [];
-  
-  // Generate sample opportunities
+  // Sample opportunities will be inserted directly using SQL
   for (let i = 0; i < 40; i++) {
     const domain = getRandomElement(sampleDomains);
-    const sourceType = getRandomElement(sourceTypes);
+    const sourceType = getRandomElement(sourceTypes); // This must match the source_type enum value
     const topic = getRandomElement(topics);
     const title = generateTitle(topic);
     const domainAuthority = generateDomainAuthority();
@@ -168,23 +166,25 @@ async function seedDiscoveredOpportunities() {
     // Determine if this should be a premium opportunity
     const isPremium = domainAuthority >= 40 && spamScore <= 2;
     
-    // Generate a URL based on the source type and domain
+    // Generate a URL based on the source type and domain with a unique identifier
+    // to prevent duplicate URLs
+    const uniqueId = Date.now() + i;
     let url;
     switch (sourceType) {
       case 'resource_page':
-        url = `https://www.${domain}/resources/${topic.toLowerCase().replace(/\s+/g, '-')}`;
+        url = `https://www.${domain}/resources/${topic.toLowerCase().replace(/\s+/g, '-')}?id=${uniqueId}`;
         break;
       case 'guest_post':
-        url = `https://www.${domain}/write-for-us`;
+        url = `https://www.${domain}/write-for-us?id=${uniqueId}`;
         break;
       case 'directory':
-        url = `https://www.${domain}/directory`;
+        url = `https://www.${domain}/directory?id=${uniqueId}`;
         break;
       case 'forum':
-        url = `https://www.${domain}/forum/${topic.toLowerCase().replace(/\s+/g, '-')}`;
+        url = `https://www.${domain}/forum/${topic.toLowerCase().replace(/\s+/g, '-')}?id=${uniqueId}`;
         break;
       default:
-        url = `https://www.${domain}/blog/${topic.toLowerCase().replace(/\s+/g, '-')}`;
+        url = `https://www.${domain}/blog/${topic.toLowerCase().replace(/\s+/g, '-')}?id=${uniqueId}`;
     }
     
     // Create contact info structure to match schema
@@ -203,28 +203,52 @@ async function seedDiscoveredOpportunities() {
       topicMatch: 60 + Math.floor(Math.random() * 40)
     };
     
-    opportunities.push({
-      url,
-      domain,
-      sourceType,
-      pageTitle: title,
-      pageContent: `This is sample content for a ${topic} opportunity on ${domain}. It would contain relevant information that matches user websites.`,
-      contactInfo,
-      domainAuthority,
-      pageAuthority,
-      spamScore,
-      isPremium,
-      discoveredAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)), // Random date in the last 30 days
-      lastChecked: new Date(),
-      status: 'analyzed',
-      validationData
-    });
+    // Execute a direct SQL insert to avoid type issues with enums
+    try {
+      const insertResult = await db.execute(sql`
+        INSERT INTO "discoveredOpportunities" (
+          "url", 
+          "domain", 
+          "sourceType", 
+          "pageTitle", 
+          "pageContent", 
+          "contactInfo", 
+          "domainAuthority", 
+          "pageAuthority", 
+          "spamScore", 
+          "isPremium", 
+          "discoveredAt", 
+          "lastChecked", 
+          "status", 
+          "validationData"
+        ) 
+        VALUES (
+          ${url}, 
+          ${domain}, 
+          ${sourceType}::source_type, 
+          ${title}, 
+          ${'This is sample content for a ' + topic + ' opportunity on ' + domain + '. It would contain relevant information that matches user websites.'}, 
+          ${JSON.stringify(contactInfo)}::jsonb, 
+          ${domainAuthority}, 
+          ${pageAuthority}, 
+          ${spamScore}, 
+          ${isPremium}, 
+          ${new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))}, 
+          ${new Date()}, 
+          ${'analyzed'}::discovery_status, 
+          ${JSON.stringify(validationData)}::jsonb
+        )
+        RETURNING id
+      `);
+      
+      console.log(`Created opportunity #${i+1} with ID: ${insertResult.rows[0].id}`);
+    } catch (error) {
+      console.error(`Error creating opportunity #${i+1}:`, error.message);
+      continue; // Skip to next opportunity on error
+    }
   }
   
-  // Insert the opportunities into the database
-  const insertedOpps = await db.insert(discoveredOpportunities).values(opportunities).returning();
-  
-  console.log(`Successfully seeded ${insertedOpps.length} discovered opportunities.`);
+  console.log(`Successfully seeded discovered opportunities.`);
 }
 
 /**
