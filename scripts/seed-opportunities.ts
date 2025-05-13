@@ -274,7 +274,7 @@ async function seedCrawlerJobs() {
   for (const jobType of jobTypes) {
     // Create completed job
     jobs.push({
-      type: jobType,
+      jobType: jobType,
       targetUrl: `https://example.com/${jobType}`,
       status: 'completed',
       startedAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
@@ -289,7 +289,7 @@ async function seedCrawlerJobs() {
     
     // Create pending job
     jobs.push({
-      type: jobType,
+      jobType: jobType,
       targetUrl: `https://example2.com/${jobType}`,
       status: 'pending',
       startedAt: null,
@@ -460,40 +460,82 @@ async function createOpportunityMatches() {
       // Determine if this is a premium match
       const isPremium = opportunity.isPremium || false;
       
-      // Create match
-      matches.push({
-        opportunityId: opportunity.id,
-        userId,
-        websiteId: website.id,
-        assignedAt: new Date(),
-        status: 'active',
-        isPremium
-      });
+      // Create matchReason object
+      const matchReason = {
+        relevance: {
+          score: 70 + Math.floor(Math.random() * 30),
+          factors: ['Content topic match', 'Niche alignment']
+        },
+        quality: {
+          score: Math.floor(Math.random() * 100),
+          factors: ['Domain authority', 'Low spam score']
+        },
+        opportunity: {
+          score: 80 + Math.floor(Math.random() * 20),
+          factors: ['Contact info available', 'Resource page']
+        }
+      };
       
-      // Create daily drip (for a portion of matches)
-      if (i < 5) { // Only create drips for the first 5 matches
-        drips.push({
-          userId,
-          opportunityId: opportunity.id,
-          dripDate: new Date(),
-          isPremium,
-          status: 'active'
-        });
+      try {
+        // Create match using SQL to handle JSONB
+        const matchResult = await db.execute(sql`
+          INSERT INTO "opportunityMatches" (
+            "opportunityId",
+            "userId",
+            "websiteId",
+            "matchScore",
+            "matchReason",
+            "assignedAt",
+            "status",
+            "isPremium"
+          ) VALUES (
+            ${opportunity.id},
+            ${userId},
+            ${website.id},
+            ${70 + Math.floor(Math.random() * 30)},
+            ${JSON.stringify(matchReason)}::jsonb,
+            ${new Date()},
+            ${'active'},
+            ${isPremium}
+          )
+          RETURNING id
+        `);
+        
+        // Add to matches count for logging
+        matches.push(matchResult.rows[0].id);
+        
+        // Create daily drip (for a portion of matches)
+        if (i < 5) { // Only create drips for the first 5 matches
+          const dripResult = await db.execute(sql`
+            INSERT INTO "dailyDrips" (
+              "userId",
+              "opportunityId",
+              "dripDate",
+              "isPremium",
+              "status"
+            ) VALUES (
+              ${userId},
+              ${opportunity.id},
+              ${new Date()},
+              ${isPremium},
+              ${'active'}
+            )
+            RETURNING id
+          `);
+          
+          // Add to drips count for logging
+          drips.push(dripResult.rows[0].id);
+        }
+      } catch (error) {
+        console.error(`Error creating match/drip: ${error.message}`);
       }
     }
   }
   
-  // Insert the matches
-  if (matches.length > 0) {
-    const insertedMatches = await db.insert(opportunityMatches).values(matches).returning();
-    console.log(`Successfully created ${insertedMatches.length} opportunity matches.`);
-  }
+  // Log the count of created matches and drips
+  console.log(`Successfully created ${matches.length} opportunity matches and ${drips.length} drips.`);
   
-  // Insert the drips
-  if (drips.length > 0) {
-    const insertedDrips = await db.insert(dailyDrips).values(drips).returning();
-    console.log(`Successfully created ${insertedDrips.length} daily drips.`);
-  }
+  // Drips are now inserted directly during the match creation
 }
 
 /**
