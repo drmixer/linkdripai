@@ -47,20 +47,17 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Add health check route first before any other routes
-  app.get(["/", "/health"], (_req, res) => {
-    res.status(200).send("OK");
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-
+  // Serve static files in production
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
+
+  // Add health check route after static files but before API routes
+  app.get("/health", (_req, res) => {
+    res.status(200).send("OK");
+  });
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
