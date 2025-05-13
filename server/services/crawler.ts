@@ -23,6 +23,7 @@ import * as cheerio from 'cheerio';
  */
 export class OpportunityCrawler {
   private mozService: MozApiService;
+  private validationService = getDomainValidationService();
   private continuousCrawlRunning: boolean = false;
   private continuousIntervalId: NodeJS.Timeout | null = null;
   private refreshIntervalId: NodeJS.Timeout | null = null;
@@ -771,27 +772,83 @@ export class OpportunityCrawler {
         const domains = batch.map(opp => opp.domain || this.extractDomain(opp.url));
         
         try {
-          // Get Moz metrics for the batch
-          const domainMetrics = await this.mozService.getBatchDomainMetrics(domains);
+          // Try multi-provider validation for more reliable metrics
+          // This uses a cascading fallback system of APIs
+          const validationResults: Record<string, any> = {};
           
-          // Update each opportunity with the metrics
+          // Process each domain with our enhanced validation service
+          for (let k = 0; k < domains.length; k++) {
+            const domain = domains[k];
+            console.log(`[Crawler] Validating domain: ${domain}`);
+            try {
+              // Use the new validation service which handles fallbacks automatically
+              const validation = await this.validationService.validateDomain(domain);
+              validationResults[domain] = validation;
+            } catch (validationError) {
+              console.error(`[Crawler] Error validating domain ${domain}:`, validationError);
+              // If validation fails, add empty result
+              validationResults[domain] = {};
+            }
+          }
+          
+          // Fall back to Moz API for any domains that failed validation
+          const domainsNeedingFallback = domains.filter(domain => 
+            !validationResults[domain] || 
+            (!validationResults[domain].domainAuthority && validationResults[domain].domainAuthority !== 0)
+          );
+          
+          if (domainsNeedingFallback.length > 0) {
+            // Last resort fallback to Moz API directly
+            try {
+              const mozMetrics = await this.mozService.getBatchDomainMetrics(domainsNeedingFallback);
+              
+              // Add Moz results to our validation results
+              domainsNeedingFallback.forEach((domain, index) => {
+                const metrics = mozMetrics[index] || {};
+                validationResults[domain] = {
+                  domainAuthority: Math.round(metrics.domain_authority || 0),
+                  spamScore: Math.round((metrics.spam_score || 0) * 10),
+                  securityScore: 100, // Default when we don't have security data
+                  riskFactors: [],
+                  technologies: [],
+                  status: 'valid',
+                  provider: 'moz'
+                };
+              });
+            } catch (mozError) {
+              console.error('[Crawler] Moz API fallback failed:', mozError);
+            }
+          }
+          
+          // Update each opportunity with the metrics from validation
           for (let j = 0; j < batch.length; j++) {
             const opp = batch[j];
-            const metrics = domainMetrics[j] || {};
+            const domain = opp.domain || this.extractDomain(opp.url);
+            const validation = validationResults[domain] || {};
+            
+            // Additional metadata for future use
+            const validationData = {
+              securityScore: validation.securityScore,
+              riskFactors: validation.riskFactors,
+              technologies: validation.technologies,
+              provider: validation.provider,
+              status: validation.status
+            };
             
             // Update the opportunity with metrics
             await db.update(discoveredOpportunities)
               .set({ 
                 status: 'analyzed',
-                domainAuthority: Math.round(metrics.domain_authority || 0),
-                pageAuthority: Math.round(metrics.page_authority || 0),
-                spamScore: Math.round((metrics.spam_score || 0) * 10), // Scale to 0-10 integer range
+                domainAuthority: validation.domainAuthority || 0,
+                pageAuthority: 0, // Not provided by all services
+                spamScore: validation.spamScore || 0,
                 lastChecked: new Date(),
+                validationData: validationData
               })
               .where(eq(discoveredOpportunities.id, opp.id));
           }
         } catch (error) {
-          console.error('Error processing opportunity batch with Moz API:', error);
+          console.error('Error processing opportunity batch:', error);
         }
       }
     } catch (error) {
