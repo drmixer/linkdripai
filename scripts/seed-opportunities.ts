@@ -314,59 +314,81 @@ async function seedDiscoveredOpportunities() {
       const uniqueId = Date.now() + i;
       const urlPath = generateUrlPath(topic, sourceType);
       const url = `https://www.${domain}${urlPath}?id=${uniqueId}`;
-    
-    // Create contact info structure to match schema
-    const contactInfo = {
-      email: generateContactEmail(domain),
-      form: Math.random() > 0.3 ? `https://www.${domain}/contact` : null, // 70% chance of having a contact form
-      social: Math.random() > 0.5 ? [`https://twitter.com/${domain.split('.')[0]}`] : []
-    };
-    
-    // Generate a simple validation data object
-    const validationData = {
-      relevanceScore: 60 + Math.floor(Math.random() * 40),
-      qualityScore: domainAuthority * 0.8,
-      contentRelevance: 70 + Math.floor(Math.random() * 30),
-      keywordDensity: 50 + Math.floor(Math.random() * 50),
-      topicMatch: 60 + Math.floor(Math.random() * 40)
-    };
-    
-    // Execute a direct SQL insert to avoid type issues with enums
-    try {
-      const insertResult = await db.execute(sql`
-        INSERT INTO "discoveredOpportunities" (
-          "url", 
-          "domain", 
-          "sourceType", 
-          "pageTitle", 
-          "pageContent", 
-          "contactInfo", 
-          "domainAuthority", 
-          "pageAuthority", 
-          "spamScore", 
-          "isPremium", 
-          "discoveredAt", 
-          "lastChecked", 
-          "status", 
-          "validationData"
-        ) 
-        VALUES (
-          ${url}, 
-          ${domain}, 
-          ${sourceType}::source_type, 
-          ${title}, 
-          ${'This is sample content for a ' + topic + ' opportunity on ' + domain + '. It would contain relevant information that matches user websites.'}, 
-          ${JSON.stringify(contactInfo)}::jsonb, 
-          ${domainAuthority}, 
-          ${pageAuthority}, 
-          ${spamScore}, 
-          ${isPremium}, 
-          ${new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))}, 
-          ${new Date()}, 
-          ${'analyzed'}::discovery_status, 
-          ${JSON.stringify(validationData)}::jsonb
-        )
-        RETURNING id
+      
+      // Create contact info structure to match schema
+      const contactInfo = {
+        email: generateContactEmail(domain),
+        form: Math.random() > 0.3 ? `https://www.${domain}/contact` : null, // 70% chance of having a contact form
+        social: Math.random() > 0.5 ? [`https://twitter.com/${domain.split('.')[0]}`] : []
+      };
+      
+      // Generate a richer validation data object based on the niche
+      let qualityBoost = 0;
+      let relevanceBoost = 0;
+      
+      // Premium opportunities (higher DA, lower spam) get better scores
+      if (isPremium) {
+        qualityBoost = 15;
+        relevanceBoost = 10;
+      }
+      
+      // More specific niches have higher relevance when matched correctly
+      if (niche === 'tech_and_saas' || niche === 'content_creation') {
+        relevanceBoost += 5;
+      }
+      
+      const validationData = {
+        relevanceScore: 60 + relevanceBoost + Math.floor(Math.random() * (40 - relevanceBoost)),
+        qualityScore: Math.min(98, domainAuthority * 0.8 + qualityBoost),
+        contentRelevance: 70 + Math.floor(Math.random() * 30),
+        keywordDensity: 50 + Math.floor(Math.random() * 50),
+        topicMatch: 60 + relevanceBoost + Math.floor(Math.random() * (40 - relevanceBoost)),
+        niche: niche // Store the niche for better matching
+      };
+      
+      // Execute a direct SQL insert to avoid type issues with enums
+      try {
+        // Generate content with niche-specific keywords for better matching
+        const nicheKeywords = nicheTopics[niche as keyof typeof nicheTopics];
+        const keywordsToUse = nicheKeywords.slice(0, 3).join(', ');
+        const pageContent = `This is a ${sourceType.replace('_', ' ')} opportunity about ${topic} on ${domain}. 
+Key areas covered include ${keywordsToUse}. This content is specifically relevant to the ${niche.replace('_', ' ')} niche 
+and would be valuable for websites in this industry.`;
+        
+        const insertResult = await db.execute(sql`
+          INSERT INTO "discoveredOpportunities" (
+            "url", 
+            "domain", 
+            "sourceType", 
+            "pageTitle", 
+            "pageContent", 
+            "contactInfo", 
+            "domainAuthority", 
+            "pageAuthority", 
+            "spamScore", 
+            "isPremium", 
+            "discoveredAt", 
+            "lastChecked", 
+            "status", 
+            "validationData"
+          ) 
+          VALUES (
+            ${url}, 
+            ${domain}, 
+            ${sourceType}::source_type, 
+            ${title}, 
+            ${pageContent}, 
+            ${JSON.stringify(contactInfo)}::jsonb, 
+            ${domainAuthority}, 
+            ${pageAuthority}, 
+            ${spamScore}, 
+            ${isPremium}, 
+            ${new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))}, 
+            ${new Date()}, 
+            ${'analyzed'}::discovery_status, 
+            ${JSON.stringify(validationData)}::jsonb
+          )
+          RETURNING id
       `);
       
       console.log(`Created opportunity #${i+1} with ID: ${insertResult.rows[0].id}`);
@@ -476,23 +498,7 @@ async function createWebsiteProfiles() {
   
   console.log(`Creating profiles for ${websitesWithoutProfiles.length} websites...`);
   
-  // Sample topics and keywords to use for profiles
-  const sampleTopics = [
-    ['SEO', 'Link Building', 'Backlinks'],
-    ['Content Marketing', 'Blogging', 'Writing'],
-    ['Social Media', 'Twitter', 'LinkedIn'],
-    ['Email Marketing', 'Newsletters', 'Automation'],
-    ['Web Development', 'JavaScript', 'React'],
-  ];
-  
-  const sampleKeywords = [
-    ['backlinks', 'seo', 'organic traffic', 'google ranking', 'anchor text', 'domain authority'],
-    ['content', 'blog', 'article', 'writing', 'publishing', 'audience'],
-    ['social media', 'engagement', 'followers', 'platform', 'strategy', 'facebook'],
-    ['email', 'newsletter', 'subscriber', 'conversion', 'autoresponder', 'open rate'],
-    ['development', 'code', 'programming', 'web', 'responsive', 'frontend'],
-  ];
-  
+  console.log('Using niche-based topics and keywords for website profiles...');
   const profiles = [];
   
   // Create profiles for each website
