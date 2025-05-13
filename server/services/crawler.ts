@@ -1094,7 +1094,7 @@ export class OpportunityCrawler {
   
   /**
    * Run one cycle of continuous crawling
-   * This selects crawl types and seed URLs strategically to maximize quality opportunities
+   * This selects crawl types and seed URLs strategically to maximize quality premium opportunities
    */
   private async runContinuousCrawlCycle() {
     try {
@@ -1105,31 +1105,55 @@ export class OpportunityCrawler {
       const highValueTypes = ['blog', 'directory']; // Good quality opportunities
       const supplementaryTypes = ['competitor_backlink', 'forum', 'social_mention', 'comment_section']; // Supplementary opportunities
       
-      // Increase premium opportunity discovery based on time of day
-      const currentHour = new Date().getHours();
+      // Get current date to help determine crawl strategy
+      const now = new Date();
+      const currentHour = now.getHours();
+      const dayOfWeek = now.getDay(); // 0 is Sunday, 6 is Saturday
+      
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const isBusinessHours = currentHour >= 9 && currentHour <= 17;
+      
       let typesToCrawl = [];
       let premiumFocus = false;
+      let highQualityFocus = false;
       
-      if (currentHour >= 0 && currentHour < 8) {
-        // Night/Early morning: Focus heavily on premium opportunities
+      // Weekend strategy - focus heavily on premium opportunities
+      if (isWeekend) {
+        // Weekend: Prioritize premium opportunities
         typesToCrawl = [...premiumTypes];
-        // Add 1 high value type
+        // Add 1 high value type for diversity
         typesToCrawl.push(highValueTypes[Math.floor(Math.random() * highValueTypes.length)]);
         premiumFocus = true;
-      } else if (currentHour >= 8 && currentHour < 14) {
-        // Business hours: Balanced approach with emphasis on guest posts
+      } 
+      // Weekday strategy - varies by time of day
+      else if (currentHour >= 0 && currentHour < 7) {
+        // Night/Early morning: Focus exclusively on premium opportunities
+        typesToCrawl = [...premiumTypes];
+        // Add 1 forum type as forums often have high DA
+        typesToCrawl.push('forum');
+        premiumFocus = true;
+        highQualityFocus = true;
+      } else if (currentHour >= 7 && currentHour < 12) {
+        // Morning business hours: Balanced approach with emphasis on guest posts (often published in mornings)
         typesToCrawl.push('guest_post');
-        typesToCrawl.push(highValueTypes[Math.floor(Math.random() * highValueTypes.length)]);
-        typesToCrawl.push(supplementaryTypes[Math.floor(Math.random() * supplementaryTypes.length)]);
-      } else if (currentHour >= 14 && currentHour < 20) {
-        // Afternoon/Evening: Mix of all types with emphasis on resource pages
+        typesToCrawl.push('blog'); // Blogs often publish in mornings
+        typesToCrawl.push('forum'); // Forums are active in mornings
+        highQualityFocus = true;
+      } else if (currentHour >= 12 && currentHour < 17) {
+        // Afternoon: Mix of all types with emphasis on resource pages and directories
         typesToCrawl.push('resource_page');
-        typesToCrawl.push(highValueTypes[Math.floor(Math.random() * highValueTypes.length)]);
+        typesToCrawl.push('directory');
         typesToCrawl.push(supplementaryTypes[Math.floor(Math.random() * supplementaryTypes.length)]);
-      } else {
-        // Late evening: Focus on blogs and directories plus one premium type
-        typesToCrawl = [...highValueTypes];
+      } else if (currentHour >= 17 && currentHour < 21) {
+        // Evening: Focus on forum and community content (more active in evenings)
+        typesToCrawl.push('forum');
+        typesToCrawl.push('social_mention');
         typesToCrawl.push(premiumTypes[Math.floor(Math.random() * premiumTypes.length)]);
+      } else {
+        // Late evening: Premium focus again when server loads are typically lower
+        typesToCrawl = [...premiumTypes];
+        typesToCrawl.push(highValueTypes[Math.floor(Math.random() * highValueTypes.length)]);
+        premiumFocus = true;
       }
       
       console.log(`[Crawler] Selected crawl types for this cycle: ${typesToCrawl.join(', ')}`);
@@ -1144,13 +1168,17 @@ export class OpportunityCrawler {
           let numUrlsToUse = 5; // Default
           let crawlDepth = 2; // Default
           
-          // Adjust strategy based on opportunity type
+          // Adjust strategy based on opportunity type and focus
           if (premiumTypes.includes(type)) {
-            numUrlsToUse = premiumFocus ? 7 : 5; // More seeds for premium types during premium focus hours
-            crawlDepth = 3; // Deeper crawl for premium types
+            numUrlsToUse = premiumFocus ? 8 : 6; // More seeds for premium types during premium focus hours
+            crawlDepth = highQualityFocus ? 4 : 3; // Even deeper crawl for premium types during high quality focus
           } else if (highValueTypes.includes(type)) {
-            numUrlsToUse = 5;
-            crawlDepth = 2;
+            numUrlsToUse = highQualityFocus ? 6 : 5;
+            crawlDepth = highQualityFocus ? 3 : 2;
+          } else if (type === 'forum' && (premiumFocus || highQualityFocus)) {
+            // Forums can yield high-quality opportunities if properly crawled
+            numUrlsToUse = 6;
+            crawlDepth = 3;
           } else {
             numUrlsToUse = 4;
             crawlDepth = 1; // Shallower crawl for supplementary types
@@ -1160,7 +1188,48 @@ export class OpportunityCrawler {
           const availableUrls = [...allSeedUrls];
           const seedUrls = [];
           
-          for (let i = 0; i < numUrlsToUse && availableUrls.length > 0; i++) {
+          // Define high-quality domains based on our crawling experience
+          const highQualityDomains = [
+            'moz.com', 
+            'ahrefs.com', 
+            'semrush.com', 
+            'searchenginejournal.com', 
+            'searchengineland.com',
+            'backlinko.com',
+            'neilpatel.com',
+            'wordstream.com',
+            'techradar.com',
+            'yoast.com',
+            'growthhackers.com',
+            'bloggerspassion.com',
+            'indiehackers.com',
+            'webmasterworld.com',
+            'reddit.com',
+            'quora.com',
+            'smashingmagazine.com',
+            'hubspot.com'
+          ];
+          
+          // First, prioritize high-quality domains if we're in premium focus mode
+          if (premiumFocus || highQualityFocus) {
+            // Find URLs from high-quality domains first
+            for (let i = 0; i < availableUrls.length && seedUrls.length < Math.ceil(numUrlsToUse * 0.6); i++) {
+              const url = availableUrls[i];
+              const domain = this.extractDomain(url);
+              
+              if (highQualityDomains.some(hqDomain => domain.includes(hqDomain))) {
+                seedUrls.push(url);
+                // Remove from available URLs to avoid duplicates
+                const index = availableUrls.indexOf(url);
+                if (index > -1) {
+                  availableUrls.splice(index, 1);
+                }
+              }
+            }
+          }
+          
+          // Fill the rest with random selection
+          while (seedUrls.length < numUrlsToUse && availableUrls.length > 0) {
             const randomIndex = Math.floor(Math.random() * availableUrls.length);
             seedUrls.push(availableUrls[randomIndex]);
             availableUrls.splice(randomIndex, 1);
