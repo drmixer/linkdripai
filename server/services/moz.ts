@@ -1,5 +1,6 @@
 import axios from 'axios';
-import * as crypto from 'crypto-js';
+import HmacSHA1 from 'crypto-js/hmac-sha1';
+import Base64 from 'crypto-js/enc-base64';
 
 // Moz API service for fetching domain metrics
 export class MozApiService {
@@ -23,8 +24,8 @@ export class MozApiService {
     
     try {
       // Use crypto-js to generate HMAC-SHA1 signature
-      const hash = crypto.HmacSHA1(stringToSign, this.secretKey);
-      const signature = hash.toString(crypto.enc.Base64);
+      const hash = HmacSHA1(stringToSign, this.secretKey);
+      const signature = hash.toString(Base64);
       const token = Buffer.from(`${this.accessId}:${expires}:${signature}`).toString('base64');
       return token;
     } catch (error) {
