@@ -195,7 +195,7 @@ export function OutreachTable({ emails, isLoading, onRefresh }: OutreachTablePro
     }
   };
 
-  const renderStatusBadge = (status?: string) => {
+  const renderStatusBadge = (status?: string | null) => {
     const statusData = status && emailStatusMap[status] ? emailStatusMap[status] : defaultStatus;
     
     return (
@@ -521,7 +521,7 @@ export function OutreachTable({ emails, isLoading, onRefresh }: OutreachTablePro
             </DialogDescription>
           </DialogHeader>
           <div className="my-6 border rounded-md p-4 bg-white">
-            <div dangerouslySetInnerHTML={{ __html: (selectedEmail?.replyContent || 'No reply content available.') }} />
+            <div dangerouslySetInnerHTML={{ __html: (selectedEmail?.replyContent || 'No reply content available.') as string }} />
           </div>
           <DialogFooter>
             <Button 
