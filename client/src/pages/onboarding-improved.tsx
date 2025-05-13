@@ -1018,11 +1018,16 @@ export default function Onboarding() {
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md">
                             <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="data-[state=checked]:bg-primary"
-                              />
+                              <div className="relative">
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  className="h-5 w-5 data-[state=checked]:bg-primary border-2 data-[state=checked]:border-primary"
+                                />
+                                {field.value && (
+                                  <Check className="absolute top-0 left-0 h-5 w-5 text-white" />
+                                )}
+                              </div>
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel>
