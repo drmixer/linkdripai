@@ -47,13 +47,14 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  // Add root and health check routes first
+  // Add health check route first before any other routes
   app.get(["/", "/health"], (_req, res) => {
     res.status(200).send("OK");
   });
+
+  // importantly only setup vite in development and after
+  // setting up all the other routes so the catch-all route
+  // doesn't interfere with the other routes
 
   if (app.get("env") === "development") {
     await setupVite(app, server);
