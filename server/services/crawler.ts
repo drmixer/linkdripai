@@ -298,22 +298,43 @@ export class OpportunityCrawler {
   }
   
   /**
-   * Crawl a specific URL using Puppeteer to identify if it contains backlink opportunities
+   * Crawl a specific URL to identify if it contains backlink opportunities
+   * @param url The URL to crawl
+   * @param depth Current depth in the crawl process
+   * @param maxDepth Maximum depth to crawl (default: 2)
    */
   async crawlUrl(url: string, depth = 0, maxDepth = 2): Promise<any> {
     console.log(`[Crawler] Crawling ${url} (depth: ${depth})`);
+    
+    // Stop if we've reached maximum depth
+    if (depth > maxDepth) {
+      return {
+        status: 'skipped',
+        url,
+        message: 'Maximum depth reached'
+      };
+    }
     
     // Make sure URL is properly formatted
     const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
     
     try {
-      // Use fetch instead of Puppeteer
+      // Random delay between 1-3 seconds to avoid rate limiting
+      const randomDelay = Math.floor(Math.random() * 2000) + 1000;
+      await new Promise(resolve => setTimeout(resolve, randomDelay));
+      
+      // Use fetch with a random user agent for each request
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       const response = await fetch(formattedUrl, {
         headers: {
-          'User-Agent': this.userAgents[Math.floor(Math.random() * this.userAgents.length)]
+          'User-Agent': this.userAgents[Math.floor(Math.random() * this.userAgents.length)],
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Referer': 'https://www.google.com/',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         },
         signal: controller.signal
       });
@@ -510,8 +531,11 @@ export class OpportunityCrawler {
   
   /**
    * Start a discovery crawl for a specific pattern/type
+   * @param type The opportunity type to crawl for
+   * @param startUrls Array of seed URLs to start crawling from
+   * @param maxCrawlDepth Maximum crawl depth (default: 2)
    */
-  async startDiscoveryCrawl(type: string, startUrls: string[]): Promise<CrawlerJob> {
+  async startDiscoveryCrawl(type: string, startUrls: string[], maxCrawlDepth: number = 2): Promise<CrawlerJob> {
     // Initialize the job
     const job = await this.initializeJob(type, startUrls.join(','));
     
@@ -520,6 +544,8 @@ export class OpportunityCrawler {
       try {
         // Update status to in progress
         await this.updateJobStatus(job.id, 'in_progress');
+        
+        console.log(`[Crawler] Starting discovery crawl for type ${type} with max depth ${maxCrawlDepth}`);
         
         // Start the crawl
         const results = {
@@ -541,7 +567,8 @@ export class OpportunityCrawler {
           results.crawled++;
           
           try {
-            const result = await this.crawlUrl(url, 0, 2);
+            // Use the specified max crawl depth
+            const result = await this.crawlUrl(url, 0, maxCrawlDepth);
             
             if (result.status === 'error') {
               results.errors++;
@@ -700,38 +727,101 @@ export class OpportunityCrawler {
   
   /**
    * Run one cycle of continuous crawling
-   * This selects random crawl types and seed URLs to maintain diversity
+   * This selects crawl types and seed URLs strategically to maximize quality opportunities
    */
   private async runContinuousCrawlCycle() {
     try {
       console.log('[Crawler] Running continuous crawl cycle');
       
-      // Crawl types to choose from
-      const crawlTypes = ['resource_page', 'directory', 'guest_post', 'forum'];
+      // Get current hour to determine crawl strategy
+      const currentHour = new Date().getHours();
       
-      // Randomly select 1-2 crawl types for this cycle
-      const numTypesToCrawl = Math.floor(Math.random() * 2) + 1;
-      const typesToCrawl = [];
+      // Define crawl strategies based on time of day
+      // Early/late hours: Focus on high-authority sites (resource pages, blogs)
+      // Mid-day hours: Focus on guest posts and directories
+      // Afternoon: Focus on forums and social mentions
+      let primaryTypes: string[] = [];
+      let secondaryTypes: string[] = [];
       
-      for (let i = 0; i < numTypesToCrawl; i++) {
-        const randomIndex = Math.floor(Math.random() * crawlTypes.length);
-        typesToCrawl.push(crawlTypes[randomIndex]);
-        // Remove selected type to avoid duplicates
-        crawlTypes.splice(randomIndex, 1);
-        
-        if (crawlTypes.length === 0) break;
+      if (currentHour >= 0 && currentHour < 8) {
+        // Early morning: Focus on resource pages and blogs
+        primaryTypes = ['resource_page', 'blog'];
+        secondaryTypes = ['guest_post', 'directory'];
+      } else if (currentHour >= 8 && currentHour < 14) {
+        // Mid-day: Focus on guest posts and directories
+        primaryTypes = ['guest_post', 'directory'];
+        secondaryTypes = ['competitor_backlink', 'forum'];
+      } else if (currentHour >= 14 && currentHour < 20) {
+        // Afternoon: Focus on forums and social mentions
+        primaryTypes = ['forum', 'social_mention'];
+        secondaryTypes = ['comment_section', 'blog'];
+      } else {
+        // Evening: Focus on competitor backlinks and comment sections
+        primaryTypes = ['competitor_backlink', 'comment_section'];
+        secondaryTypes = ['resource_page', 'guest_post'];
       }
       
-      // For each type, run a crawl job
+      // Determine number of types to crawl (2-3 types)
+      const numTypesToCrawl = Math.floor(Math.random() * 2) + 2;
+      const typesToCrawl = [];
+      
+      // Always include at least one primary type
+      const primaryType = primaryTypes[Math.floor(Math.random() * primaryTypes.length)];
+      typesToCrawl.push(primaryType);
+      
+      // Add secondary types to complete the selection
+      const remainingTypes = [...secondaryTypes];
+      for (let i = 1; i < numTypesToCrawl; i++) {
+        if (remainingTypes.length === 0) break;
+        
+        const randomIndex = Math.floor(Math.random() * remainingTypes.length);
+        typesToCrawl.push(remainingTypes[randomIndex]);
+        remainingTypes.splice(randomIndex, 1);
+      }
+      
+      console.log(`[Crawler] Selected crawl types for this cycle: ${typesToCrawl.join(', ')}`);
+      
+      // For each type, run a crawl job with randomized seed URLs
       for (const type of typesToCrawl) {
-        // Select seed URLs based on type
-        const seedUrls = this.getSeedUrlsForType(type);
-        if (seedUrls.length > 0) {
+        // Get all seed URLs for this type
+        const allSeedUrls = this.getSeedUrlsForType(type);
+        
+        if (allSeedUrls.length > 0) {
+          // Select a random subset of seed URLs to avoid hitting the same URLs repeatedly
+          // and to distribute the load
+          const numUrlsToUse = Math.min(5, allSeedUrls.length);
+          const seedUrls = [];
+          
+          // Create a copy of the array to sample from
+          const availableUrls = [...allSeedUrls];
+          
+          for (let i = 0; i < numUrlsToUse; i++) {
+            if (availableUrls.length === 0) break;
+            
+            const randomIndex = Math.floor(Math.random() * availableUrls.length);
+            seedUrls.push(availableUrls[randomIndex]);
+            availableUrls.splice(randomIndex, 1);
+          }
+          
           console.log(`[Crawler] Starting crawl for type: ${type} with ${seedUrls.length} seed URLs`);
           await this.startDiscoveryCrawl(type, seedUrls);
           
-          // Add a delay between crawl jobs to avoid overloading
-          await new Promise(resolve => setTimeout(resolve, this.crawlDelay));
+          // Add a variable delay between crawl jobs to avoid predictable patterns
+          // and to be more respectful to servers
+          const variableDelay = this.crawlDelay + (Math.random() * 5000);
+          await new Promise(resolve => setTimeout(resolve, variableDelay));
+        }
+      }
+      
+      // Occasionally run a full depth crawl on high-value opportunity types
+      if (Math.random() < 0.2) {  // 20% chance
+        const highValueType = Math.random() < 0.5 ? 'guest_post' : 'resource_page';
+        const highValueSeeds = this.getSeedUrlsForType(highValueType).slice(0, 3);
+        
+        if (highValueSeeds.length > 0) {
+          console.log(`[Crawler] Running deep crawl for high-value ${highValueType} opportunities`);
+          // When crawling high-value opportunities, we want to go deeper
+          await this.startDiscoveryCrawl(highValueType, highValueSeeds, 3);  // Deeper crawl depth
         }
       }
     } catch (error) {
@@ -746,6 +836,7 @@ export class OpportunityCrawler {
     // Comprehensive seed URLs for each opportunity type
     const seedUrls: Record<string, string[]> = {
       resource_page: [
+        // High DA SEO resource pages
         'https://ahrefs.com/blog/seo-resources/',
         'https://moz.com/learn/seo',
         'https://backlinko.com/seo-tools',
@@ -755,21 +846,56 @@ export class OpportunityCrawler {
         'https://www.hubspot.com/resources',
         'https://www.wordstream.com/blog/resources',
         'https://buffer.com/resources/',
-        'https://www.marketo.com/resources/'
+        
+        // Marketing resources
+        'https://www.marketo.com/resources/',
+        'https://coschedule.com/marketing-resources',
+        'https://www.marketingprofs.com/resources/',
+        'https://contentmarketinginstitute.com/articles/',
+        'https://backlinko.com/hub/seo/resources',
+        
+        // Industry-specific resource pages
+        'https://www.convinceandconvert.com/resources/',
+        'https://www.orbitmedia.com/blog/web-design-statistics/',
+        'https://www.crazyegg.com/blog/resources/',
+        'https://www.copyblogger.com/content-marketing-tools/',
+        'https://blog.hootsuite.com/social-media-resources/',
+        
+        // Web development resources
+        'https://css-tricks.com/guides/',
+        'https://developer.mozilla.org/en-US/docs/Web/Guide',
+        'https://www.smashingmagazine.com/guides/',
+        'https://web.dev/learn/',
+        'https://www.digitalocean.com/community/tutorials'
       ],
       directory: [
+        // General business directories
         'https://botw.org/',
         'https://directorysearch.com/',
         'https://www.jasminedirectory.com/',
-        'https://dmoz-odp.org/',
         'https://www.business.com/directory/',
         'https://www.jayde.com/',
         'https://www.chamberofcommerce.com/business-directory',
         'https://www.hotfrog.com/',
+        'https://www.yelp.com/search',
+        
+        // Industry-specific directories
         'https://www.g2.com/categories/',
-        'https://www.capterra.com/directories/'
+        'https://www.capterra.com/directories/',
+        'https://clutch.co/directories',
+        'https://www.goodfirms.co/',
+        'https://www.sitejabber.com/',
+        'https://www.sortlist.com/',
+        
+        // Local business directories
+        'https://www.yellowpages.com/',
+        'https://www.bbb.org/',
+        'https://www.thomasnet.com/',
+        'https://www.angi.com/',
+        'https://www.tripadvisor.com/'
       ],
       guest_post: [
+        // Marketing/SEO blogs that accept guest posts
         'https://www.searchenginejournal.com/contribute/',
         'https://www.convinceandconvert.com/write-for-us/',
         'https://www.entrepreneur.com/getpublished',
@@ -777,23 +903,59 @@ export class OpportunityCrawler {
         'https://contentmarketinginstitute.com/blog/contributor-guidelines/',
         'https://www.jeffbullas.com/submit-a-guest-post/',
         'https://blog.hubspot.com/submit-a-guest-post',
+        
+        // Social media and digital marketing
         'https://www.socialmediaexaminer.com/writers/',
         'https://www.business2community.com/become-a-contributor',
-        'https://sproutsocial.com/insights/write-for-us/'
+        'https://sproutsocial.com/insights/write-for-us/',
+        'https://www.postplanner.com/write-for-us/',
+        'https://www.digitalmarketer.com/blog/write-for-digitalmarketer/',
+        
+        // Technology and business
+        'https://techcrunch.com/got-a-tip/',
+        'https://mashable.com/submit/',
+        'https://www.forbes.com/sites/quora/',
+        'https://www.inc.com/help-and-feedback.html',
+        'https://www.fastcompany.com/section/hit-the-ground-running',
+        
+        // Industry-specific guest post opportunities
+        'https://www.addthis.com/academy/write-for-us/',
+        'https://www.impactplus.com/write-for-us',
+        'https://www.singlegrain.com/contact/',
+        'https://neilpatel.com/write-for-neil/',
+        'https://www.blogtyrant.com/write-for-us/'
       ],
       forum: [
+        // SEO and marketing forums
         'https://forums.digitalpoint.com/',
         'https://www.webmasterworld.com/',
         'https://moz.com/community/q/',
+        'https://community.semrush.com/',
+        'https://www.warriorforum.com/',
+        
+        // Tech and startup communities
         'https://www.producthunt.com/',
         'https://growthhackers.com/posts',
         'https://indiehackers.com/groups/marketing',
+        'https://www.indiehackers.com/group/content-marketing',
+        'https://news.ycombinator.com/',
+        
+        // Social media discussion groups
         'https://www.reddit.com/r/SEO/',
+        'https://www.reddit.com/r/marketing/',
+        'https://www.reddit.com/r/content_marketing/',
+        'https://www.reddit.com/r/Entrepreneur/',
+        'https://www.reddit.com/r/smallbusiness/',
+        
+        // Q&A platforms
         'https://www.quora.com/topic/Search-Engine-Optimization-SEO',
-        'https://www.warriorforum.com/',
-        'https://community.semrush.com/'
+        'https://www.quora.com/topic/Digital-Marketing',
+        'https://stackoverflow.com/questions/tagged/seo',
+        'https://webmasters.stackexchange.com/',
+        'https://ahrefs.com/blog/haro/'
       ],
       blog: [
+        // High DA SEO and marketing blogs
         'https://moz.com/blog',
         'https://ahrefs.com/blog',
         'https://www.semrush.com/blog/',
@@ -801,11 +963,30 @@ export class OpportunityCrawler {
         'https://searchengineland.com/',
         'https://www.searchenginejournal.com/category/seo/',
         'https://backlinko.com/blog',
+        
+        // Industry news and updates
         'https://www.seroundtable.com/',
         'https://www.gsqi.com/marketing-blog/',
-        'https://www.thesempost.com/'
+        'https://www.thesempost.com/',
+        'https://www.searchenginewatch.com/',
+        'https://www.siegemedia.com/blog',
+        
+        // Content marketing blogs
+        'https://www.copyblogger.com/',
+        'https://www.animalz.co/blog/',
+        'https://www.convinceandconvert.com/blog/',
+        'https://contentmarketinginstitute.com/blog/',
+        'https://www.orbitmedia.com/blog/',
+        
+        // Growth and analytics
+        'https://www.crazyegg.com/blog/',
+        'https://www.growthmachine.com/blog',
+        'https://growthhackers.com/posts',
+        'https://blog.kissmetrics.com/',
+        'https://www.matthewwoodward.co.uk/blog/'
       ],
       competitor_backlink: [
+        // Backlink analysis tools
         'https://ahrefs.com/backlink-checker',
         'https://moz.com/link-explorer',
         'https://majestic.com/',
@@ -813,33 +994,64 @@ export class OpportunityCrawler {
         'https://neilpatel.com/backlinks/',
         'https://app.linkresearchtools.com/toolkit/quickbacklinks.php',
         'https://cognitiveseo.com/backlink-checker/',
+        
+        // Link building resources
+        'https://backlinko.com/link-building',
         'https://www.linkody.com/',
         'https://www.buzzstream.com/',
-        'https://www.linkresearchtools.com/'
+        'https://www.linkresearchtools.com/',
+        'https://www.screamingfrog.co.uk/seo-spider/',
+        
+        // Competitor analysis tools
+        'https://www.spyfu.com/',
+        'https://serpstat.com/',
+        'https://www.similarweb.com/',
+        'https://moz.com/explorer',
+        'https://ubersuggest.com/user/sites'
       ],
       social_mention: [
+        // Major social platforms
         'https://twitter.com/search',
         'https://www.linkedin.com/feed/',
         'https://www.facebook.com/search/',
         'https://www.reddit.com/search/',
         'https://www.pinterest.com/search/',
+        
+        // Social mention monitoring
         'https://www.instagram.com/explore/',
         'https://www.quora.com/search',
         'https://medium.com/search',
         'https://www.tumblr.com/explore/',
-        'https://www.tiktok.com/discover'
+        'https://www.tiktok.com/discover',
+        
+        // Industry-specific social platforms
+        'https://www.producthunt.com/',
+        'https://hashtagify.me/',
+        'https://www.brandmentions.com/',
+        'https://www.socialmention.com/',
+        'https://mention.com/en/'
       ],
       comment_section: [
+        // High-engagement blogs
         'https://moz.com/blog/',
         'https://backlinko.com/blog',
         'https://neilpatel.com/blog/',
         'https://searchengineland.com/',
         'https://www.searchenginejournal.com/',
+        
+        // Industry news with active comments
         'https://www.seroundtable.com/',
         'https://searchenginewatch.com/',
         'https://www.gsqi.com/marketing-blog/',
         'https://www.seoroundtable.com/',
-        'https://www.webmasterworld.com/'
+        'https://www.webmasterworld.com/',
+        
+        // Marketing blogs with engagement
+        'https://www.copyblogger.com/',
+        'https://www.problogger.com/',
+        'https://www.smartblogger.com/',
+        'https://www.convinceandconvert.com/blog/',
+        'https://www.socialmediaexaminer.com/blog/'
       ]
     };
     
