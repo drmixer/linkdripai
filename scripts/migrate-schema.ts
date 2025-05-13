@@ -8,6 +8,62 @@ async function migrateSchema() {
   console.log('Starting schema migration...');
   
   try {
+    // Create or update the discovery_status enum
+    console.log('Creating/updating discovery_status enum...');
+    try {
+      await db.execute(sql`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'discovery_status') THEN
+            CREATE TYPE discovery_status AS ENUM (
+              'discovered',
+              'analyzed',
+              'validated',
+              'rejected',
+              'matched',
+              'assigned',
+              'premium',
+              'unlocked',
+              'contacted',
+              'converted',
+              'failed',
+              'expired'
+            );
+          END IF;
+        END
+        $$;
+      `);
+      console.log('discovery_status enum created or already exists');
+    } catch (error) {
+      console.error('Error creating discovery_status enum:', error);
+    }
+    
+    // Create or update the source_type enum
+    console.log('Creating/updating source_type enum...');
+    try {
+      await db.execute(sql`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'source_type') THEN
+            CREATE TYPE source_type AS ENUM (
+              'resource_page',
+              'directory',
+              'blog',
+              'guest_post',
+              'competitor_backlink',
+              'social_mention',
+              'forum',
+              'comment_section'
+            );
+          END IF;
+        END
+        $$;
+      `);
+      console.log('source_type enum created or already exists');
+    } catch (error) {
+      console.error('Error creating source_type enum:', error);
+    }
+
     // Check if discoveredOpportunities table exists
     console.log('Checking for discoveredOpportunities table...');
     try {
@@ -20,7 +76,7 @@ async function migrateSchema() {
           "id" SERIAL PRIMARY KEY,
           "url" TEXT NOT NULL UNIQUE,
           "domain" TEXT NOT NULL,
-          "sourceType" TEXT NOT NULL,
+          "sourceType" source_type NOT NULL,
           "pageTitle" TEXT,
           "pageContent" TEXT,
           "contactInfo" JSONB,
@@ -30,7 +86,7 @@ async function migrateSchema() {
           "isPremium" BOOLEAN DEFAULT false,
           "discoveredAt" TIMESTAMP DEFAULT NOW(),
           "lastChecked" TIMESTAMP DEFAULT NOW(),
-          "status" TEXT DEFAULT 'discovered',
+          "status" discovery_status DEFAULT 'discovered',
           "rawData" JSONB,
           "validationData" JSONB
         )

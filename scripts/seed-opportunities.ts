@@ -14,7 +14,7 @@ import { getDiscoveryScheduler } from '../server/services/discovery-scheduler';
 import { getOpportunityCrawler } from '../server/services/crawler';
 import { getValidationPipeline } from '../server/services/validation-pipeline';
 
-// Dictionary of source types
+// Dictionary of source types - must match the source_type enum values
 const sourceTypes = [
   'resource_page',
   'guest_post',
@@ -216,7 +216,7 @@ async function seedDiscoveredOpportunities() {
       isPremium,
       discoveredAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)), // Random date in the last 30 days
       lastChecked: new Date(),
-      status: 'validated',
+      status: 'analyzed',
       validationData
     });
   }
