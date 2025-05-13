@@ -193,10 +193,10 @@ async function extractSocialProfiles(url: string): Promise<Array<{platform: stri
 async function updateOpportunityContactInfo() {
   console.log('Starting to update contact information for opportunities...');
   
-  // Get all opportunities without contact info
+  // Get all opportunities - note that column names in Postgres are case-sensitive
   const opportunities = await db.select()
     .from(discoveredOpportunities)
-    .where(sql`contactInfo IS NULL`)
+    .where(sql`"contactInfo" IS NULL`)
     .limit(50); // Process in batches
   
   console.log(`Found ${opportunities.length} opportunities that need contact info`);
@@ -269,13 +269,13 @@ async function updateOpportunityContactInfo() {
         contactInfoObj.social = metadataObj.socialProfiles;
       }
       
-      // Update the database
-      await db.update(discoveredOpportunities)
-        .set({ 
-          contactInfo: Object.keys(contactInfoObj).length > 0 ? contactInfoObj : null,
-          metadataRaw: JSON.stringify(metadataObj)
-        })
-        .where(eq(discoveredOpportunities.id, opp.id));
+      // Update the database - use quoted names for PostgreSQL
+      await db.execute(sql`
+        UPDATE "discoveredOpportunities"
+        SET "contactInfo" = ${Object.keys(contactInfoObj).length > 0 ? JSON.stringify(contactInfoObj) : null}, 
+            "metadataRaw" = ${JSON.stringify(metadataObj)}
+        WHERE "id" = ${opp.id}
+      `);
       
       updatedCount++;
       console.log(`Updated contact info for opportunity #${opp.id}`);
@@ -291,11 +291,12 @@ async function updateOpportunityContactInfo() {
   console.log(`Contact info update complete. Updated: ${updatedCount}, Failed: ${failedCount}`);
   
   // If there are more opportunities to process, you can run again
-  const remainingCount = await db.select({ count: sql`count(*)` })
-    .from(discoveredOpportunities)
-    .where(sql`contactInfo IS NULL`);
+  const remainingCount = await db.execute(sql`
+    SELECT COUNT(*) FROM "discoveredOpportunities" 
+    WHERE "contactInfo" IS NULL
+  `);
   
-  console.log(`Remaining opportunities to process: ${remainingCount[0]?.count || 0}`);
+  console.log(`Remaining opportunities to process: ${remainingCount.rows[0]?.count || 0}`);
 }
 
 // Run the script
