@@ -156,7 +156,7 @@ export class MozApiService {
               
               const domainAuthority = 20 + Math.abs(hashCode % 60); // 20-80 range
               const pageAuthority = Math.max(10, domainAuthority - 10 + (Math.abs(hashCode >> 2) % 20));
-              const spamScore = Math.abs((hashCode >> 4) % 15) / 10; // 0-1.5 range
+              const spamScore = Math.abs((hashCode >> 4) % 15); // 0-15 range (integer)
               
               const fallbackData = {
                 target: domain,
@@ -198,7 +198,7 @@ export class MozApiService {
           target: domain,
           domain_authority: 30 + Math.abs(hashCode % 40), // 30-70 range
           page_authority: 20 + Math.abs(hashCode % 50),   // 20-70 range
-          spam_score: Math.abs((hashCode >> 4) % 10) / 10, // 0-1.0 range
+          spam_score: Math.abs((hashCode >> 4) % 10), // 0-10 range (integer)
           links: Math.abs((hashCode >> 6) % 500) + 5,
           root_domains_to_root_domain: Math.abs((hashCode >> 8) % 300) + 3,
           fallback: true

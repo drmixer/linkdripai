@@ -407,9 +407,9 @@ export class OpportunityCrawler {
             await db.update(discoveredOpportunities)
               .set({ 
                 status: 'processed',
-                domainAuthority: metrics.domain_authority || 0,
-                pageAuthority: metrics.page_authority || 0,
-                spamScore: metrics.spam_score || 0,
+                domainAuthority: Math.round(metrics.domain_authority || 0),
+                pageAuthority: Math.round(metrics.page_authority || 0),
+                spamScore: Math.round((metrics.spam_score || 0) * 10), // Scale to 0-10 integer range
                 lastChecked: new Date(),
               })
               .where(eq(discoveredOpportunities.id, opp.id));
