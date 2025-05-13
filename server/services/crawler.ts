@@ -379,7 +379,7 @@ export class OpportunityCrawler {
       if (opportunityIds.length === 0) {
         opportunities = await db.select()
           .from(discoveredOpportunities)
-          .where(eq(discoveredOpportunities.status, 'new'))
+          .where(eq(discoveredOpportunities.status, 'discovered'))
           .limit(50);
       } else {
         opportunities = await db.select()

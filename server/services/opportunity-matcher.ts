@@ -6,6 +6,7 @@ import {
   websiteProfiles, 
   websites, 
   dailyDrips,
+  users,
   DiscoveredOpportunity
 } from '@shared/schema';
 import { eq, and, inArray, sql, lte, desc, gte } from 'drizzle-orm';
