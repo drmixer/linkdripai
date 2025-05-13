@@ -745,7 +745,7 @@ async function extractDeepContactInfo() {
           await db.update(discoveredOpportunities)
             .set({ 
               contactInfo: contactInfo,
-              lastUpdated: new Date()
+              lastChecked: new Date() // Using lastChecked instead of lastUpdated to match schema
             })
             .where(sql`id = ${opportunity.id}`);
           
