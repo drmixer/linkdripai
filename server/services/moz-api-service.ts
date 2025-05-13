@@ -32,7 +32,7 @@ export class MozApiService {
     // Check cache first
     const cacheKey = `domain_metrics_${domain}`;
     const cachedData = this.cache.get(cacheKey);
-    
+
     if (cachedData && (Date.now() - cachedData.timestamp) < this.cacheTime) {
       console.log(`[MozAPI] Using cached data for ${domain}`);
       return cachedData.data;
@@ -41,6 +41,13 @@ export class MozApiService {
     console.log(`[MozAPI] Fetching metrics for ${domain}`);
     try {
       const token = this.generateAuthToken();
+
+      // Add delay between requests
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+      // Add 1 second delay between requests
+      await delay(1000);
+
       const response = await axios.get(`${this.baseUrl}/url-metrics`, {
         params: {
           targets: [domain],
@@ -58,6 +65,9 @@ export class MozApiService {
           Authorization: `Basic ${token}`,
           'Content-Type': 'application/json',
         },
+        // Add retry configuration
+        timeout: 5000,
+        validateStatus: (status) => status < 500
       });
 
       // Store in cache
@@ -80,26 +90,33 @@ export class MozApiService {
     try {
       // Deduplicate domains
       const uniqueDomains = Array.from(new Set(domains));
-      
+
       // Check which domains we need to fetch
       const domainsToFetch: string[] = [];
       const results: { [key: string]: any } = {};
-      
+
       for (const domain of uniqueDomains) {
         const cacheKey = `domain_metrics_${domain}`;
         const cachedData = this.cache.get(cacheKey);
-        
+
         if (cachedData && (Date.now() - cachedData.timestamp) < this.cacheTime) {
           results[domain] = cachedData.data;
         } else {
           domainsToFetch.push(domain);
         }
       }
-      
+
       // If we need to fetch any domains, do it
       if (domainsToFetch.length > 0) {
         console.log(`[MozAPI] Batch fetching metrics for ${domainsToFetch.length} domains`);
         const token = this.generateAuthToken();
+
+        // Add delay between requests
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // Add 1 second delay between requests
+        await delay(1000);
+
         const response = await axios.get(`${this.baseUrl}/url-metrics`, {
           params: {
             targets: domainsToFetch,
@@ -117,8 +134,11 @@ export class MozApiService {
             Authorization: `Basic ${token}`,
             'Content-Type': 'application/json',
           },
+           // Add retry configuration
+          timeout: 5000,
+          validateStatus: (status) => status < 500
         });
-        
+
         // Add results to cache and result object
         for (const result of response.data.results) {
           const domain = result.target;
@@ -129,7 +149,7 @@ export class MozApiService {
           results[domain] = result;
         }
       }
-      
+
       // Return results in the same order as requested
       return domains.map(domain => results[domain]);
     } catch (error) {
@@ -154,13 +174,13 @@ export function getMozApiService(): MozApiService {
   if (!mozApiService) {
     const accessId = process.env.MOZ_ACCESS_ID;
     const secretKey = process.env.MOZ_SECRET_KEY;
-    
+
     if (!accessId || !secretKey) {
       throw new Error('MOZ_ACCESS_ID and MOZ_SECRET_KEY environment variables must be set');
     }
-    
+
     mozApiService = new MozApiService(accessId, secretKey);
   }
-  
+
   return mozApiService;
 }
