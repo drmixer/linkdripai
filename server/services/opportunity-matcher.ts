@@ -24,6 +24,134 @@ export class OpportunityMatcher {
   }
   
   /**
+   * Process newly discovered and validated opportunities
+   * Creates matches between opportunities and website profiles
+   */
+  async processNewOpportunities(): Promise<number> {
+    try {
+      // Get all validated opportunities that haven't been matched yet
+      const newOpportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(
+          and(
+            eq(discoveredOpportunities.status, 'validated'),
+            sql`NOT EXISTS (
+              SELECT 1 FROM ${opportunityMatches}
+              WHERE ${opportunityMatches.opportunityId} = ${discoveredOpportunities.id}
+            )`
+          )
+        );
+      
+      if (newOpportunities.length === 0) {
+        console.log('[OpportunityMatcher] No new opportunities to process');
+        return 0;
+      }
+      
+      console.log(`[OpportunityMatcher] Processing ${newOpportunities.length} new opportunities`);
+      
+      // Get all website profiles
+      const profiles = await db.select({
+        profile: websiteProfiles,
+        website: websites
+      })
+      .from(websiteProfiles)
+      .innerJoin(
+        websites,
+        eq(websiteProfiles.websiteId, websites.id)
+      );
+      
+      if (profiles.length === 0) {
+        console.log('[OpportunityMatcher] No website profiles found for matching');
+        return 0;
+      }
+      
+      let matchCount = 0;
+      
+      // For each opportunity, find matching websites
+      for (const opportunity of newOpportunities) {
+        // Score each website profile against this opportunity
+        const scores = await Promise.all(
+          profiles.map(async ({ profile, website }) => {
+            const relevanceScore = this.websiteAnalyzer.calculateRelevance(
+              profile,
+              opportunity
+            );
+            
+            return {
+              websiteId: website.id,
+              userId: website.userId,
+              relevanceScore,
+              isPremium: opportunity.isPremium || false
+            };
+          })
+        );
+        
+        // Get the top matches (relevanceScore > 60)
+        const topMatches = scores
+          .filter(score => score.relevanceScore > 60)
+          .sort((a, b) => b.relevanceScore - a.relevanceScore);
+        
+        // Create matches for the top websites
+        for (const match of topMatches) {
+          await db.insert(opportunityMatches)
+            .values({
+              opportunityId: opportunity.id,
+              userId: match.userId,
+              websiteId: match.websiteId,
+              assignedAt: new Date(),
+              status: 'pending', // Will be assigned to daily feed later
+              isPremium: match.isPremium
+            });
+          
+          matchCount++;
+        }
+        
+        // Update the opportunity status
+        if (topMatches.length > 0) {
+          await db.update(discoveredOpportunities)
+            .set({ status: 'matched' })
+            .where(eq(discoveredOpportunities.id, opportunity.id));
+        }
+      }
+      
+      console.log(`[OpportunityMatcher] Created ${matchCount} matches from new opportunities`);
+      return matchCount;
+    } catch (error) {
+      console.error('[OpportunityMatcher] Error processing new opportunities:', error);
+      return 0;
+    }
+  }
+  
+  /**
+   * Assign daily opportunities to users' feeds
+   */
+  async assignDailyOpportunities(): Promise<number> {
+    try {
+      // Get all users
+      const allUsers = await db.select().from(users);
+      
+      if (allUsers.length === 0) {
+        console.log('[OpportunityMatcher] No users found for assigning daily opportunities');
+        return 0;
+      }
+      
+      let totalAssigned = 0;
+      
+      // Process each user
+      for (const user of allUsers) {
+        const result = await this.assignDailyMatches(user.id);
+        totalAssigned += result.count + result.premium;
+      }
+      
+      console.log(`[OpportunityMatcher] Assigned ${totalAssigned} daily opportunities to users`);
+      return totalAssigned;
+    } catch (error) {
+      console.error('[OpportunityMatcher] Error assigning daily opportunities:', error);
+      return 0;
+    }
+  }
+  
+  /**
    * Find matching opportunities for a specific website
    */
   async findMatchesForWebsite(websiteId: number, limit = 10): Promise<DiscoveredOpportunity[]> {

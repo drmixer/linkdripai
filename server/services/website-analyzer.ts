@@ -16,6 +16,53 @@ export class WebsiteAnalyzer {
   }
   
   /**
+   * Process a website for analysis
+   * This is the main entry point called by the discovery scheduler
+   */
+  async processWebsite(website: any): Promise<any> {
+    console.log(`[WebsiteAnalyzer] Processing website: ${website.url}`);
+    
+    try {
+      // Check if we already have a profile for this website
+      const profile = await this.getProfile(website.id);
+      
+      if (profile) {
+        // If profile exists and was recently updated (within 7 days), skip
+        const lastAnalyzed = new Date(profile.lastAnalyzed);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
+        if (lastAnalyzed > sevenDaysAgo) {
+          console.log(`[WebsiteAnalyzer] Website ${website.url} was recently analyzed. Skipping.`);
+          return profile;
+        }
+      }
+      
+      // Perform full analysis
+      return await this.analyzeWebsite(website.id, website.url);
+    } catch (error) {
+      console.error(`[WebsiteAnalyzer] Error processing website ${website.url}:`, error);
+      throw new Error(`Failed to process website: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Get existing profile for a website
+   */
+  async getProfile(websiteId: number): Promise<any> {
+    try {
+      const profiles = await db.select()
+        .from(websiteProfiles)
+        .where(eq(websiteProfiles.websiteId, websiteId));
+      
+      return profiles.length > 0 ? profiles[0] : null;
+    } catch (error) {
+      console.error(`[WebsiteAnalyzer] Error getting profile for website ${websiteId}:`, error);
+      return null;
+    }
+  }
+  
+  /**
    * Analyze a website and store content profile
    */
   async analyzeWebsite(websiteId: number, url: string): Promise<any> {
