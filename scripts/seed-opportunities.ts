@@ -23,43 +23,133 @@ const sourceTypes = [
   'blog'
 ];
 
-// List of realistic domains for backlink opportunities
-const sampleDomains = [
-  'digitalmarketinginstitute.com',
-  'searchenginejournal.com',
-  'contentmarketinginstitute.com',
-  'ahrefs.com',
-  'moz.com',
-  'semrush.com',
-  'backlinko.com',
-  'neilpatel.com',
-  'wordstream.com',
-  'convinceandconvert.com',
-  'copyblogger.com',
-  'buffer.com',
-  'hubspot.com',
-  'sproutsocial.com',
-  'socialmediaexaminer.com',
-  'smartblogger.com',
-  'bloggingwizard.com',
-  'problogger.com',
-  'searchengineland.com',
-  'marketingprofs.com'
-];
+// Organized by niche for better opportunity matching
+const nicheBasedDomains = {
+  'digital_marketing': [
+    'digitalmarketinginstitute.com',
+    'searchenginejournal.com',
+    'contentmarketinginstitute.com',
+    'ahrefs.com',
+    'moz.com',
+    'semrush.com',
+    'backlinko.com',
+    'neilpatel.com',
+    'wordstream.com',
+    'convinceandconvert.com',
+    'copyblogger.com',
+    'searchengineland.com',
+    'marketingprofs.com'
+  ],
+  'social_media': [
+    'buffer.com',
+    'sproutsocial.com',
+    'socialmediaexaminer.com',
+    'hootsuite.com',
+    'socialmediacollege.com',
+    'socialmediatoday.com',
+    'socialmediastrategiessummit.com'
+  ],
+  'content_creation': [
+    'smartblogger.com',
+    'bloggingwizard.com',
+    'problogger.com',
+    'copyblogger.com',
+    'write.as',
+    'contently.com',
+    'writtent.com'
+  ],
+  'tech_and_saas': [
+    'hubspot.com',
+    'techcrunch.com',
+    'saashacker.com',
+    'saastr.com',
+    'saasquatch.com',
+    'productled.com',
+    'growthhackers.com'
+  ],
+  'health_and_wellness': [
+    'healthline.com',
+    'mindbodygreen.com',
+    'wellnessmama.com',
+    'healthwellnessdigest.com',
+    'acefitness.org',
+    'yogajournal.com',
+    'everydayhealth.com'
+  ],
+  'finance': [
+    'nerdwallet.com',
+    'investopedia.com',
+    'thebalance.com',
+    'fool.com',
+    'financialmentor.com',
+    'moneyunder30.com',
+    'budgetsaresexy.com'
+  ],
+  'travel': [
+    'nomadicmatt.com',
+    'lonelyplanet.com',
+    'travelandleisure.com',
+    'thepointsguy.com',
+    'fodors.com',
+    'travelpulse.com',
+    'afar.com'
+  ],
+  'education': [
+    'edutopia.org',
+    'teachthought.com',
+    'edsurge.com',
+    'teachertoolkit.com',
+    'edweek.org',
+    'scholastic.com',
+    'educationcorner.com'
+  ]
+};
 
-// Relevant topics and keywords for backlink opportunities
-const topics = [
-  'SEO',
-  'Content Marketing',
-  'Social Media Marketing',
-  'Email Marketing',
-  'Digital Marketing',
-  'Blogging',
-  'Link Building',
-  'Keyword Research',
-  'Web Development',
-  'WordPress'
-];
+// Flatten for compatibility with existing code
+const sampleDomains = Object.values(nicheBasedDomains).flat();
+
+// Topics by niche for more targeted content opportunities
+const nicheTopics = {
+  'digital_marketing': [
+    'SEO', 'Content Marketing', 'PPC', 'Digital Strategy', 
+    'Link Building', 'Keyword Research', 'Local SEO', 'Technical SEO',
+    'Analytics', 'Conversion Optimization'
+  ],
+  'social_media': [
+    'Instagram Marketing', 'LinkedIn Strategy', 'Twitter Growth',
+    'Social Media ROI', 'Community Management', 'Social Listening',
+    'Influencer Marketing', 'Social Media Analytics', 'Social Advertising'
+  ],
+  'content_creation': [
+    'Copywriting', 'Content Strategy', 'Storytelling', 'Editorial Calendars',
+    'Content Distribution', 'Blog Optimization', 'Content Repurposing',
+    'Case Studies', 'Content for SEO'
+  ],
+  'tech_and_saas': [
+    'SaaS Marketing', 'Product-Led Growth', 'Customer Success',
+    'User Onboarding', 'Retention Strategies', 'API Documentation',
+    'Developer Marketing', 'Technical Documentation', 'SaaS Metrics'
+  ],
+  'health_and_wellness': [
+    'Nutrition', 'Fitness', 'Mental Health', 'Yoga', 'Meditation',
+    'Healthy Recipes', 'Holistic Health', 'Workout Plans', 'Wellness Trends'
+  ],
+  'finance': [
+    'Personal Finance', 'Investing', 'Retirement Planning', 'Debt Management',
+    'Budgeting', 'Financial Independence', 'Tax Planning', 'Credit Scores'
+  ],
+  'travel': [
+    'Budget Travel', 'Luxury Travel', 'Travel Hacking', 'Digital Nomad',
+    'Adventure Travel', 'Family Travel', 'Solo Travel', 'Sustainable Tourism'
+  ],
+  'education': [
+    'EdTech', 'Online Learning', 'Curriculum Development', 'Teaching Resources',
+    'Higher Education', 'E-Learning', 'Education Policy', 'Education Research'
+  ]
+};
+
+// Flatten topics for compatibility with existing code
+const topics = Object.values(nicheTopics).flat();
 
 // Realistic titles for backlink opportunities
 const titleTemplates = [
@@ -139,7 +229,54 @@ function generateSpamScore(): number {
 }
 
 /**
- * Seed discovered opportunities
+ * Get a random niche from the nicheBasedDomains object
+ */
+function getRandomNiche(): string {
+  const niches = Object.keys(nicheBasedDomains);
+  return niches[Math.floor(Math.random() * niches.length)];
+}
+
+/**
+ * Get a random domain from a specific niche
+ */
+function getRandomDomainFromNiche(niche: string): string {
+  const domains = nicheBasedDomains[niche as keyof typeof nicheBasedDomains];
+  return domains[Math.floor(Math.random() * domains.length)];
+}
+
+/**
+ * Get a random topic from a specific niche
+ */
+function getRandomTopicFromNiche(niche: string): string {
+  const nicheSpecificTopics = nicheTopics[niche as keyof typeof nicheTopics];
+  return nicheSpecificTopics[Math.floor(Math.random() * nicheSpecificTopics.length)];
+}
+
+/**
+ * Generate URL path based on topic and source type
+ */
+function generateUrlPath(topic: string, sourceType: string): string {
+  // Replace spaces with hyphens and make lowercase
+  const formattedTopic = topic.toLowerCase().replace(/\s+/g, '-');
+  
+  switch (sourceType) {
+    case 'resource_page':
+      return `/resources/${formattedTopic}-resources`;
+    case 'guest_post':
+      return `/blog/guest-post-guidelines`;
+    case 'directory':
+      return `/directory/${formattedTopic}`;
+    case 'forum':
+      return `/forum/${formattedTopic}-discussion`;
+    case 'blog':
+      return `/blog/${formattedTopic}-guide`;
+    default:
+      return `/resources/${formattedTopic}`;
+  }
+}
+
+/**
+ * Seed discovered opportunities with niche-specific data
  */
 async function seedDiscoveredOpportunities() {
   console.log('Seeding discovered opportunities...');
@@ -153,39 +290,30 @@ async function seedDiscoveredOpportunities() {
     return;
   }
   
-  // Sample opportunities will be inserted directly using SQL
-  for (let i = 0; i < 40; i++) {
-    const domain = getRandomElement(sampleDomains);
-    const sourceType = getRandomElement(sourceTypes); // This must match the source_type enum value
-    const topic = getRandomElement(topics);
-    const title = generateTitle(topic);
-    const domainAuthority = generateDomainAuthority();
-    const pageAuthority = Math.max(10, domainAuthority - Math.floor(Math.random() * 20));
-    const spamScore = generateSpamScore();
+  // Create opportunities for each niche
+  const niches = Object.keys(nicheBasedDomains);
+  const opportunitiesPerNiche = 15;
+  
+  for (const niche of niches) {
+    console.log(`Creating opportunities for niche: ${niche}`);
     
-    // Determine if this should be a premium opportunity
-    const isPremium = domainAuthority >= 40 && spamScore <= 2;
-    
-    // Generate a URL based on the source type and domain with a unique identifier
-    // to prevent duplicate URLs
-    const uniqueId = Date.now() + i;
-    let url;
-    switch (sourceType) {
-      case 'resource_page':
-        url = `https://www.${domain}/resources/${topic.toLowerCase().replace(/\s+/g, '-')}?id=${uniqueId}`;
-        break;
-      case 'guest_post':
-        url = `https://www.${domain}/write-for-us?id=${uniqueId}`;
-        break;
-      case 'directory':
-        url = `https://www.${domain}/directory?id=${uniqueId}`;
-        break;
-      case 'forum':
-        url = `https://www.${domain}/forum/${topic.toLowerCase().replace(/\s+/g, '-')}?id=${uniqueId}`;
-        break;
-      default:
-        url = `https://www.${domain}/blog/${topic.toLowerCase().replace(/\s+/g, '-')}?id=${uniqueId}`;
-    }
+    for (let i = 0; i < opportunitiesPerNiche; i++) {
+      const domain = getRandomDomainFromNiche(niche);
+      const sourceType = getRandomElement(sourceTypes);
+      const topic = getRandomTopicFromNiche(niche);
+      const title = generateTitle(topic);
+      const domainAuthority = generateDomainAuthority();
+      const pageAuthority = Math.max(10, domainAuthority - Math.floor(Math.random() * 20));
+      const spamScore = generateSpamScore();
+      
+      // Determine if this should be a premium opportunity (DA 40+, spam <2)
+      const isPremium = domainAuthority >= 40 && spamScore <= 2;
+      
+      // Generate a URL based on the source type and domain with a unique identifier
+      // to prevent duplicate URLs
+      const uniqueId = Date.now() + i;
+      const urlPath = generateUrlPath(topic, sourceType);
+      const url = `https://www.${domain}${urlPath}?id=${uniqueId}`;
     
     // Create contact info structure to match schema
     const contactInfo = {
