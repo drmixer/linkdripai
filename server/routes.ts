@@ -313,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send email
   app.post("/api/email/send", isAuthenticated, async (req, res) => {
     try {
-      const { prospectId, subject, body } = req.body;
+      const { prospectId, subject, body, cc, bcc, replyTo } = req.body;
       
       if (!prospectId || !subject || !body) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -324,10 +324,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Prospect not found" });
       }
 
-      if (!prospect.isUnlocked || prospect.unlockedBy !== req.user!.id) {
-        return res.status(403).json({ message: "You haven't unlocked this prospect" });
+      // All opportunities now unlocked by default
+      // Check for email settings
+      const emailService = await createEmailServiceForUser(req.user!.id);
+      if (!emailService) {
+        return res.status(400).json({ message: "Email is not configured for this user" });
       }
-
+      
+      // Create the email record first
       const emailData = {
         prospectId,
         userId: req.user!.id,
@@ -337,11 +341,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contactEmail: prospect.contactEmail!,
         contactRole: prospect.contactRole,
         domainAuthority: prospect.domainAuthority,
+        status: 'Sending', // Initial status
       };
 
       const emailSchema = insertEmailSchema.parse(emailData);
-      const email = await storage.sendEmail(emailSchema);
-      res.json(email);
+      
+      // Insert the email to get the ID
+      const savedEmail = await storage.sendEmail(emailSchema);
+      
+      // Now actually send the email with tracking info
+      try {
+        const result = await emailService.sendEmail(
+          savedEmail.id,
+          req.user!.id,
+          prospectId,
+          {
+            to: prospect.contactEmail!,
+            subject,
+            body,
+            cc: cc ? Array.isArray(cc) ? cc : [cc] : undefined,
+            bcc: bcc ? Array.isArray(bcc) ? bcc : [bcc] : undefined,
+            replyTo,
+          }
+        );
+        
+        // Return the success result
+        res.json({
+          email: savedEmail,
+          sent: true,
+          messageId: result.messageId,
+        });
+      } catch (emailError: any) {
+        // Since we already saved the email, return it with the error
+        res.status(500).json({
+          email: savedEmail,
+          sent: false,
+          error: emailError.message,
+        });
+      }
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -1634,6 +1671,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send a verification email
+  app.post("/api/email/verify", isAuthenticated, async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email address is required" });
+      }
+      
+      const emailService = await createEmailServiceForUser(req.user!.id);
+      if (!emailService) {
+        return res.status(400).json({ message: "Email is not configured for this user" });
+      }
+      
+      // Send verification email
+      const result = await emailService.sendVerificationEmail(req.user!.id, email);
+      
+      res.json({
+        success: true,
+        message: "Verification email sent successfully"
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  });
+  
+  // Verify email with token
+  app.get("/api/email/verify", async (req, res) => {
+    try {
+      const { token, email } = req.query;
+      
+      if (!token || !email) {
+        return res.status(400).json({ message: "Missing required parameters" });
+      }
+      
+      // Find the user with this verification token
+      const [emailSetting] = await db.select()
+        .from(schema.emailSettings)
+        .where(eq(schema.emailSettings.verificationToken, token as string));
+      
+      if (!emailSetting) {
+        return res.status(404).json({ message: "Invalid or expired verification token" });
+      }
+      
+      // Check if token is expired
+      if (emailSetting.verificationExpires && new Date() > emailSetting.verificationExpires) {
+        return res.status(400).json({ message: "Verification token has expired" });
+      }
+      
+      // Update the email verified status
+      await db.update(schema.emailSettings)
+        .set({
+          isVerified: true,
+          verificationToken: null,
+          verificationExpires: null
+        })
+        .where(eq(schema.emailSettings.id, emailSetting.id));
+      
+      res.json({
+        success: true,
+        message: "Email verified successfully"
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Register email webhook routes
+  app.use('/api/webhooks', emailWebhookRoutes);
+  
+  // Create HTTP server
   const httpServer = createServer(app);
   
   // Start the opportunity discovery scheduler in development

@@ -3,12 +3,13 @@
  * 
  * Handles incoming emails and webhook callbacks from email providers
  */
-
-import { Router, Request, Response } from 'express';
-import { EmailService, createEmailServiceForUser } from '../services/email-service';
+import { Request, Response, Router } from 'express';
+import { createEmailServiceForUser } from '../services/email-service';
+import { storage } from '../storage';
 import { db } from '../db';
-import { users } from '@shared/schema';
+import { outreachEmails } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { log } from '../vite';
 
 const router = Router();
 
@@ -16,60 +17,32 @@ const router = Router();
  * SendGrid Webhook
  * Handles incoming emails from SendGrid
  */
-router.post('/webhook/sendgrid', async (req, res) => {
+router.post('/sendgrid', async (req, res) => {
   try {
-    const events = req.body;
+    log('SendGrid webhook received', 'email-webhook');
     
-    if (!Array.isArray(events)) {
-      return res.status(400).json({ error: 'Invalid webhook payload' });
-    }
+    // SendGrid sends an array of events
+    const events = req.body || [];
     
-    let processedCount = 0;
-    
-    // Process each event
     for (const event of events) {
       if (event.event === 'inbound') {
-        // Extract email data from the event
-        const email = {
+        await processIncomingEmail({
+          provider: 'sendgrid',
           from: event.from,
           to: event.to,
           subject: event.subject,
-          text: event.text,
-          html: event.html,
-          headers: event.headers || {},
-        };
-        
-        // Find the recipient's user account
-        const recipient = email.to.split('@')[0];
-        const [user] = await db.select()
-          .from(users)
-          .where(eq(users.fromEmail, recipient + '@' + process.env.EMAIL_DOMAIN));
-        
-        if (!user) {
-          continue; // Skip if no matching user
-        }
-        
-        // Create email service for this user
-        const emailService = await createEmailServiceForUser(user.id);
-        
-        if (!emailService) {
-          console.log(`Could not create email service for user ${user.id}`);
-          continue; // Skip if no valid email service could be created
-        }
-        
-        // Process the incoming email
-        const result = await emailService.processIncomingEmail(email);
-        
-        if (result.processed) {
-          processedCount++;
-        }
+          body: event.html || event.text,
+          headers: event.headers,
+          messageId: event.messageId,
+          timestamp: new Date(),
+        });
       }
     }
     
-    return res.status(200).json({ success: true, processed: processedCount });
+    res.status(200).send('OK');
   } catch (error) {
-    console.error('Error processing SendGrid webhook:', error);
-    return res.status(500).json({ error: 'Failed to process webhook' });
+    log(`Error processing SendGrid webhook: ${error}`, 'email-webhook');
+    res.status(500).send('Error processing webhook');
   }
 });
 
@@ -77,38 +50,147 @@ router.post('/webhook/sendgrid', async (req, res) => {
  * Generic Email Webhook
  * Handles incoming emails in a standardized format
  */
-router.post('/webhook/email', async (req, res) => {
+router.post('/generic', async (req, res) => {
   try {
-    const { userId, email } = req.body;
+    log('Generic email webhook received', 'email-webhook');
     
-    if (!userId || !email) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const { 
+      provider, 
+      from, 
+      to, 
+      subject, 
+      body, 
+      headers, 
+      messageId,
+      threadId,
+      inReplyTo
+    } = req.body;
+    
+    if (!from || !to || !body) {
+      return res.status(400).send('Missing required fields');
     }
     
-    // Get user details
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    await processIncomingEmail({
+      provider,
+      from,
+      to,
+      subject,
+      body,
+      headers,
+      messageId,
+      threadId,
+      inReplyTo,
+      timestamp: new Date(),
+    });
     
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Create email service for this user
-    const emailService = await createEmailServiceForUser(userId);
-    
-    if (!emailService) {
-      return res.status(400).json({ error: 'Failed to create email service for user' });
-    }
-    
-    // Process the incoming email
-    const result = await emailService.processIncomingEmail(email);
-    
-    return res.status(200).json({ success: true, ...result });
+    res.status(200).send('OK');
   } catch (error) {
-    console.error('Error processing generic email webhook:', error);
-    return res.status(500).json({ error: 'Failed to process webhook' });
+    log(`Error processing generic webhook: ${error}`, 'email-webhook');
+    res.status(500).send('Error processing webhook');
   }
 });
 
-// Email service utility is already imported at the top
+/**
+ * Process an incoming email or reply
+ */
+async function processIncomingEmail(emailData: {
+  provider: string;
+  from: string;
+  to: string;
+  subject: string;
+  body: string;
+  headers?: any;
+  messageId?: string;
+  threadId?: string;
+  inReplyTo?: string;
+  timestamp: Date;
+}) {
+  try {
+    const { from, to, subject, body, messageId, inReplyTo, threadId } = emailData;
+    
+    // Extract the actual email address from the "from" field (which might be "John Doe <john@example.com>")
+    const fromEmail = extractEmailAddress(from);
+    const toEmail = extractEmailAddress(to);
+    
+    // Look for a matching sent email that might be replied to
+    let matchingEmailId: number | null = null;
+    
+    // First try to match by In-Reply-To header which is most reliable
+    if (inReplyTo) {
+      const [matchByReplyTo] = await db.select()
+        .from(outreachEmails)
+        .where(eq(outreachEmails.messageId, inReplyTo));
+      
+      if (matchByReplyTo) {
+        matchingEmailId = matchByReplyTo.id;
+      }
+    }
+    
+    // Then try to match by thread ID
+    if (!matchingEmailId && threadId) {
+      const [matchByThread] = await db.select()
+        .from(outreachEmails)
+        .where(eq(outreachEmails.threadId, threadId));
+      
+      if (matchByThread) {
+        matchingEmailId = matchByThread.id;
+      }
+    }
+    
+    // If still no match, try to match by subject line (naive but fallback)
+    if (!matchingEmailId && subject) {
+      // If it starts with Re: or RE: or re:, try to match the original subject
+      const cleanSubject = subject.replace(/^re:\s*/i, '').trim();
+      
+      const [matchBySubject] = await db.select()
+        .from(outreachEmails)
+        .where(eq(outreachEmails.subject, cleanSubject));
+      
+      if (matchBySubject) {
+        matchingEmailId = matchBySubject.id;
+      }
+    }
+    
+    // If we found a matching email, update it
+    if (matchingEmailId) {
+      await db.update(outreachEmails)
+        .set({
+          status: 'Responded',
+          responseAt: new Date(),
+          replyContent: body,
+          replyMessageId: messageId,
+        })
+        .where(eq(outreachEmails.id, matchingEmailId));
+      
+      log(`Updated email ${matchingEmailId} as responded`, 'email-webhook');
+    } else {
+      // If no matching email, this might be a new incoming email (not a reply)
+      // You could store it separately or ignore depending on your requirements
+      log(`Received non-matching email from ${fromEmail}`, 'email-webhook');
+    }
+  } catch (error) {
+    log(`Error processing email: ${error}`, 'email-webhook');
+    throw error;
+  }
+}
+
+/**
+ * Extract email address from a string like "John Doe <john@example.com>"
+ */
+function extractEmailAddress(input: string): string {
+  // If it's already just an email, return it
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input)) {
+    return input;
+  }
+  
+  // Try to extract email from a format like "Name <email@example.com>"
+  const matches = input.match(/<([^>]+)>/);
+  if (matches && matches[1]) {
+    return matches[1];
+  }
+  
+  // If all else fails, just return the input
+  return input;
+}
 
 export default router;

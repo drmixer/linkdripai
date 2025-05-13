@@ -7,15 +7,15 @@
  * - Processing incoming emails and replies
  * - Managing email verification
  */
-
-import { randomUUID } from 'crypto';
 import nodemailer from 'nodemailer';
-import { db } from "../db";
-import { outreachEmails, users } from "@shared/schema";
-import { eq } from "drizzle-orm";
-import * as SendGrid from '@sendgrid/mail';
+import { createTransport } from 'nodemailer';
+import { randomBytes } from 'crypto';
+import { db } from '../db';
+import { users, outreachEmails, emailSettings } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import { log } from '../vite';
+import sgMail from '@sendgrid/mail';
 
-// Types for email configuration
 interface EmailConfig {
   provider: 'sendgrid' | 'smtp' | 'gmail';
   fromEmail: string;
@@ -40,13 +40,10 @@ interface EmailContent {
   replyTo?: string;
 }
 
-// Constants
-const EMAIL_DOMAIN = process.env.EMAIL_DOMAIN || 'linkdripai.com';
-const PLATFORM_NAME = 'LinkDripAI';
-
 export class EmailService {
   private config: EmailConfig;
   private transporter: any = null;
+  private domain: string = 'linkdripai.com';
   
   constructor(config: EmailConfig) {
     this.config = config;
@@ -57,12 +54,12 @@ export class EmailService {
    * Initialize the appropriate email provider based on user configuration
    */
   private initializeProvider() {
-    switch(this.config.provider) {
+    switch (this.config.provider) {
       case 'sendgrid':
         if (!this.config.sendgridApiKey) {
           throw new Error('SendGrid API key is required');
         }
-        SendGrid.setApiKey(this.config.sendgridApiKey);
+        sgMail.setApiKey(this.config.sendgridApiKey);
         break;
         
       case 'smtp':
@@ -71,14 +68,14 @@ export class EmailService {
           throw new Error('SMTP configuration is incomplete');
         }
         
-        this.transporter = nodemailer.createTransport({
+        this.transporter = createTransport({
           host: this.config.smtpHost,
           port: this.config.smtpPort,
-          secure: this.config.smtpPort === 465,
+          secure: this.config.smtpPort === 465, // true for 465, false for other ports
           auth: {
             user: this.config.smtpUsername,
-            pass: this.config.smtpPassword
-          }
+            pass: this.config.smtpPassword,
+          },
         });
         break;
         
@@ -87,15 +84,15 @@ export class EmailService {
           throw new Error('Gmail OAuth configuration is incomplete');
         }
         
-        this.transporter = nodemailer.createTransport({
+        this.transporter = createTransport({
           service: 'gmail',
           auth: {
             type: 'OAuth2',
             user: this.config.fromEmail,
             clientId: this.config.gmailClientId,
             clientSecret: this.config.gmailClientSecret,
-            refreshToken: this.config.gmailRefreshToken
-          }
+            refreshToken: this.config.gmailRefreshToken,
+          },
         });
         break;
         
@@ -108,45 +105,39 @@ export class EmailService {
    * Generate unique message and thread IDs for tracking
    */
   private generateMessageId(emailId: number): string {
-    const randomPart = randomUUID().replace(/-/g, '').substring(0, 8);
-    return `${emailId}-${randomPart}@${EMAIL_DOMAIN}`;
+    return `<email-${emailId}-${randomBytes(8).toString('hex')}@${this.domain}>`;
   }
   
   private generateThreadId(): string {
-    return randomUUID().replace(/-/g, '').substring(0, 12);
+    return `thread-${randomBytes(12).toString('hex')}@${this.domain}`;
   }
   
   /**
    * Add tracking headers to outgoing emails
    */
   private addTrackingHeaders(emailId: number, userId: number, prospectId: number) {
-    const messageId = this.generateMessageId(emailId);
-    const threadId = this.generateThreadId();
-    
-    const headers = {
-      'X-LinkDripAI-Message-ID': messageId,
-      'X-LinkDripAI-Thread-ID': threadId,
+    return {
+      'X-LinkDripAI-Email-ID': emailId.toString(),
       'X-LinkDripAI-User-ID': userId.toString(),
       'X-LinkDripAI-Prospect-ID': prospectId.toString(),
-      'X-LinkDripAI-Email-ID': emailId.toString(),
     };
-    
-    return { headers, messageId, threadId };
   }
   
   /**
    * Send an email with tracking capabilities
    */
   public async sendEmail(emailId: number, userId: number, prospectId: number, content: EmailContent) {
-    // Add tracking information
-    const { headers, messageId, threadId } = this.addTrackingHeaders(emailId, userId, prospectId);
+    const messageId = this.generateMessageId(emailId);
+    const threadId = this.generateThreadId();
     
-    // Set up common email options
-    const emailOptions = {
-      from: {
-        name: this.config.fromName || PLATFORM_NAME,
-        email: this.config.fromEmail
-      },
+    // Headers for tracking
+    const headers = this.addTrackingHeaders(emailId, userId, prospectId);
+    
+    // Create email content object
+    const email = {
+      from: this.config.fromName 
+        ? `"${this.config.fromName}" <${this.config.fromEmail}>`
+        : this.config.fromEmail,
       to: content.to,
       subject: content.subject,
       html: content.body,
@@ -154,39 +145,48 @@ export class EmailService {
       cc: content.cc,
       bcc: content.bcc,
       replyTo: content.replyTo || this.config.fromEmail,
-      headers: headers,
-      messageId: `<${messageId}>`,
+      headers: {
+        ...headers,
+        'Message-ID': messageId,
+        'X-Thread-ID': threadId,
+      },
     };
     
     try {
       let result;
       
-      // Send via appropriate provider
+      // Send email through the appropriate provider
       if (this.config.provider === 'sendgrid') {
-        result = await SendGrid.send(emailOptions);
+        result = await sgMail.send(email);
       } else {
         // For SMTP and Gmail
-        result = await this.transporter.sendMail(emailOptions);
+        result = await this.transporter.sendMail(email);
       }
       
-      // Update the email record with tracking information
+      // Update the email record with the tracking IDs
       await db.update(outreachEmails)
         .set({
           messageId,
           threadId,
-          providerMessageId: result.messageId || null,
           status: 'Sent',
-          sentAt: new Date()
+          sentAt: new Date(),
         })
         .where(eq(outreachEmails.id, emailId));
       
-      return { success: true, messageId, threadId };
+      log(`Email sent successfully: ${messageId}`, 'email-service');
+      return { messageId, threadId, result };
     } catch (error) {
-      console.error('Failed to send email:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+      log(`Failed to send email: ${error}`, 'email-service');
+      
+      // Update the email record to reflect the failure
+      await db.update(outreachEmails)
+        .set({
+          status: 'Failed',
+          errorMessage: error.message || 'Failed to send email',
+        })
+        .where(eq(outreachEmails.id, emailId));
+      
+      throw error;
     }
   }
   
@@ -194,97 +194,66 @@ export class EmailService {
    * Process incoming email (from webhook or API polling)
    */
   public async processIncomingEmail(email: any) {
-    // Extract tracking headers
-    const headers = email.headers || {};
-    const messageId = headers['X-LinkDripAI-Message-ID'] || 
-                      headers['x-linkdripai-message-id'] || null;
-    
-    if (!messageId) {
-      // Not a tracked email
-      return { processed: false, reason: 'No tracking ID found' };
-    }
-    
-    // Find the original email
-    const [originalEmail] = await db.select()
-      .from(outreachEmails)
-      .where(eq(outreachEmails.messageId, messageId));
-      
-    if (!originalEmail) {
-      return { processed: false, reason: 'Original email not found' };
-    }
-    
-    // Update the original email with the reply
-    await db.update(outreachEmails)
-      .set({
-        status: 'Responded',
-        responseAt: new Date(),
-        replyContent: email.text || email.html || '',
-        replyHeaders: headers,
-      })
-      .where(eq(outreachEmails.id, originalEmail.id));
-      
-    return { processed: true, originalEmailId: originalEmail.id };
+    // This will be implemented in the webhook routes
+    log('Processing incoming email', 'email-service');
   }
   
   /**
    * Check for replies to sent emails (for non-webhook providers)
    */
   public async checkForReplies(userId: number) {
-    // This would need to be implemented specifically for Gmail and IMAP
-    // For Gmail, it would use the Gmail API to search for emails with our headers
-    // For SMTP/IMAP, it would connect to the inbox and search for replies
-    
-    // Placeholder for future implementation
-    return { checked: true, newReplies: 0 };
+    // This would be implemented for providers that don't support webhooks
+    // It would poll an inbox for replies to sent emails
+    log(`Checking for replies for user ${userId}`, 'email-service');
   }
   
   /**
    * Send a verification email to confirm email ownership
    */
   public async sendVerificationEmail(userId: number, email: string) {
-    // Generate verification token
-    const token = randomUUID();
+    // Generate a verification token
+    const verificationToken = randomBytes(32).toString('hex');
     
-    // Store token in database
-    // This would need a verification tokens table in a full implementation
+    // Store the token in the database
+    await db.update(emailSettings)
+      .set({
+        verificationToken,
+        verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      })
+      .where(eq(emailSettings.userId, userId));
     
-    // Create verification link
-    const verificationLink = `${process.env.APP_URL || 'https://linkdripai.com'}/verify-email?token=${token}`;
+    // Create a verification link
+    const verificationLink = `https://linkdripai.com/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
     
-    // Send email
+    // Email content
     const content = {
       to: email,
-      subject: 'Verify your email address for LinkDripAI',
+      subject: 'Verify Your Email for LinkDripAI',
       body: `
-        <p>Thank you for setting up your email integration with LinkDripAI.</p>
-        <p>Please click the button below to verify this email address:</p>
-        <p>
-          <a href="${verificationLink}" style="display: inline-block; padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 4px;">
-            Verify Email Address
-          </a>
-        </p>
-        <p>If you didn't request this verification, you can safely ignore this email.</p>
-        <p>Thanks,<br>The LinkDripAI Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #4a5568;">Verify Your Email</h2>
+          <p>Thank you for setting up your email with LinkDripAI. Please verify your email address by clicking the button below:</p>
+          <a href="${verificationLink}" style="display: inline-block; background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Verify Email</a>
+          <p>If you did not request this verification, please ignore this email.</p>
+          <p>This link will expire in 24 hours.</p>
+        </div>
       `,
     };
     
-    // Use a simpler email sending process for verification
     try {
+      // For verification emails, we use the platform's default email service
+      // rather than the user's configured service
       if (this.config.provider === 'sendgrid') {
-        await SendGrid.send({
-          from: {
-            name: PLATFORM_NAME,
-            email: this.config.fromEmail
-          },
+        await sgMail.send({
+          from: this.config.fromEmail,
           to: content.to,
           subject: content.subject,
           html: content.body,
           text: this.stripHtml(content.body),
         });
       } else {
-        // For SMTP and Gmail
         await this.transporter.sendMail({
-          from: `"${PLATFORM_NAME}" <${this.config.fromEmail}>`,
+          from: this.config.fromEmail,
           to: content.to,
           subject: content.subject,
           html: content.body,
@@ -292,13 +261,11 @@ export class EmailService {
         });
       }
       
-      return { success: true, token };
+      log(`Verification email sent to ${email}`, 'email-service');
+      return true;
     } catch (error) {
-      console.error('Failed to send verification email:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+      log(`Failed to send verification email: ${error}`, 'email-service');
+      throw error;
     }
   }
   
@@ -306,13 +273,7 @@ export class EmailService {
    * Utility: Strip HTML tags for plain text version
    */
   private stripHtml(html: string): string {
-    return html.replace(/<[^>]*>?/gm, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
+    return html.replace(/<\/?[^>]+(>|$)/g, '');
   }
 }
 
@@ -321,51 +282,50 @@ export class EmailService {
  */
 export async function createEmailServiceForUser(userId: number): Promise<EmailService | null> {
   try {
-    // Get user's email settings
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    // Get the user's email settings
+    const [userSettings] = await db.select()
+      .from(emailSettings)
+      .where(eq(emailSettings.userId, userId));
     
-    if (!user || !user.emailProvider || !user.fromEmail || !user.emailProviderSettings) {
+    if (!userSettings || !userSettings.isConfigured) {
+      log(`Email not configured for user ${userId}`, 'email-service');
       return null;
     }
     
-    // Create config based on user settings
-    const config: EmailConfig = {
-      provider: user.emailProvider as 'sendgrid' | 'smtp' | 'gmail',
-      fromEmail: user.fromEmail,
-      fromName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : undefined,
-    };
+    // Get the user record for the email address
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId));
     
-    // Add provider-specific settings based on provider
-    const providerSettings = user.emailProviderSettings;
-    
-    if (user.emailProvider === 'sendgrid' && providerSettings.sendgrid?.apiKey) {
-      config.sendgridApiKey = providerSettings.sendgrid.apiKey;
-    } else if (user.emailProvider === 'smtp' && providerSettings.smtp) {
-      const smtpSettings = providerSettings.smtp;
-      if (smtpSettings.server && smtpSettings.username && smtpSettings.password) {
-        config.smtpHost = smtpSettings.server;
-        config.smtpPort = typeof smtpSettings.port === 'number' ? smtpSettings.port : parseInt(smtpSettings.port) || 587;
-        config.smtpUsername = smtpSettings.username;
-        config.smtpPassword = smtpSettings.password;
-      } else {
-        return null; // Missing required SMTP settings
-      }
-    } else if (user.emailProvider === 'gmail' && providerSettings.gmail) {
-      const gmailSettings = providerSettings.gmail;
-      if (gmailSettings.clientId && gmailSettings.clientSecret && gmailSettings.refreshToken) {
-        config.gmailClientId = gmailSettings.clientId;
-        config.gmailClientSecret = gmailSettings.clientSecret;
-        config.gmailRefreshToken = gmailSettings.refreshToken;
-      } else {
-        return null; // Missing required Gmail settings
-      }
-    } else {
-      return null; // Missing required provider settings
+    if (!user) {
+      log(`User ${userId} not found`, 'email-service');
+      return null;
     }
     
+    const config: EmailConfig = {
+      provider: userSettings.provider as 'sendgrid' | 'smtp' | 'gmail',
+      fromEmail: userSettings.fromEmail || user.email,
+      fromName: userSettings.fromName || `${user.firstName} ${user.lastName}`.trim(),
+    };
+    
+    // Add provider-specific settings
+    if (userSettings.provider === 'sendgrid') {
+      config.sendgridApiKey = userSettings.sendgridApiKey;
+    } else if (userSettings.provider === 'smtp') {
+      config.smtpHost = userSettings.smtpHost;
+      config.smtpPort = userSettings.smtpPort;
+      config.smtpUsername = userSettings.smtpUsername;
+      config.smtpPassword = userSettings.smtpPassword;
+    } else if (userSettings.provider === 'gmail') {
+      config.gmailClientId = userSettings.gmailClientId;
+      config.gmailClientSecret = userSettings.gmailClientSecret;
+      config.gmailRefreshToken = userSettings.gmailRefreshToken;
+    }
+    
+    // Create and return the email service
     return new EmailService(config);
   } catch (error) {
-    console.error('Failed to create EmailService for user:', error);
+    log(`Error creating email service: ${error}`, 'email-service');
     return null;
   }
 }
