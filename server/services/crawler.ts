@@ -169,7 +169,7 @@ export class OpportunityCrawler {
           domain,
           discoveredAt: new Date(),
           lastChecked: new Date(),
-          status: 'new',
+          status: 'discovered',
         })
         .returning();
         
