@@ -1220,6 +1220,10 @@ export class OpportunityCrawler {
         'https://www.marketingprofs.com/resources/',
         'https://contentmarketinginstitute.com/articles/',
         'https://backlinko.com/hub/seo/resources',
+        'https://www.digitalmarketer.com/resources/',
+        'https://www.emailmonday.com/resources/',
+        'https://www.conversion-rate-experts.com/resources/',
+        'https://www.singlegrain.com/resources/',
         
         // Industry-specific resource pages
         'https://www.convinceandconvert.com/resources/',
@@ -1227,13 +1231,25 @@ export class OpportunityCrawler {
         'https://www.crazyegg.com/blog/resources/',
         'https://www.copyblogger.com/content-marketing-tools/',
         'https://blog.hootsuite.com/social-media-resources/',
+        'https://www.authorityhacker.com/resources/',
+        'https://bloggerspassion.com/resources/',
+        'https://matthewwoodward.co.uk/resources/',
+        'https://adamenfroy.com/resources',
+        'https://www.robbierichards.com/resources/',
+        'https://www.indiehackers.com/resources',
         
         // Web development resources
         'https://css-tricks.com/guides/',
         'https://developer.mozilla.org/en-US/docs/Web/Guide',
         'https://www.smashingmagazine.com/guides/',
         'https://web.dev/learn/',
-        'https://www.digitalocean.com/community/tutorials'
+        'https://www.digitalocean.com/community/tutorials',
+        'https://www.freecodecamp.org/news/tag/resources/',
+        'https://sitepoint.com/resources/',
+        'https://webdesignledger.com/resources/',
+        'https://hackernoon.com/tagged/resource',
+        'https://www.producthunt.com/topics/resources',
+        'https://tympanus.net/codrops/category/resources/'
       ],
       directory: [
         // General business directories
@@ -1245,6 +1261,13 @@ export class OpportunityCrawler {
         'https://www.chamberofcommerce.com/business-directory',
         'https://www.hotfrog.com/',
         'https://www.yelp.com/search',
+        'https://www.dmoz-odp.org/',
+        'https://www.ezilon.com/',
+        'https://www.brownbook.net/',
+        'https://www.angieslist.com/',
+        'https://www.manta.com/',
+        'https://www.superpages.com/',
+        'https://www.aboutus.com/',
         
         // Industry-specific directories
         'https://www.g2.com/categories/',
@@ -1253,13 +1276,25 @@ export class OpportunityCrawler {
         'https://www.goodfirms.co/',
         'https://www.sitejabber.com/',
         'https://www.sortlist.com/',
+        'https://www.trustpilot.com/',
+        'https://www.softwareadvice.com/categories/',
+        'https://digital.com/categories/',
+        'https://getapp.com/categories/',
+        'https://www.webwiki.com/',
+        'https://www.producthunt.com/topics/',
+        'https://www.allbusiness.com/business-directory/',
         
         // Local business directories
         'https://www.yellowpages.com/',
         'https://www.bbb.org/',
         'https://www.thomasnet.com/',
         'https://www.angi.com/',
-        'https://www.tripadvisor.com/'
+        'https://www.tripadvisor.com/',
+        'https://www.merchantcircle.com/',
+        'https://www.citysearch.com/',
+        'https://www.insiderpages.com/',
+        'https://www.local.com/',
+        'https://www.foursquare.com/'
       ],
       guest_post: [
         // Marketing/SEO blogs that accept guest posts
