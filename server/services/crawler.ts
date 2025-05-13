@@ -406,7 +406,7 @@ export class OpportunityCrawler {
             // Update the opportunity with metrics
             await db.update(discoveredOpportunities)
               .set({ 
-                status: 'processed',
+                status: 'analyzed',
                 domainAuthority: Math.round(metrics.domain_authority || 0),
                 pageAuthority: Math.round(metrics.page_authority || 0),
                 spamScore: Math.round((metrics.spam_score || 0) * 10), // Scale to 0-10 integer range
