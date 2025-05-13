@@ -530,8 +530,8 @@ async function seedDiscoveredOpportunities() {
     const domains = nicheBasedDomains[niche];
     
     for (const domain of domains) {
-      // Create 5-8 opportunities per domain with different source types
-      const numOpportunities = Math.floor(Math.random() * 4) + 5;
+      // Create 10-15 opportunities per domain with different source types
+      const numOpportunities = Math.floor(Math.random() * 6) + 10;
       
       for (let i = 0; i < numOpportunities; i++) {
         const sourceType = sourceTypes[Math.floor(Math.random() * sourceTypes.length)];
