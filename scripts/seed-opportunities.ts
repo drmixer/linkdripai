@@ -515,10 +515,12 @@ async function seedDiscoveredOpportunities() {
   const existingOpportunities = await db.select({ count: sql`count(*)` }).from(discoveredOpportunities);
   const count = parseInt(existingOpportunities[0]?.count.toString() || '0');
   
-  if (count > 0) {
-    console.log(`Database already has ${count} discovered opportunities. Skipping.`);
-    return;
-  }
+  console.log(`Database has ${count} discovered opportunities. Adding more...`);
+  // Force adding more opportunities
+  // if (count > 0) {
+  //   console.log(`Database already has ${count} discovered opportunities. Skipping.`);
+  //   return;
+  // }
   
   // Create opportunities
   const opportunities = [];
@@ -590,10 +592,11 @@ async function seedCrawlerJobs() {
   const existingJobs = await db.select({ count: sql`count(*)` }).from(crawlerJobs);
   const count = parseInt(existingJobs[0]?.count.toString() || '0');
   
-  if (count > 0) {
-    console.log(`Database already has ${count} crawler jobs. Skipping.`);
-    return;
-  }
+  console.log(`Database has ${count} crawler jobs. Adding more...`);
+  // if (count > 0) {
+  //   console.log(`Database already has ${count} crawler jobs. Skipping.`);
+  //   return;
+  // }
   
   // Create crawler jobs for different niches
   const jobs = [];
@@ -765,10 +768,11 @@ async function createWebsiteProfiles() {
   const existingProfiles = await db.select({ count: sql`count(*)` }).from(websiteProfiles);
   const count = parseInt(existingProfiles[0]?.count.toString() || '0');
   
-  if (count > 0) {
-    console.log(`Database already has ${count} website profiles. Skipping.`);
-    return;
-  }
+  console.log(`Database has ${count} website profiles. Adding more...`);
+  // if (count > 0) {
+  //   console.log(`Database already has ${count} website profiles. Skipping.`);
+  //   return;
+  // }
   
   // Get all websites
   const allWebsites = await db.select().from(websites);
