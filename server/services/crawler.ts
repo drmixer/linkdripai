@@ -810,7 +810,7 @@ export class OpportunityCrawler {
         return paragraphs.join('\n\n').substring(0, 1000);
       })();
       
-      // Return the results with enhanced metadata
+      // Return the results with enhanced metadata and improved contact info structure
       return {
         status: 'success',
         url: formattedUrl,
@@ -818,6 +818,8 @@ export class OpportunityCrawler {
         description: metaDescription,
         emails,
         hasContactForm,
+        contactFormUrl,
+        socialProfiles,
         opportunityType,
         categories: uniqueCategories,
         content: contentSummary,
@@ -1014,7 +1016,7 @@ export class OpportunityCrawler {
             const isHighQuality = result.relevanceScore && result.relevanceScore >= 4;
             
             if (isRequestedType && hasContactMethod && hasGoodContent) {
-              // Store the opportunity with all available metadata
+              // Store the opportunity with all available metadata and enhanced contact info
               const opportunity = await this.storeDiscoveredOpportunity({
                 url: result.url,
                 domain: this.extractDomain(result.url),
@@ -1032,6 +1034,8 @@ export class OpportunityCrawler {
                 metadataRaw: JSON.stringify({
                   crawlDate: result.crawlDate || new Date().toISOString(),
                   allEmails: result.emails, // Store all discovered emails
+                  socialProfiles: result.socialProfiles || [], // Store all social profiles
+                  contactFormUrl: result.contactFormUrl, // Store contact form URL
                   wordCount: result.content ? result.content.split(/\s+/).length : 0,
                   relevance: result.relevanceScore || 0,
                   opportunityQuality: isHighQuality ? 'high' : 'standard'
@@ -1077,7 +1081,7 @@ export class OpportunityCrawler {
                 const isSubHighQuality = subResult.relevanceScore && subResult.relevanceScore >= 4;
                 
                 if (isRequestedSubType && hasSubContactMethod && hasSubGoodContent) {
-                  // Store the opportunity with all available metadata
+                  // Store the opportunity with all available metadata and enhanced contact info
                   const opportunity = await this.storeDiscoveredOpportunity({
                     url: subResult.url,
                     domain: this.extractDomain(subResult.url),
@@ -1095,6 +1099,8 @@ export class OpportunityCrawler {
                     metadataRaw: JSON.stringify({
                       crawlDate: subResult.crawlDate || new Date().toISOString(),
                       allEmails: subResult.emails, // Store all discovered emails
+                      socialProfiles: subResult.socialProfiles || [], // Store all social profiles
+                      contactFormUrl: subResult.contactFormUrl, // Store contact form URL
                       wordCount: subResult.content ? subResult.content.split(/\s+/).length : 0,
                       relevance: subResult.relevanceScore || 0,
                       opportunityQuality: isSubHighQuality ? 'high' : 'standard'
