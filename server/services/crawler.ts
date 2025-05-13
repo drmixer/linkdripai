@@ -1305,6 +1305,14 @@ export class OpportunityCrawler {
         'https://contentmarketinginstitute.com/blog/contributor-guidelines/',
         'https://www.jeffbullas.com/submit-a-guest-post/',
         'https://blog.hubspot.com/submit-a-guest-post',
+        'https://ahrefs.com/blog/write-for-us/',
+        'https://backlinko.com/write-for-us',
+        'https://moz.com/community/join',
+        'https://www.wordstream.com/write-for-wordstream',
+        'https://www.crazyegg.com/blog/write-for-us/',
+        'https://buffer.com/resources/write-for-us/',
+        'https://www.copyblogger.com/guest-post-guidelines/',
+        'https://www.searchenginewatch.com/contact-us/',
         
         // Social media and digital marketing
         'https://www.socialmediaexaminer.com/writers/',
@@ -1312,6 +1320,12 @@ export class OpportunityCrawler {
         'https://sproutsocial.com/insights/write-for-us/',
         'https://www.postplanner.com/write-for-us/',
         'https://www.digitalmarketer.com/blog/write-for-digitalmarketer/',
+        'https://www.socialmediatoday.com/content-submission/',
+        'https://www.hootsuite.com/resources/guest-article-guidelines',
+        'https://www.marketingprofs.com/write-for-us',
+        'https://www.smartinsights.com/submit-article/',
+        'https://blog.mailchimp.com/guest-contributor-guidelines/',
+        'https://www.emailmonday.com/guest-blogging/',
         
         // Technology and business
         'https://techcrunch.com/got-a-tip/',
@@ -1319,13 +1333,29 @@ export class OpportunityCrawler {
         'https://www.forbes.com/sites/quora/',
         'https://www.inc.com/help-and-feedback.html',
         'https://www.fastcompany.com/section/hit-the-ground-running',
+        'https://readwrite.com/contact/',
+        'https://www.wired.com/about/press/',
+        'https://thenextweb.com/about#contact',
+        'https://venturebeat.com/guest-posts/',
+        'https://hackernoon.com/submit-story',
+        'https://smallbiztrends.com/contact-us',
         
         // Industry-specific guest post opportunities
         'https://www.addthis.com/academy/write-for-us/',
         'https://www.impactplus.com/write-for-us',
         'https://www.singlegrain.com/contact/',
         'https://neilpatel.com/write-for-neil/',
-        'https://www.blogtyrant.com/write-for-us/'
+        'https://www.blogtyrant.com/write-for-us/',
+        'https://www.smartblogger.com/write-for-us/',
+        'https://www.quicksprout.com/contact/',
+        'https://www.robbierichards.com/write-for-us/',
+        'https://www.matthewwoodward.co.uk/write-for-us/',
+        'https://www.adamenfroy.com/blogging-community',
+        'https://authorityhacker.com/contact/',
+        'https://www.growthbadger.com/contribute/',
+        'https://bloggerspassion.com/write-for-us/',
+        'https://www.websiteplanet.com/write-for-us/',
+        'https://madlemmings.com/write-for-us/'
       ],
       forum: [
         // SEO and marketing forums
@@ -1334,6 +1364,11 @@ export class OpportunityCrawler {
         'https://moz.com/community/q/',
         'https://community.semrush.com/',
         'https://www.warriorforum.com/',
+        'https://www.blackhatworld.com/',
+        'https://seoforums.org/',
+        'https://www.seohut.com/',
+        'https://www.bigseo.com/',
+        'https://www.cre8asiteforums.com/',
         
         // Tech and startup communities
         'https://www.producthunt.com/',
@@ -1341,6 +1376,11 @@ export class OpportunityCrawler {
         'https://indiehackers.com/groups/marketing',
         'https://www.indiehackers.com/group/content-marketing',
         'https://news.ycombinator.com/',
+        'https://www.wip.co/',
+        'https://betalist.com/',
+        'https://startups.com/communities',
+        'https://www.startupschool.org/posts',
+        'https://pioneer.app/blog',
         
         // Social media discussion groups
         'https://www.reddit.com/r/SEO/',
@@ -1348,13 +1388,23 @@ export class OpportunityCrawler {
         'https://www.reddit.com/r/content_marketing/',
         'https://www.reddit.com/r/Entrepreneur/',
         'https://www.reddit.com/r/smallbusiness/',
+        'https://www.reddit.com/r/startups/',
+        'https://www.reddit.com/r/webmarketing/',
+        'https://www.reddit.com/r/bigseo/',
+        'https://www.reddit.com/r/tech/',
+        'https://www.reddit.com/r/digital_marketing/',
         
         // Q&A platforms
         'https://www.quora.com/topic/Search-Engine-Optimization-SEO',
         'https://www.quora.com/topic/Digital-Marketing',
         'https://stackoverflow.com/questions/tagged/seo',
         'https://webmasters.stackexchange.com/',
-        'https://ahrefs.com/blog/haro/'
+        'https://ahrefs.com/blog/haro/',
+        'https://answers.moz.com/',
+        'https://www.toprankblog.com/questions/',
+        'https://digitalmarketer.com/engage/',
+        'https://community.ahrefs.com/',
+        'https://help.ahrefs.com/en/categories/keyword-research'
       ],
       blog: [
         // High DA SEO and marketing blogs
@@ -1365,6 +1415,13 @@ export class OpportunityCrawler {
         'https://searchengineland.com/',
         'https://www.searchenginejournal.com/category/seo/',
         'https://backlinko.com/blog',
+        'https://www.singlegrain.com/blog/',
+        'https://bloggerspassion.com/blog/',
+        'https://rankmath.com/blog/',
+        'https://yoast.com/seo-blog/',
+        'https://cognitiveseo.com/blog/',
+        'https://www.diggitymarketing.com/blog/',
+        'https://www.gotchseo.com/blog/',
         
         // Industry news and updates
         'https://www.seroundtable.com/',
@@ -1372,6 +1429,12 @@ export class OpportunityCrawler {
         'https://www.thesempost.com/',
         'https://www.searchenginewatch.com/',
         'https://www.siegemedia.com/blog',
+        'https://www.seobythesea.com/',
+        'https://www.searchmetrics.com/blog/',
+        'https://www.searchenginegurus.com/blog/',
+        'https://www.seerinteractive.com/blog/',
+        'https://seoroundtable.com/',
+        'https://www.seoreseller.com/blog/',
         
         // Content marketing blogs
         'https://www.copyblogger.com/',
@@ -1379,13 +1442,25 @@ export class OpportunityCrawler {
         'https://www.convinceandconvert.com/blog/',
         'https://contentmarketinginstitute.com/blog/',
         'https://www.orbitmedia.com/blog/',
+        'https://www.clearvoice.com/blog/',
+        'https://cxl.com/blog/',
+        'https://express-writers.com/blog/',
+        'https://writtent.com/blog/',
+        'https://www.marketingprofs.com/articles/',
+        'https://blog.hubspot.com/marketing/',
         
         // Growth and analytics
         'https://www.crazyegg.com/blog/',
         'https://www.growthmachine.com/blog',
         'https://growthhackers.com/posts',
         'https://blog.kissmetrics.com/',
-        'https://www.matthewwoodward.co.uk/blog/'
+        'https://www.matthewwoodward.co.uk/blog/',
+        'https://databox.com/blog/',
+        'https://www.ppchero.com/blog/',
+        'https://www.wordstream.com/blog',
+        'https://www.optimizesmart.com/blog/',
+        'https://www.similarweb.com/blog/',
+        'https://www.practicalecommerce.com/articles/'
       ],
       competitor_backlink: [
         // Backlink analysis tools
@@ -1396,6 +1471,12 @@ export class OpportunityCrawler {
         'https://neilpatel.com/backlinks/',
         'https://app.linkresearchtools.com/toolkit/quickbacklinks.php',
         'https://cognitiveseo.com/backlink-checker/',
+        'https://linkgraph.com/free-backlink-checker/',
+        'https://www.backlinktest.com/',
+        'https://smallseotools.com/backlink-checker/',
+        'https://sitechecker.pro/backlink-checker/',
+        'https://www.seoptimer.com/backlinks-checker',
+        'https://www.openlinkprofiler.org/',
         
         // Link building resources
         'https://backlinko.com/link-building',
@@ -1403,13 +1484,25 @@ export class OpportunityCrawler {
         'https://www.buzzstream.com/',
         'https://www.linkresearchtools.com/',
         'https://www.screamingfrog.co.uk/seo-spider/',
+        'https://respona.com/blog/link-building-tools/',
+        'https://pitchbox.com/resources/',
+        'https://pointvisible.com/blog/link-building-strategies/',
+        'https://www.linkdepartment.com/resources',
+        'https://www.pageonepower.com/resources',
+        'https://www.fatjoe.com/blog/category/link-building/',
         
         // Competitor analysis tools
         'https://www.spyfu.com/',
         'https://serpstat.com/',
         'https://www.similarweb.com/',
         'https://moz.com/explorer',
-        'https://ubersuggest.com/user/sites'
+        'https://ubersuggest.com/user/sites',
+        'https://www.semrush.com/competitive-research/',
+        'https://www.alexa.com/siteinfo',
+        'https://kwfinder.com/',
+        'https://www.ispot.tv/competitors',
+        'https://www.owler.com/company/example',
+        'https://www.crunchbase.com/discover/organization.companies'
       ],
       social_mention: [
         // Major social platforms
@@ -1418,6 +1511,11 @@ export class OpportunityCrawler {
         'https://www.facebook.com/search/',
         'https://www.reddit.com/search/',
         'https://www.pinterest.com/search/',
+        'https://www.instagram.com/explore/',
+        'https://mastodon.social/explore',
+        'https://www.threads.net/explore',
+        'https://bluesky.app/explore',
+        'https://www.snapchat.com/discover',
         
         // Social mention monitoring
         'https://www.instagram.com/explore/',
@@ -1425,13 +1523,23 @@ export class OpportunityCrawler {
         'https://medium.com/search',
         'https://www.tumblr.com/explore/',
         'https://www.tiktok.com/discover',
+        'https://www.flickr.com/search/',
+        'https://www.youtube.com/results',
+        'https://www.slideshare.net/search/',
+        'https://www.twitch.tv/directory',
+        'https://soundcloud.com/search',
         
         // Industry-specific social platforms
         'https://www.producthunt.com/',
         'https://hashtagify.me/',
         'https://www.brandmentions.com/',
         'https://www.socialmention.com/',
-        'https://mention.com/en/'
+        'https://mention.com/en/',
+        'https://www.google.com/alerts',
+        'https://answerthepublic.com/',
+        'https://keyhole.co/',
+        'https://www.hootsuite.com/platform/streams',
+        'https://sproutsocial.com/features/social-media-listening/'
       ],
       comment_section: [
         // High-engagement blogs
@@ -1440,6 +1548,11 @@ export class OpportunityCrawler {
         'https://neilpatel.com/blog/',
         'https://searchengineland.com/',
         'https://www.searchenginejournal.com/',
+        'https://blog.hubspot.com/',
+        'https://www.jeffbullas.com/',
+        'https://blog.buffer.com/',
+        'https://www.quicksprout.com/blog/',
+        'https://www.impactplus.com/blog',
         
         // Industry news with active comments
         'https://www.seroundtable.com/',
@@ -1447,13 +1560,23 @@ export class OpportunityCrawler {
         'https://www.gsqi.com/marketing-blog/',
         'https://www.seoroundtable.com/',
         'https://www.webmasterworld.com/',
+        'https://www.searchenginejournal.com/category/news/',
+        'https://www.marketingdive.com/',
+        'https://www.adweek.com/',
+        'https://thenextweb.com/search',
+        'https://venturebeat.com/',
         
         // Marketing blogs with engagement
         'https://www.copyblogger.com/',
         'https://www.problogger.com/',
         'https://www.smartblogger.com/',
         'https://www.convinceandconvert.com/blog/',
-        'https://www.socialmediaexaminer.com/blog/'
+        'https://www.socialmediaexaminer.com/blog/',
+        'https://www.socialmediatoday.com/',
+        'https://www.digitalmarketer.com/blog/',
+        'https://www.wordstream.com/blog',
+        'https://blog.kissmetrics.com/',
+        'https://coschedule.com/blog/'
       ]
     };
     
