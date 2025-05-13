@@ -19,6 +19,22 @@ import emailWebhookRoutes from "./routes/email-webhook";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+  
+  // Start the discovery scheduler to continuously find opportunities
+  const discoveryScheduler = getDiscoveryScheduler();
+  // Run every 12 hours (in production this would be configured based on system load)
+  discoveryScheduler.startScheduler(12);
+  
+  // Run the discovery pipeline once at startup to initialize opportunities
+  setTimeout(() => {
+    discoveryScheduler.runDiscoveryPipeline()
+      .then(result => {
+        console.log('[Discovery] Initial pipeline run complete:', result.success);
+      })
+      .catch(error => {
+        console.error('[Discovery] Initial pipeline run failed:', error);
+      });
+  }, 30000); // Wait 30 seconds after server start to run initial pipeline
 
   // Middleware to check if user is authenticated
   const isAuthenticated = (req: any, res: any, next: any) => {

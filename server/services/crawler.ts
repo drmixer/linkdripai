@@ -17,9 +17,16 @@ import * as cheerio from 'cheerio';
  * 3. Blogs with guest post opportunities
  * 4. Forums
  * 5. Specific URLs from competitor backlinks
+ * 
+ * Features continuous discovery and automated refreshing of opportunities.
  */
 export class OpportunityCrawler {
   private mozService: MozApiService;
+  private continuousCrawlRunning: boolean = false;
+  private continuousIntervalId: NodeJS.Timeout | null = null;
+  private refreshIntervalId: NodeJS.Timeout | null = null;
+  private crawlDelay = 5000; // 5 seconds between requests to be respectful
+  
   private userAgents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15',
