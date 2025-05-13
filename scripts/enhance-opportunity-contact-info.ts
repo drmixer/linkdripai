@@ -1,6 +1,6 @@
 /**
- * This script specifically updates premium opportunities with structured contact information
- * by extracting it from pages and storing it in the contactInfo field
+ * This script enhances contact information for premium opportunities using
+ * our improved extraction techniques
  */
 import { db } from '../server/db';
 import { discoveredOpportunities } from '../shared/schema';
@@ -297,7 +297,7 @@ async function extractEmailsFromPage(url: string): Promise<string[]> {
     
     console.log(`Found ${filteredEmails.length} emails on ${url}`);
     return Array.from(new Set(filteredEmails)); // Remove duplicates
-  } catch (error) {
+  } catch (error: any) {
     console.log(`Failed to extract emails from ${url}: ${error.message}`);
     return [];
   }
@@ -364,12 +364,14 @@ async function findContactFormUrl(url: string): Promise<string | null> {
     
     if (structuredDataContactUrl) {
       // Normalize the structured data URL
-      if (structuredDataContactUrl.startsWith('http')) {
-        return structuredDataContactUrl;
-      } else if (structuredDataContactUrl.startsWith('/')) {
-        return `${baseUrl.protocol}//${domain}${structuredDataContactUrl}`;
-      } else {
-        return `${baseUrl.protocol}//${domain}/${structuredDataContactUrl}`;
+      if (typeof structuredDataContactUrl === 'string') {
+        if (structuredDataContactUrl.startsWith('http')) {
+          return structuredDataContactUrl;
+        } else if (structuredDataContactUrl.startsWith('/')) {
+          return `${baseUrl.protocol}//${domain}${structuredDataContactUrl}`;
+        } else {
+          return `${baseUrl.protocol}//${domain}/${structuredDataContactUrl}`;
+        }
       }
     }
     
@@ -465,7 +467,7 @@ async function findContactFormUrl(url: string): Promise<string | null> {
     
     // Step 4: If no link found on the page, try common contact paths
     return await checkCommonContactPaths(baseUrl.protocol, domain, contactPaths);
-  } catch (error) {
+  } catch (error: any) {
     console.log(`Error finding contact form: ${error.message}`);
     return null;
   }
@@ -712,177 +714,200 @@ async function extractSocialProfiles(url: string): Promise<Array<{platform: stri
     }
     
     return profiles;
-  } catch (error) {
+  } catch (error: any) {
     console.log(`Error extracting social profiles: ${error.message}`);
     return [];
   }
 }
 
-async function updatePremiumOpportunityContactInfo() {
-  console.log('Starting to update contact information for premium opportunities...');
+/**
+ * Update premium opportunities with enhanced contact information extraction
+ */
+async function enhanceOpportunityContactInfo() {
+  console.log('Starting to enhance contact information for premium opportunities...');
   
-  // Get premium opportunities without contact info
-  const opportunities = await db.select()
-    .from(discoveredOpportunities)
-    .where(sql`"isPremium" = true AND "contactInfo" IS NULL`)
-    .limit(20); // Process fewer to avoid timeouts
-  
-  console.log(`Found ${opportunities.length} premium opportunities that need contact info`);
-  
-  let updatedCount = 0;
-  let failedCount = 0;
-  
-  // Number of parallel requests to make at once - smaller batch size to avoid overloading
-  const BATCH_SIZE = 3;
-  
-  // Process in parallel batches
-  for (let i = 0; i < opportunities.length; i += BATCH_SIZE) {
-    const batch = opportunities.slice(i, i + BATCH_SIZE);
-    console.log(`Processing batch of ${batch.length} opportunities (${i+1} to ${Math.min(i+BATCH_SIZE, opportunities.length)} of ${opportunities.length})`);
+  try {
+    // Get all premium opportunities
+    const opportunities = await db.select()
+      .from(discoveredOpportunities)
+      .where(
+        sql`isPremium = true`
+      )
+      .limit(25); // Process in smaller batches for better error handling
     
-    // Process batch in parallel
-    const promises = batch.map(async (opp) => {
-      try {
-        console.log(`Processing premium opportunity #${opp.id}: ${opp.domain}`);
-        
-        let contactInfoObj: Record<string, any> = {};
-        let metadataObj: Record<string, any> = {};
-        
-        // Parse existing metadata if available
-        if (opp.rawData) {
-          try {
-            metadataObj = typeof opp.rawData === 'string' ? JSON.parse(opp.rawData) : opp.rawData;
-          } catch (e) {
-            console.log(`Error parsing metadata for opportunity #${opp.id}`);
-          }
+    console.log(`Found ${opportunities.length} premium opportunities to enhance with improved contact info`);
+    
+    // Create a semaphore to limit concurrent requests (prevent overwhelming target servers)
+    const MAX_CONCURRENT = 5;
+    let runningTasks = 0;
+    let completedTasks = 0;
+    const taskQueue = [];
+    
+    // Create a promise that resolves when all opportunities are processed
+    const processingComplete = new Promise((resolve, reject) => {
+      // Function to process the next opportunity in the queue
+      const processNext = async () => {
+        if (taskQueue.length === 0 && runningTasks === 0) {
+          return resolve(null);
         }
         
-        // Check if we already have email info in metadata
-        if (metadataObj.allEmails && Array.isArray(metadataObj.allEmails) && metadataObj.allEmails.length > 0) {
-          contactInfoObj.additionalEmails = metadataObj.allEmails;
+        if (taskQueue.length > 0 && runningTasks < MAX_CONCURRENT) {
+          const opportunity = taskQueue.shift();
+          runningTasks++;
           
-          // Use first email as primary
-          if (metadataObj.allEmails.length > 0) {
-            contactInfoObj.email = metadataObj.allEmails[0];
-          }
-        } 
-        // If we have a contact email in the metadata
-        else if (metadataObj.contactEmail) {
-          contactInfoObj.email = metadataObj.contactEmail;
-        }
-        // If we have no email info at all, try to fetch from the page
-        else {
           try {
-            const emails = await extractEmailsFromPage(opp.url);
-            if (emails.length > 0) {
-              contactInfoObj.email = emails[0];
-              if (emails.length > 1) {
-                contactInfoObj.additionalEmails = emails.slice(1);
-              }
-              
-              // Update metadata as well
-              metadataObj.allEmails = emails;
+            await processOpportunity(opportunity);
+          } catch (error: any) {
+            console.error(`Error in task processing: ${error.message}`);
+          } finally {
+            runningTasks--;
+            completedTasks++;
+            
+            // Log progress periodically
+            if (completedTasks % 5 === 0 || completedTasks === opportunities.length) {
+              console.log(`Progress: ${completedTasks}/${opportunities.length} opportunities processed`);
             }
-          } catch (emailError) {
-            console.log(`Error extracting emails from ${opp.url}: ${emailError.message}`);
+            
+            // Process next opportunity
+            processNext();
           }
         }
-        
-        // Always use the domain homepage as the primary URL for extracting contact info
-        const baseUrl = new URL(opp.url);
-        const homepageUrl = `${baseUrl.protocol}//${baseUrl.hostname}`;
-        
-        // Try to find a contact form - homepage is more likely to have navigation to contact page
-        try {
-          // Try homepage first, then fall back to specific page URL
-          const contactFormUrl = await findContactFormUrl(homepageUrl) || 
-                               await findContactFormUrl(opp.url);
-          
-          if (contactFormUrl) {
-            contactInfoObj.form = contactFormUrl;
-            metadataObj.contactFormUrl = contactFormUrl;
-          }
-        } catch (formError) {
-          console.log(`Error finding contact form for ${homepageUrl}: ${formError.message}`);
-        }
-        
-        // If we don't have emails yet, try to extract from homepage
-        if (!contactInfoObj.email && !contactInfoObj.additionalEmails) {
-          try {
-            const emails = await extractEmailsFromPage(homepageUrl);
-            if (emails.length > 0) {
-              contactInfoObj.email = emails[0];
-              if (emails.length > 1) {
-                contactInfoObj.additionalEmails = emails.slice(1);
-              }
-              
-              // Update metadata as well
-              metadataObj.allEmails = emails;
-            }
-          } catch (emailError) {
-            console.log(`Error extracting emails from homepage: ${emailError.message}`);
-          }
-        }
-        
-        // Extract social profiles if not already in metadata
-        if (!metadataObj.socialProfiles || !Array.isArray(metadataObj.socialProfiles) || metadataObj.socialProfiles.length === 0) {
-          try {
-            // Prioritize homepage for social profiles since they're usually in the footer
-            const socialProfiles = await extractSocialProfiles(homepageUrl);
-                                
-            if (socialProfiles.length > 0) {
-              contactInfoObj.social = socialProfiles;
-              metadataObj.socialProfiles = socialProfiles;
-            }
-          } catch (socialError) {
-            console.log(`Error extracting social profiles for ${homepageUrl}: ${socialError.message}`);
-          }
-        } else if (metadataObj.socialProfiles && Array.isArray(metadataObj.socialProfiles) && metadataObj.socialProfiles.length > 0) {
-          contactInfoObj.social = metadataObj.socialProfiles;
-        }
-        
-        // Update the database - use quoted names for PostgreSQL
-        await db.execute(sql`
-          UPDATE "discoveredOpportunities"
-          SET "contactInfo" = ${Object.keys(contactInfoObj).length > 0 ? JSON.stringify(contactInfoObj) : null}, 
-              "rawData" = ${JSON.stringify(metadataObj)}
-          WHERE "id" = ${opp.id}
-        `);
-        
-        updatedCount++;
-        console.log(`Updated contact info for premium opportunity #${opp.id}`);
-        return true;
-      } catch (error) {
-        console.error(`Error updating opportunity #${opp.id}:`, error);
-        failedCount++;
-        return false;
+      };
+      
+      // Add all opportunities to the task queue
+      taskQueue.push(...opportunities);
+      
+      // Start initial batch of tasks
+      for (let i = 0; i < Math.min(MAX_CONCURRENT, opportunities.length); i++) {
+        processNext();
       }
     });
     
-    // Wait for all promises in this batch to resolve
-    await Promise.all(promises);
+    // Process a single opportunity
+    async function processOpportunity(opportunity: any) {
+      console.log(`Processing opportunity: ${opportunity.domain} (${opportunity.url})`);
+      
+      try {
+        // Get existing contact info if any
+        const existingContactInfo = opportunity.contactInfo ? JSON.parse(opportunity.contactInfo) : {
+          emails: [],
+          contactForm: null,
+          socialProfiles: []
+        };
+        
+        // Extract emails from the page
+        const emails = await extractEmailsFromPage(opportunity.url);
+        console.log(`Found ${emails.length} emails on main page`);
+        
+        // Find contact form
+        const contactFormUrl = await findContactFormUrl(opportunity.url);
+        console.log(`Contact form: ${contactFormUrl || 'Not found'}`);
+        
+        // Extract social profiles
+        const socialProfiles = await extractSocialProfiles(opportunity.url);
+        console.log(`Found ${socialProfiles.length} social profiles`);
+        
+        // Try to extract "about" page content if emails are missing
+        let aboutPageEmails = [];
+        if (emails.length === 0) {
+          try {
+            // Try to find the about page
+            const urlObj = new URL(opportunity.url);
+            const aboutUrls = [
+              `${urlObj.protocol}//${urlObj.hostname}/about`,
+              `${urlObj.protocol}//${urlObj.hostname}/about-us`,
+              `${urlObj.protocol}//${urlObj.hostname}/team`,
+              `${urlObj.protocol}//${urlObj.hostname}/company`
+            ];
+            
+            for (const aboutUrl of aboutUrls) {
+              console.log(`Checking about page for emails: ${aboutUrl}`);
+              aboutPageEmails = await extractEmailsFromPage(aboutUrl);
+              if (aboutPageEmails.length > 0) {
+                console.log(`Found ${aboutPageEmails.length} emails on about page: ${aboutUrl}`);
+                break;
+              }
+            }
+          } catch (aboutError) {
+            console.log(`Error checking about pages: ${aboutError.message}`);
+          }
+        }
+        
+        // Combine all found emails with existing emails
+        const allEmails = [...new Set([
+          ...existingContactInfo.emails,
+          ...emails, 
+          ...aboutPageEmails
+        ])];
+        
+        // Prepare enhanced contactInfo object
+        const enhancedContactInfo = {
+          emails: allEmails,
+          contactForm: contactFormUrl || existingContactInfo.contactForm,
+          socialProfiles: socialProfiles.length > 0 ? socialProfiles : existingContactInfo.socialProfiles,
+          lastUpdated: new Date().toISOString(),
+          extractionDetails: {
+            mainPageEmailsFound: emails.length,
+            aboutPageEmailsFound: aboutPageEmails.length,
+            hasContactForm: !!contactFormUrl,
+            socialProfilesFound: socialProfiles.length,
+            enhancedExtraction: true
+          }
+        };
+        
+        // Update the opportunity in the database
+        await db.update(discoveredOpportunities)
+          .set({
+            contactInfo: JSON.stringify(enhancedContactInfo)
+          })
+          .where(sql`id = ${opportunity.id}`);
+        
+        console.log(`Enhanced contact info for ${opportunity.domain}: ${allEmails.length} emails, form: ${contactFormUrl ? 'yes' : 'no'}, ${socialProfiles.length} social profiles`);
+      } catch (error: any) {
+        console.error(`Error processing opportunity ${opportunity.url}: ${error.message}`);
+        
+        // Update with error information but preserve existing data
+        const existingContactInfo = opportunity.contactInfo ? JSON.parse(opportunity.contactInfo) : {
+          emails: [],
+          contactForm: null,
+          socialProfiles: []
+        };
+        
+        const fallbackContactInfo = {
+          ...existingContactInfo,
+          lastUpdated: new Date().toISOString(),
+          extractionDetails: {
+            ...(existingContactInfo.extractionDetails || {}),
+            error: `Enhancement failed: ${error.message}`,
+            enhancementAttempted: true
+          }
+        };
+        
+        // Update with at least the attempt information
+        await db.update(discoveredOpportunities)
+          .set({
+            contactInfo: JSON.stringify(fallbackContactInfo)
+          })
+          .where(sql`id = ${opportunity.id}`);
+      }
+    }
     
-    // Add a small delay between batches to avoid overwhelming the system
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for all opportunities to be processed
+    await processingComplete;
+    
+    console.log('Finished enhancing contact information for premium opportunities');
+  } catch (error: any) {
+    console.error(`Error enhancing contact information: ${error.message}`);
   }
-  
-  console.log(`Contact info update complete for premium opportunities. Updated: ${updatedCount}, Failed: ${failedCount}`);
-  
-  // If there are more opportunities to process, you can run again
-  const remainingCount = await db.execute(sql`
-    SELECT COUNT(*) FROM "discoveredOpportunities" 
-    WHERE "isPremium" = true AND "contactInfo" IS NULL
-  `);
-  
-  console.log(`Remaining premium opportunities to process: ${remainingCount.rows[0]?.count || 0}`);
 }
 
-// Run the script
-updatePremiumOpportunityContactInfo()
-  .catch(error => {
-    console.error('Error running script:', error);
-    process.exit(1);
+// Run the enhancement function
+enhanceOpportunityContactInfo()
+  .then(() => {
+    console.log('Contact information enhancement script completed successfully!');
+    process.exit(0);
   })
-  .finally(() => {
-    console.log('Script execution completed');
+  .catch((error) => {
+    console.error('Script failed:', error);
+    process.exit(1);
   });
