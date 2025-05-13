@@ -1021,6 +1021,7 @@ export default function Onboarding() {
                               <Checkbox
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-primary"
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
