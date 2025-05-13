@@ -67,7 +67,7 @@ export class OpportunityCrawler {
    */
   async initializeJob(jobType: string, targetUrl?: string): Promise<CrawlerJob> {
     const [job] = await db.insert(crawlerJobs).values({
-      type: jobType,
+      jobType: jobType,
       targetUrl,
       status: 'pending',
       startedAt: new Date(),
