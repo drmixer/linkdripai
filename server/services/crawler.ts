@@ -658,28 +658,103 @@ export class OpportunityCrawler {
    * Get seed URLs for a specific crawl type
    */
   private getSeedUrlsForType(type: string): string[] {
-    // These are just example seed URLs - in production this would be more extensive
+    // Comprehensive seed URLs for each opportunity type
     const seedUrls: Record<string, string[]> = {
       resource_page: [
         'https://ahrefs.com/blog/seo-resources/',
         'https://moz.com/learn/seo',
         'https://backlinko.com/seo-tools',
-        'https://www.semrush.com/blog/resources/'
+        'https://www.semrush.com/blog/resources/',
+        'https://neilpatel.com/blog/seo-tools/',
+        'https://www.searchenginejournal.com/category/seo/tools-seo/',
+        'https://www.hubspot.com/resources',
+        'https://www.wordstream.com/blog/resources',
+        'https://buffer.com/resources/',
+        'https://www.marketo.com/resources/'
       ],
       directory: [
         'https://botw.org/',
         'https://directorysearch.com/',
-        'https://www.jasminedirectory.com/'
+        'https://www.jasminedirectory.com/',
+        'https://dmoz-odp.org/',
+        'https://www.business.com/directory/',
+        'https://www.jayde.com/',
+        'https://www.chamberofcommerce.com/business-directory',
+        'https://www.hotfrog.com/',
+        'https://www.g2.com/categories/',
+        'https://www.capterra.com/directories/'
       ],
       guest_post: [
         'https://www.searchenginejournal.com/contribute/',
         'https://www.convinceandconvert.com/write-for-us/',
-        'https://www.entrepreneur.com/getpublished'
+        'https://www.entrepreneur.com/getpublished',
+        'https://www.semrush.com/blog/contribute/',
+        'https://contentmarketinginstitute.com/blog/contributor-guidelines/',
+        'https://www.jeffbullas.com/submit-a-guest-post/',
+        'https://blog.hubspot.com/submit-a-guest-post',
+        'https://www.socialmediaexaminer.com/writers/',
+        'https://www.business2community.com/become-a-contributor',
+        'https://sproutsocial.com/insights/write-for-us/'
       ],
       forum: [
         'https://forums.digitalpoint.com/',
         'https://www.webmasterworld.com/',
-        'https://moz.com/community/q/'
+        'https://moz.com/community/q/',
+        'https://www.producthunt.com/',
+        'https://growthhackers.com/posts',
+        'https://indiehackers.com/groups/marketing',
+        'https://www.reddit.com/r/SEO/',
+        'https://www.quora.com/topic/Search-Engine-Optimization-SEO',
+        'https://www.warriorforum.com/',
+        'https://community.semrush.com/'
+      ],
+      blog: [
+        'https://moz.com/blog',
+        'https://ahrefs.com/blog',
+        'https://www.semrush.com/blog/',
+        'https://neilpatel.com/blog/',
+        'https://searchengineland.com/',
+        'https://www.searchenginejournal.com/category/seo/',
+        'https://backlinko.com/blog',
+        'https://www.seroundtable.com/',
+        'https://www.gsqi.com/marketing-blog/',
+        'https://www.thesempost.com/'
+      ],
+      competitor_backlink: [
+        'https://ahrefs.com/backlink-checker',
+        'https://moz.com/link-explorer',
+        'https://majestic.com/',
+        'https://www.semrush.com/analytics/backlinks/',
+        'https://neilpatel.com/backlinks/',
+        'https://app.linkresearchtools.com/toolkit/quickbacklinks.php',
+        'https://cognitiveseo.com/backlink-checker/',
+        'https://www.linkody.com/',
+        'https://www.buzzstream.com/',
+        'https://www.linkresearchtools.com/'
+      ],
+      social_mention: [
+        'https://twitter.com/search',
+        'https://www.linkedin.com/feed/',
+        'https://www.facebook.com/search/',
+        'https://www.reddit.com/search/',
+        'https://www.pinterest.com/search/',
+        'https://www.instagram.com/explore/',
+        'https://www.quora.com/search',
+        'https://medium.com/search',
+        'https://www.tumblr.com/explore/',
+        'https://www.tiktok.com/discover'
+      ],
+      comment_section: [
+        'https://moz.com/blog/',
+        'https://backlinko.com/blog',
+        'https://neilpatel.com/blog/',
+        'https://searchengineland.com/',
+        'https://www.searchenginejournal.com/',
+        'https://www.seroundtable.com/',
+        'https://searchenginewatch.com/',
+        'https://www.gsqi.com/marketing-blog/',
+        'https://www.seoroundtable.com/',
+        'https://www.webmasterworld.com/'
       ]
     };
     
