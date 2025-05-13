@@ -62,12 +62,28 @@ export class DiscoveryScheduler {
       }
       
       // Step 2: Discover new opportunities
-      // For demo purposes, we'll use a predefined list of URLs
-      // In production, this would come from multiple sources
+      // Real URLs to crawl for backlink opportunities
       const crawlUrls = [
-        'https://www.example.com/resources',
-        'https://www.example.org/blog',
-        'https://www.example.net/write-for-us',
+        // Resource pages
+        'https://ahrefs.com/blog/seo-resources/',
+        'https://backlinko.com/hub/seo/link-building',
+        'https://moz.com/learn/seo/link-building',
+        'https://neilpatel.com/blog/category/seo/',
+        'https://searchenginejournal.com/category/link-building/',
+        
+        // Guest post opportunities
+        'https://www.searchenginejournal.com/contribute/',
+        'https://www.convinceandconvert.com/write-for-us/',
+        'https://www.semrush.com/blog/contribute/',
+        'https://contentmarketinginstitute.com/blog/contributor-guidelines/',
+        'https://www.jeffbullas.com/submit-a-guest-post/',
+        
+        // Directories and forums
+        'https://www.producthunt.com/',
+        'https://growthhackers.com/posts',
+        'https://indiehackers.com/groups/marketing',
+        'https://www.reddit.com/r/SEO/',
+        'https://www.g2.com/categories/seo',
       ];
       
       try {
