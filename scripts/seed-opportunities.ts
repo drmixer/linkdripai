@@ -150,127 +150,103 @@ const nicheBasedDomains = {
     'socialmediastrategiessummit.com'
   ],
   'content_creation': [
-    'smartblogger.com',
-    'bloggingwizard.com',
-    'problogger.com',
-    'copyblogger.com',
-    'write.as',
     'contently.com',
-    'writtent.com'
+    'ann-handley.com',
+    'coschedule.com',
+    'problogger.com',
+    'storybrand.com',
+    'contentmarketinginstitute.com',
+    'gathercontent.com',
+    'clearvoice.com',
+    'copyblogger.com',
+    'semrush.com/blog/category/content-marketing/'
   ],
   'tech_and_saas': [
-    'hubspot.com',
     'techcrunch.com',
+    'producthunt.com',
+    'g2.com',
+    'capterra.com',
     'saashacker.com',
     'saastr.com',
-    'saasquatch.com',
-    'productled.com',
-    'growthhackers.com'
+    'openview.com',
+    'saasacademy.com',
+    'forexample.com',
+    'microsoftstartups.com',
+    'saas.group'
   ],
   'health_and_wellness': [
+    'webmd.com',
     'healthline.com',
-    'mindbodygreen.com',
+    'mayoclinic.org',
     'wellnessmama.com',
-    'healthwellnessdigest.com',
-    'acefitness.org',
-    'yogajournal.com',
-    'everydayhealth.com'
+    'mindbodygreen.com',
+    'everydayhealth.com',
+    'draxe.com',
+    'medicalnewstoday.com',
+    'shape.com',
+    'prevention.com'
   ],
   'finance': [
-    'nerdwallet.com',
     'investopedia.com',
-    'thebalance.com',
-    'fool.com',
-    'financialmentor.com',
-    'moneyunder30.com',
-    'budgetsaresexy.com'
+    'nerdwallet.com',
+    'bankrate.com',
+    'forbes.com/money',
+    'moneysavingexpert.com',
+    'cnbc.com/personal-finance',
+    'thepennyhoarder.com',
+    'consumerfinance.gov',
+    'finance.yahoo.com',
+    'kiplinger.com'
   ],
   'travel': [
-    'nomadicmatt.com',
     'lonelyplanet.com',
+    'tripadvisor.com',
+    'nomadicmatt.com',
+    'afar.com',
     'travelandleisure.com',
-    'thepointsguy.com',
+    'roughguides.com',
+    'cntraveler.com',
+    'wanderlust.co.uk',
     'fodors.com',
-    'travelpulse.com',
-    'afar.com'
+    'thepointsguy.com'
   ],
   'education': [
     'edutopia.org',
-    'teachthought.com',
-    'edsurge.com',
-    'teachertoolkit.com',
+    'education.com',
     'edweek.org',
-    'scholastic.com',
-    'educationcorner.com'
+    'teacherspayteachers.com',
+    'coursera.org/blog',
+    'khanacademy.org/about/blog',
+    'teachthought.com',
+    'edx.org',
+    'edsurge.com',
+    'chronicle.com'
   ]
 };
-
-// Flatten for compatibility with existing code
-const sampleDomains = Object.values(nicheBasedDomains).flat();
-
-// Topics by niche for more targeted content opportunities
-const nicheTopics = {
-  'digital_marketing': [
-    'SEO', 'Content Marketing', 'PPC', 'Digital Strategy', 
-    'Link Building', 'Keyword Research', 'Local SEO', 'Technical SEO',
-    'Analytics', 'Conversion Optimization'
-  ],
-  'social_media': [
-    'Instagram Marketing', 'LinkedIn Strategy', 'Twitter Growth',
-    'Social Media ROI', 'Community Management', 'Social Listening',
-    'Influencer Marketing', 'Social Media Analytics', 'Social Advertising'
-  ],
-  'content_creation': [
-    'Copywriting', 'Content Strategy', 'Storytelling', 'Editorial Calendars',
-    'Content Distribution', 'Blog Optimization', 'Content Repurposing',
-    'Case Studies', 'Content for SEO'
-  ],
-  'tech_and_saas': [
-    'SaaS Marketing', 'Product-Led Growth', 'Customer Success',
-    'User Onboarding', 'Retention Strategies', 'API Documentation',
-    'Developer Marketing', 'Technical Documentation', 'SaaS Metrics'
-  ],
-  'health_and_wellness': [
-    'Nutrition', 'Fitness', 'Mental Health', 'Yoga', 'Meditation',
-    'Healthy Recipes', 'Holistic Health', 'Workout Plans', 'Wellness Trends'
-  ],
-  'finance': [
-    'Personal Finance', 'Investing', 'Retirement Planning', 'Debt Management',
-    'Budgeting', 'Financial Independence', 'Tax Planning', 'Credit Scores'
-  ],
-  'travel': [
-    'Budget Travel', 'Luxury Travel', 'Travel Hacking', 'Digital Nomad',
-    'Adventure Travel', 'Family Travel', 'Solo Travel', 'Sustainable Tourism'
-  ],
-  'education': [
-    'EdTech', 'Online Learning', 'Curriculum Development', 'Teaching Resources',
-    'Higher Education', 'E-Learning', 'Education Policy', 'Education Research'
-  ]
-};
-
-// Flatten topics for compatibility with existing code
-const topics = Object.values(nicheTopics).flat();
-
-// Realistic titles for backlink opportunities
-const titleTemplates = [
-  '{topic} Resources You Need to Check Out',
-  'Top {topic} Tools and Resources',
-  'The Ultimate Guide to {topic}',
-  'Write for Us: {topic} Guest Post Guidelines',
-  '{topic} Link Roundup',
-  'Best {topic} Blogs to Follow',
-  'Submit Your {topic} Site to Our Directory',
-  '{topic} Case Studies',
-  'Join Our {topic} Forum',
-  'Featured {topic} Experts'
-];
 
 /**
  * Generate a title with the provided topic
  */
 function generateTitle(topic: string): string {
-  const template = titleTemplates[Math.floor(Math.random() * titleTemplates.length)];
-  return template.replace('{topic}', topic);
+  const templates = [
+    `Ultimate Guide to ${topic}`,
+    `${topic}: Best Strategies for 2025`,
+    `How to Leverage ${topic} in Your Business`,
+    `The Complete ${topic} Resource`,
+    `${topic} 101: Everything You Need to Know`,
+    `10 Essential ${topic} Tips`,
+    `Why ${topic} Matters in Today's Market`,
+    `Mastering ${topic}: Expert Insights`,
+    `The Future of ${topic}`,
+    `${topic} Case Study: Real Results`,
+    `Understanding ${topic}: A Comprehensive Guide`,
+    `${topic} Statistics and Trends in 2025`,
+    `The ROI of Investing in ${topic}`,
+    `${topic} vs Traditional Methods: Which Wins?`,
+    `The Evolution of ${topic}`
+  ];
+  
+  return templates[Math.floor(Math.random() * templates.length)];
 }
 
 /**
@@ -284,8 +260,8 @@ function getRandomElement<T>(array: T[]): T {
  * Generate a random contact email for a domain
  */
 function generateContactEmail(domain: string): string {
-  const contactTypes = ['info', 'contact', 'editor', 'admin', 'hello', 'support'];
-  return `${getRandomElement(contactTypes)}@${domain}`;
+  const prefixes = ['contact', 'hello', 'info', 'outreach', 'partnerships', 'editor', 'marketing', 'media', 'admin', 'support'];
+  return `${getRandomElement(prefixes)}@${domain}`;
 }
 
 /**
@@ -293,20 +269,15 @@ function generateContactEmail(domain: string): string {
  * With a bias toward the middle range (20-50)
  */
 function generateDomainAuthority(): number {
-  // Generate a base score between 20 and 50
-  let score = 20 + Math.floor(Math.random() * 31);
+  // Use a normal-like distribution centered around 35
+  // with most sites between 20-50
+  let base = Math.floor(Math.random() * 60) + 10; // 10-70 range
   
-  // 20% chance to get a higher score (50-80)
-  if (Math.random() < 0.2) {
-    score = 50 + Math.floor(Math.random() * 31);
-  }
+  // Add some variation
+  let variation = Math.floor(Math.random() * 20) - 10; // -10 to +10
   
-  // 10% chance to get a very high score (80-95)
-  if (Math.random() < 0.1) {
-    score = 80 + Math.floor(Math.random() * 16);
-  }
-  
-  return score;
+  // Ensure it stays in the 1-100 range
+  return Math.min(Math.max(base + variation, 1), 100);
 }
 
 /**
@@ -314,18 +285,18 @@ function generateDomainAuthority(): number {
  * Most legitimate sites have low spam scores
  */
 function generateSpamScore(): number {
-  // 70% chance of very low spam score (0-2)
-  if (Math.random() < 0.7) {
-    return Math.floor(Math.random() * 3);
+  // Most legitimate sites (80%) should have a spam score of 0-5
+  if (Math.random() < 0.8) {
+    return Math.floor(Math.random() * 6); 
   }
   
-  // 20% chance of moderate spam score (3-5)
-  if (Math.random() < 0.9) {
-    return 3 + Math.floor(Math.random() * 3);
+  // 15% have a moderate spam score of 6-10
+  if (Math.random() < 0.15) {
+    return Math.floor(Math.random() * 5) + 6;
   }
   
-  // 10% chance of high spam score (6-10)
-  return 6 + Math.floor(Math.random() * 5);
+  // 5% have a high spam score of 11-17
+  return Math.floor(Math.random() * 7) + 11;
 }
 
 /**
@@ -340,7 +311,7 @@ function getRandomNiche(): string {
  * Get a random domain from a specific niche
  */
 function getRandomDomainFromNiche(niche: string): string {
-  const domains = nicheBasedDomains[niche as keyof typeof nicheBasedDomains];
+  const domains = nicheBasedDomains[niche];
   return domains[Math.floor(Math.random() * domains.length)];
 }
 
@@ -348,30 +319,33 @@ function getRandomDomainFromNiche(niche: string): string {
  * Get a random topic from a specific niche
  */
 function getRandomTopicFromNiche(niche: string): string {
-  const nicheSpecificTopics = nicheTopics[niche as keyof typeof nicheTopics];
-  return nicheSpecificTopics[Math.floor(Math.random() * nicheSpecificTopics.length)];
+  if (!nicheTopics[niche]) {
+    return "General Topic";
+  }
+  const topics = nicheTopics[niche];
+  return topics[Math.floor(Math.random() * topics.length)];
 }
 
 /**
  * Generate URL path based on topic and source type
  */
 function generateUrlPath(topic: string, sourceType: string): string {
-  // Replace spaces with hyphens and make lowercase
+  // Format topic for URL: "SEO Strategies" -> "seo-strategies"
   const formattedTopic = topic.toLowerCase().replace(/\s+/g, '-');
   
   switch (sourceType) {
     case 'resource_page':
-      return `/resources/${formattedTopic}-resources`;
+      return `/resources/${formattedTopic}`;
     case 'guest_post':
-      return `/blog/guest-post-guidelines`;
+      return `/write-for-us`;
     case 'directory':
       return `/directory/${formattedTopic}`;
     case 'forum':
-      return `/forum/${formattedTopic}-discussion`;
+      return `/forum/topic/${formattedTopic}`;
     case 'blog':
-      return `/blog/${formattedTopic}-guide`;
+      return `/blog/${formattedTopic}`;
     default:
-      return `/resources/${formattedTopic}`;
+      return `/${formattedTopic}`;
   }
 }
 
@@ -382,123 +356,69 @@ async function seedDiscoveredOpportunities() {
   console.log('Seeding discovered opportunities...');
   
   // Check if there are already opportunities in the database
-  const existingOpps = await db.select({ count: sql`count(*)` }).from(discoveredOpportunities);
-  const count = parseInt(existingOpps[0]?.count.toString() || '0');
+  const existingOpportunities = await db.select({ count: sql`count(*)` }).from(discoveredOpportunities);
+  const count = parseInt(existingOpportunities[0]?.count.toString() || '0');
   
   if (count > 0) {
-    console.log(`Database already has ${count} discovered opportunities. Skipping seeding.`);
+    console.log(`Database already has ${count} discovered opportunities. Skipping.`);
     return;
   }
   
-  // Create opportunities for each niche
+  // Create opportunities
+  const opportunities = [];
+  
+  // For each niche, create a set of opportunities
   const niches = Object.keys(nicheBasedDomains);
-  const opportunitiesPerNiche = 15;
   
   for (const niche of niches) {
-    console.log(`Creating opportunities for niche: ${niche}`);
+    const domains = nicheBasedDomains[niche];
     
-    for (let i = 0; i < opportunitiesPerNiche; i++) {
-      const domain = getRandomDomainFromNiche(niche);
-      const sourceType = getRandomElement(sourceTypes);
-      const topic = getRandomTopicFromNiche(niche);
-      const title = generateTitle(topic);
-      const domainAuthority = generateDomainAuthority();
-      const pageAuthority = Math.max(10, domainAuthority - Math.floor(Math.random() * 20));
-      const spamScore = generateSpamScore();
+    for (const domain of domains) {
+      // Create 1-3 opportunities per domain with different source types
+      const numOpportunities = Math.floor(Math.random() * 3) + 1;
       
-      // Determine if this should be a premium opportunity (DA 40+, spam <2)
-      const isPremium = domainAuthority >= 40 && spamScore <= 2;
-      
-      // Generate a URL based on the source type and domain with a unique identifier
-      // to prevent duplicate URLs
-      const uniqueId = Date.now() + i;
-      const urlPath = generateUrlPath(topic, sourceType);
-      const url = `https://www.${domain}${urlPath}?id=${uniqueId}`;
-      
-      // Create contact info structure to match schema
-      const contactInfo = {
-        email: generateContactEmail(domain),
-        form: Math.random() > 0.3 ? `https://www.${domain}/contact` : null, // 70% chance of having a contact form
-        social: Math.random() > 0.5 ? [`https://twitter.com/${domain.split('.')[0]}`] : []
-      };
-      
-      // Generate a richer validation data object based on the niche
-      let qualityBoost = 0;
-      let relevanceBoost = 0;
-      
-      // Premium opportunities (higher DA, lower spam) get better scores
-      if (isPremium) {
-        qualityBoost = 15;
-        relevanceBoost = 10;
-      }
-      
-      // More specific niches have higher relevance when matched correctly
-      if (niche === 'tech_and_saas' || niche === 'content_creation') {
-        relevanceBoost += 5;
-      }
-      
-      const validationData = {
-        relevanceScore: 60 + relevanceBoost + Math.floor(Math.random() * (40 - relevanceBoost)),
-        qualityScore: Math.min(98, domainAuthority * 0.8 + qualityBoost),
-        contentRelevance: 70 + Math.floor(Math.random() * 30),
-        keywordDensity: 50 + Math.floor(Math.random() * 50),
-        topicMatch: 60 + relevanceBoost + Math.floor(Math.random() * (40 - relevanceBoost)),
-        niche: niche // Store the niche for better matching
-      };
-      
-      // Execute a direct SQL insert to avoid type issues with enums
-      try {
-        // Generate content with niche-specific keywords for better matching
-        const nicheKeywords = nicheTopics[niche as keyof typeof nicheTopics];
-        const keywordsToUse = nicheKeywords.slice(0, 3).join(', ');
-        const pageContent = `This is a ${sourceType.replace('_', ' ')} opportunity about ${topic} on ${domain}. 
-Key areas covered include ${keywordsToUse}. This content is specifically relevant to the ${niche.replace('_', ' ')} niche 
-and would be valuable for websites in this industry.`;
+      for (let i = 0; i < numOpportunities; i++) {
+        const sourceType = sourceTypes[Math.floor(Math.random() * sourceTypes.length)];
+        const topic = getRandomTopicFromNiche(niche);
+        const title = generateTitle(topic);
+        const urlPath = generateUrlPath(topic, sourceType);
         
-        const insertResult = await db.execute(sql`
-          INSERT INTO "discoveredOpportunities" (
-            "url", 
-            "domain", 
-            "sourceType", 
-            "pageTitle", 
-            "pageContent", 
-            "contactInfo", 
-            "domainAuthority", 
-            "pageAuthority", 
-            "spamScore", 
-            "isPremium", 
-            "discoveredAt", 
-            "lastChecked", 
-            "status", 
-            "validationData"
-          ) 
-          VALUES (
-            ${url}, 
-            ${domain}, 
-            ${sourceType}::source_type, 
-            ${title}, 
-            ${pageContent}, 
-            ${JSON.stringify(contactInfo)}::jsonb, 
-            ${domainAuthority}, 
-            ${pageAuthority}, 
-            ${spamScore}, 
-            ${isPremium}, 
-            ${new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))}, 
-            ${new Date()}, 
-            ${'analyzed'}::discovery_status, 
-            ${JSON.stringify(validationData)}::jsonb
-          )
-          RETURNING id
-      `);
-      
-      console.log(`Created opportunity #${i+1} with ID: ${insertResult.rows[0].id}`);
-    } catch (error) {
-      console.error(`Error creating opportunity #${i+1}:`, error.message);
-      continue; // Skip to next opportunity on error
+        const opportunityData = {
+          domain: domain,
+          url: `https://${domain}${urlPath}`,
+          title: title,
+          description: `A ${sourceType.replace('_', ' ')} about ${topic.toLowerCase()} from ${domain}`,
+          sourceType: sourceType,
+          contactEmail: Math.random() > 0.2 ? generateContactEmail(domain) : null, // 80% have contact email
+          domainAuthority: Math.random() > 0.1 ? generateDomainAuthority() : null, // 90% have DA
+          spamScore: Math.random() > 0.1 ? generateSpamScore() : null, // 90% have spam score
+          status: 'validated',
+          niche: niche,
+          discoveredAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000), // Random date in last 30 days
+          metadataRaw: JSON.stringify({
+            title: title,
+            h1: title,
+            description: `Learn about ${topic} in this ${sourceType.replace('_', ' ')} article.`,
+            links: Math.floor(Math.random() * 50) + 10,
+            wordCount: Math.floor(Math.random() * 1500) + 500,
+          })
+        };
+        
+        opportunities.push(opportunityData);
+      }
     }
   }
   
-  console.log(`Successfully seeded discovered opportunities.`);
+  // Insert opportunities in batches
+  for (const opportunity of opportunities) {
+    try {
+      await db.insert(discoveredOpportunities).values(opportunity);
+    } catch (error) {
+      console.error(`Error inserting opportunity: ${error.message}`);
+    }
+  }
+  
+  console.log(`Successfully created ${opportunities.length} discovered opportunities.`);
 }
 
 /**
@@ -512,15 +432,14 @@ async function seedCrawlerJobs() {
   const count = parseInt(existingJobs[0]?.count.toString() || '0');
   
   if (count > 0) {
-    console.log(`Database already has ${count} crawler jobs. Skipping seeding.`);
+    console.log(`Database already has ${count} crawler jobs. Skipping.`);
     return;
   }
   
+  // Create crawler jobs for different niches
   const jobs = [];
   
-  // Create real crawler jobs for various niches and source types
-  
-  // Digital Marketing resources and guest posts
+  // Digital Marketing resources
   jobs.push({
     jobType: 'resource_page',
     targetUrl: 'https://ahrefs.com/blog/seo-resources/',
@@ -536,7 +455,7 @@ async function seedCrawlerJobs() {
   
   jobs.push({
     jobType: 'guest_post',
-    targetUrl: 'https://www.searchenginejournal.com/contribute/',
+    targetUrl: 'https://www.searchenginejournal.com/page/write-for-sej/',
     status: 'pending',
     startedAt: null,
     completedAt: null,
@@ -550,7 +469,7 @@ async function seedCrawlerJobs() {
   // Content Creation resources
   jobs.push({
     jobType: 'resource_page',
-    targetUrl: 'https://www.copyblogger.com/copywriting-101/',
+    targetUrl: 'https://contentmarketinginstitute.com/resources/',
     status: 'pending',
     startedAt: null,
     completedAt: null,
@@ -601,38 +520,10 @@ async function seedCrawlerJobs() {
     })
   });
   
-  // Social Media resources
+  // Health resources
   jobs.push({
-    jobType: 'blog',
-    targetUrl: 'https://buffer.com/resources/',
-    status: 'pending',
-    startedAt: null,
-    completedAt: null,
-    error: null,
-    results: JSON.stringify({
-      status: 'queued',
-      niche: 'social_media'
-    })
-  });
-  
-  // Finance resources
-  jobs.push({
-    jobType: 'blog',
-    targetUrl: 'https://www.investopedia.com/',
-    status: 'pending',
-    startedAt: null,
-    completedAt: null,
-    error: null,
-    results: JSON.stringify({
-      status: 'queued',
-      niche: 'finance'
-    })
-  });
-  
-  // Health & Wellness resources
-  jobs.push({
-    jobType: 'blog',
-    targetUrl: 'https://www.healthline.com/',
+    jobType: 'resource_page',
+    targetUrl: 'https://www.healthline.com/health/fitness-nutrition',
     status: 'pending',
     startedAt: null,
     completedAt: null,
@@ -643,39 +534,66 @@ async function seedCrawlerJobs() {
     })
   });
   
-  // General/mixed resources
+  // Financial resources
   jobs.push({
-    jobType: 'all',
-    targetUrl: 'https://indiehackers.com/groups/marketing',
+    jobType: 'resource_page',
+    targetUrl: 'https://www.investopedia.com/financial-term-dictionary-4769738',
     status: 'pending',
     startedAt: null,
     completedAt: null,
     error: null,
     results: JSON.stringify({
       status: 'queued',
-      niche: 'mixed'
+      niche: 'finance'
     })
   });
   
-  // Insert the jobs into the database
-  const insertedJobs = await db.insert(crawlerJobs).values(jobs).returning();
+  // Travel resources
+  jobs.push({
+    jobType: 'blog',
+    targetUrl: 'https://www.lonelyplanet.com/articles',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'travel'
+    })
+  });
   
-  console.log(`Successfully seeded ${insertedJobs.length} crawler jobs.`);
+  // Education resources
+  jobs.push({
+    jobType: 'guest_post',
+    targetUrl: 'https://www.edutopia.org/about/how-to-contribute/',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'education'
+    })
+  });
+  
+  // Insert jobs in batches
+  for (const job of jobs) {
+    try {
+      await db.insert(crawlerJobs).values(job);
+    } catch (error) {
+      console.error(`Error inserting crawler job: ${error.message}`);
+    }
+  }
+  
+  console.log(`Successfully created ${jobs.length} crawler jobs.`);
 }
 
 /**
  * Run the discovery pipeline
  */
 async function runDiscoveryPipeline() {
-  console.log('Running discovery pipeline...');
-  
-  // Get the discovery scheduler
-  const scheduler = getDiscoveryScheduler();
-  
-  // Run the pipeline
-  const result = await scheduler.runDiscoveryPipeline();
-  
-  console.log('Discovery pipeline completed:', result);
+  // This would run the actual discovery pipeline
+  // But for now, we'll just seed the data
 }
 
 /**
@@ -684,104 +602,89 @@ async function runDiscoveryPipeline() {
 async function createWebsiteProfiles() {
   console.log('Creating website profiles...');
   
-  // Get all websites without profiles
-  const userWebsites = await db.select().from(websites);
+  // Check if there are already profiles in the database
+  const existingProfiles = await db.select({ count: sql`count(*)` }).from(websiteProfiles);
+  const count = parseInt(existingProfiles[0]?.count.toString() || '0');
   
-  if (userWebsites.length === 0) {
-    console.log('No websites found to create profiles for.');
+  if (count > 0) {
+    console.log(`Database already has ${count} website profiles. Skipping.`);
     return;
   }
   
-  // Check which websites already have profiles
-  const existingProfiles = await db.select().from(websiteProfiles);
-  const websiteIdsWithProfiles = new Set(existingProfiles.map(profile => profile.websiteId));
+  // Get all websites
+  const allWebsites = await db.select().from(websites);
   
-  // Filter to websites without profiles
-  const websitesWithoutProfiles = userWebsites.filter(website => !websiteIdsWithProfiles.has(website.id));
-  
-  if (websitesWithoutProfiles.length === 0) {
-    console.log('All websites already have profiles.');
+  if (allWebsites.length === 0) {
+    console.log('No websites found. Skipping profile creation.');
     return;
   }
   
-  console.log(`Creating profiles for ${websitesWithoutProfiles.length} websites...`);
-  
-  console.log('Using niche-based topics and keywords for website profiles...');
-  const profiles = [];
-  
-  // Create profiles for each website with niche-specific data
-  for (const website of websitesWithoutProfiles) {
-    // Assign a random niche to the website
-    const niche = getRandomNiche();
-    const websiteTopics = [];
-    const websiteKeywords = [];
+  // For each website, create a profile with randomized data
+  for (const website of allWebsites) {
+    // Determine niche
+    const websiteNiche = getRandomNiche();
+    const topics = [];
+    const targetNiches = [websiteNiche];
+    const avoidNiches = [];
     
-    // Get topics for this niche
-    const nicheSpecificTopics = nicheTopics[niche as keyof typeof nicheTopics];
-    
-    // Select 3-5 random topics from this niche
-    const numTopics = 3 + Math.floor(Math.random() * 3);
-    const shuffledTopics = [...nicheSpecificTopics].sort(() => 0.5 - Math.random());
-    
-    for (let i = 0; i < Math.min(numTopics, shuffledTopics.length); i++) {
-      websiteTopics.push(shuffledTopics[i]);
-      
-      // Generate keywords from each topic
-      const topicWords = shuffledTopics[i].toLowerCase().split(' ');
-      for (const word of topicWords) {
-        if (word.length > 3) { // Only add meaningful words
-          websiteKeywords.push(word);
-        }
+    // Add some topics from the website's primary niche
+    if (nicheTopics[websiteNiche]) {
+      // Get 3-5 random topics from the niche
+      const nicheSpecificTopics = [...nicheTopics[websiteNiche]]; // Clone the array
+      for (let i = 0; i < Math.min(3 + Math.floor(Math.random() * 3), nicheSpecificTopics.length); i++) {
+        // Select a random index
+        const randomIndex = Math.floor(Math.random() * nicheSpecificTopics.length);
+        // Add the topic
+        topics.push(nicheSpecificTopics[randomIndex]);
+        // Remove it from the array to avoid duplicates
+        nicheSpecificTopics.splice(randomIndex, 1);
       }
     }
     
-    // Add some niche-specific keywords
-    if (niche === 'digital_marketing') {
-      websiteKeywords.push('seo', 'analytics', 'backlinks', 'optimization', 'traffic');
-    } else if (niche === 'social_media') {
-      websiteKeywords.push('engagement', 'followers', 'reach', 'platform', 'social');
-    } else if (niche === 'content_creation') {
-      websiteKeywords.push('writing', 'blog', 'article', 'audience', 'publishing');
-    } else if (niche === 'tech_and_saas') {
-      websiteKeywords.push('software', 'platform', 'solution', 'integration', 'product');
-    } else if (niche === 'health_and_wellness') {
-      websiteKeywords.push('wellness', 'nutrition', 'fitness', 'health', 'lifestyle');
-    } else if (niche === 'finance') {
-      websiteKeywords.push('investing', 'budgeting', 'financial', 'money', 'wealth');
-    } else if (niche === 'travel') {
-      websiteKeywords.push('travel', 'destination', 'tourism', 'adventure', 'experience');
-    } else if (niche === 'education') {
-      websiteKeywords.push('learning', 'education', 'teaching', 'courses', 'students');
+    // Add 1-2 complementary niches as target niches
+    const complementaryNiches = Object.keys(nicheBasedDomains).filter(n => n !== websiteNiche);
+    for (let i = 0; i < Math.min(1 + Math.floor(Math.random() * 2), complementaryNiches.length); i++) {
+      // Select a random index
+      const randomIndex = Math.floor(Math.random() * complementaryNiches.length);
+      // Add the niche
+      targetNiches.push(complementaryNiches[randomIndex]);
+      // Remove it from the array to avoid duplicates
+      complementaryNiches.splice(randomIndex, 1);
     }
     
-    // Remove duplicate keywords
-    const uniqueKeywords = [...new Set(websiteKeywords)];
+    // Add 1-2 niches to avoid
+    for (let i = 0; i < Math.min(1 + Math.floor(Math.random() * 2), complementaryNiches.length); i++) {
+      // Select a random index
+      const randomIndex = Math.floor(Math.random() * complementaryNiches.length);
+      // Add the niche
+      avoidNiches.push(complementaryNiches[randomIndex]);
+      // Remove it from the array to avoid duplicates
+      complementaryNiches.splice(randomIndex, 1);
+    }
     
-    // Create rich content description
-    const nicheFormatted = niche.replace('_', ' ');
-    const content = `Website about ${nicheFormatted} focusing on ${websiteTopics.join(', ')}. 
-This site provides valuable resources and information for professionals in the ${nicheFormatted} industry.`;
-    
-    profiles.push({
-      websiteId: website.id,
-      content: content,
-      topics: websiteTopics,
-      keywords: uniqueKeywords,
-      metadata: {
-        title: `${website.name} - ${niche.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Website`,
-        description: `${website.name} focuses on ${websiteTopics[0]} and related topics in the ${nicheFormatted} space`,
-        h1: website.name,
-        wordCount: 2500 + Math.floor(Math.random() * 2500),
-        niche: niche // Store the niche for better opportunity matching
-      },
-      lastAnalyzed: new Date()
-    });
+    // Create a profile
+    try {
+      await db.insert(websiteProfiles).values({
+        websiteId: website.id,
+        keywords: ['seo', 'marketing', 'backlinks', 'content', 'digital marketing'],
+        topics: topics,
+        contentTypes: ['blog', 'guide', 'tutorial', 'review', 'case study'],
+        analyzedAt: new Date(),
+        activeBacklinks: Math.floor(Math.random() * 100) + 10,
+        domainAuthority: generateDomainAuthority(),
+        targetNiches: targetNiches,
+        avoidNiches: avoidNiches,
+        linkTypePreferences: ['resource_page', 'guest_post', 'blog'],
+        lastUpdated: new Date()
+      });
+      
+      console.log(`Created profile for website ${website.id}: ${website.url}`);
+    } catch (error) {
+      console.error(`Error creating profile for website ${website.id}: ${error.message}`);
+    }
   }
   
-  // Insert the profiles
-  const insertedProfiles = await db.insert(websiteProfiles).values(profiles).returning();
-  
-  console.log(`Successfully created ${insertedProfiles.length} website profiles.`);
+  console.log(`Successfully created profiles for ${allWebsites.length} websites.`);
 }
 
 /**
@@ -828,73 +731,66 @@ async function createOpportunityMatches() {
   const matches = [];
   const drips = [];
   
-  // Get user IDs for the websites
-  const userIds = [...new Set(websiteWithProfiles.map(item => item.website.userId))];
-  
-  // Create 5-10 matches per user with niche-specific reasoning
-  for (const userId of userIds) {
-    // Get websites for this user
-    const userWebsites = websiteWithProfiles.filter(item => item.website.userId === userId);
+  // For each website, find matching opportunities
+  for (const { website, profile } of websiteWithProfiles) {
+    // Get the user who owns this website
+    const user = await db.select().from(users).where(eq(users.id, website.userId)).limit(1);
     
-    // Determine how many matches to create
-    const matchCount = 5 + Math.floor(Math.random() * 6); // 5-10 matches
+    if (user.length === 0) {
+      console.log(`No user found for website ${website.id}. Skipping.`);
+      continue;
+    }
     
-    // Create the matches
-    for (let i = 0; i < matchCount; i++) {
-      // Pick a random website for this user
-      const websiteIndex = Math.floor(Math.random() * userWebsites.length);
-      const website = userWebsites[websiteIndex].website;
-      
-      // Pick a random opportunity
-      const opportunityIndex = Math.floor(Math.random() * opportunities.length);
-      const opportunity = opportunities[opportunityIndex];
-      
-      // Determine if this is a premium match
-      const isPremium = opportunity.isPremium || false;
-      
-      // Get niche information if available
-      let websiteNiche = 'unknown';
-      let opportunityNiche = 'unknown';
-      
-      // Extract niche from website profile metadata
-      if (userWebsites[websiteIndex].profile.metadata && 
-          typeof userWebsites[websiteIndex].profile.metadata === 'object' &&
-          'niche' in userWebsites[websiteIndex].profile.metadata) {
-        websiteNiche = userWebsites[websiteIndex].profile.metadata.niche;
+    const userId = user[0].id;
+    
+    // Get the website's target niches
+    const websiteNiches = profile.targetNiches || [];
+    const avoidNiches = profile.avoidNiches || [];
+    
+    // Get the website's link type preferences
+    const linkTypePreferences = profile.linkTypePreferences || [];
+    
+    // For each opportunity, check if it matches the website
+    for (const opportunity of opportunities) {
+      // Skip if the opportunity is in an avoided niche
+      if (avoidNiches.includes(opportunity.niche)) {
+        continue;
       }
       
-      // Extract niche from opportunity validation data
-      if (opportunity.validationData && 
-          typeof opportunity.validationData === 'object' &&
-          'niche' in opportunity.validationData) {
-        opportunityNiche = opportunity.validationData.niche;
-      }
+      // Calculate match score components
+      // 1. Niche match
+      const nicheMatch = websiteNiches.includes(opportunity.niche);
+      const nicheScore = nicheMatch ? 40 : 20;
       
-      // Higher scores for niche matching
-      const nicheMatch = websiteNiche === opportunityNiche;
-      const relevanceScore = nicheMatch ? 
-                            85 + Math.floor(Math.random() * 15) : // 85-100 for matching niches
-                            60 + Math.floor(Math.random() * 25);  // 60-85 for non-matching niches
+      // 2. Source type match
+      const sourceTypeMatch = linkTypePreferences.includes(opportunity.sourceType);
+      const sourceTypeScore = sourceTypeMatch ? 30 : 15;
       
-      // Quality score based on domain authority and spam score
-      const qualityScore = opportunity.domainAuthority ?
-                          Math.min(100, opportunity.domainAuthority * 1.2) :
-                          55 + Math.floor(Math.random() * 30);
-                          
-      // Opportunity score 
-      let opportunityScore = 75 + Math.floor(Math.random() * 20);
+      // 3. Quality score based on domain authority and spam score
+      const daScore = opportunity.domainAuthority ? Math.min(opportunity.domainAuthority / 2, 20) : 10;
+      const spamPenalty = opportunity.spamScore ? Math.min(opportunity.spamScore * 2, 20) : 0;
+      const qualityScore = Math.max(daScore - spamPenalty, 0);
       
-      // Premium opportunities get higher scores
-      if (isPremium) {
-        opportunityScore = 90 + Math.floor(Math.random() * 10);
-      }
+      // Final relevance score
+      const relevanceScore = nicheScore + sourceTypeScore;
+      
+      // Final quality score
+      // Higher domain authority and lower spam score = higher quality
+      
+      // Final opportunity score
+      // Premium opportunities based on DA and spam score
+      const isPremium = opportunity.domainAuthority >= 40 && 
+                        opportunity.spamScore < 2 && 
+                        relevanceScore > 60;
+      
+      const opportunityScore = isPremium ? 90 : 70;
       
       // Create more detailed matchReason object
       const matchReason = {
         relevance: {
           score: relevanceScore,
           factors: [
-            nicheMatch ? `Strong match in ${websiteNiche.replace('_', ' ')} niche` : 'Complementary niche alignment',
+            nicheMatch ? `Strong match in ${opportunity.niche.replace('_', ' ')} niche` : 'Complementary niche alignment',
             'Content topic relevance',
             opportunity.sourceType === 'resource_page' ? 'Resource page opportunity' : 
               (opportunity.sourceType === 'guest_post' ? 'Guest posting opportunity' : 'Link opportunity')
@@ -963,28 +859,23 @@ async function createOpportunityMatches() {
         const shouldCreateDrip = isPremium ? 
                                 (Math.random() < 0.8) : // 80% chance for premium
                                 (Math.random() < 0.5);  // 50% chance for standard
-                                
-        // Limit to first 7 matches to avoid too many drips
-        if (i < 7 && shouldCreateDrip) {
+        
+        if (shouldCreateDrip) {
+          // Create a daily drip for today
           try {
-            // Create a drip date that's within the last 7 days
-            const daysAgo = Math.floor(Math.random() * 7); // 0-6 days ago
-            const dripDate = new Date();
-            dripDate.setDate(dripDate.getDate() - daysAgo);
-            
             const dripResult = await db.execute(sql`
               INSERT INTO "dailyDrips" (
                 "userId",
                 "opportunityId",
                 "dripDate",
-                "isPremium",
-                "status"
+                "status",
+                "isPremium"
               ) VALUES (
                 ${userId},
                 ${opportunity.id},
-                ${dripDate},
-                ${isPremium},
-                ${'active'}
+                ${new Date()},
+                ${'active'},
+                ${isPremium}
               )
               RETURNING id
             `);
