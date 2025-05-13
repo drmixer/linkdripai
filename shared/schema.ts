@@ -3,29 +3,6 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Users table
-export const emailSettings = pgTable("emailSettings", {
-  id: serial("id").primaryKey(),
-  userId: integer("userId").notNull().references(() => users.id),
-  provider: text("provider"),
-  fromEmail: text("fromEmail"),
-  fromName: text("fromName"),
-  isConfigured: boolean("isConfigured").default(false),
-  isVerified: boolean("isVerified").default(false),
-  termsAccepted: boolean("termsAccepted").default(false),
-  sendgridApiKey: text("sendgridApiKey"),
-  smtpHost: text("smtpHost"),
-  smtpPort: integer("smtpPort"),
-  smtpUsername: text("smtpUsername"),
-  smtpPassword: text("smtpPassword"),
-  gmailClientId: text("gmailClientId"),
-  gmailClientSecret: text("gmailClientSecret"),
-  gmailRefreshToken: text("gmailRefreshToken"),
-  verificationToken: text("verificationToken"),
-  verificationExpires: timestamp("verificationExpires"),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
-});
-
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -116,6 +93,30 @@ export const insertUserSchema = baseInsertUserSchema.extend({
 });
 
 // Email settings related schemas
+
+// Email settings for users 
+export const emailSettings = pgTable("emailSettings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().references(() => users.id),
+  provider: text("provider"),
+  fromEmail: text("fromEmail"),
+  fromName: text("fromName"),
+  isConfigured: boolean("isConfigured").default(false),
+  isVerified: boolean("isVerified").default(false),
+  termsAccepted: boolean("termsAccepted").default(false),
+  sendgridApiKey: text("sendgridApiKey"),
+  smtpHost: text("smtpHost"),
+  smtpPort: integer("smtpPort"),
+  smtpUsername: text("smtpUsername"),
+  smtpPassword: text("smtpPassword"),
+  gmailClientId: text("gmailClientId"),
+  gmailClientSecret: text("gmailClientSecret"),
+  gmailRefreshToken: text("gmailRefreshToken"),
+  verificationToken: text("verificationToken"),
+  verificationExpires: timestamp("verificationExpires"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
+});
 export const emailSettingsSchema = z.object({
   provider: z.enum(["sendgrid", "smtp", "gmail"]),
   fromEmail: z.string().email("Please enter a valid email address"),
@@ -405,3 +406,4 @@ export type OpportunityMatch = typeof opportunityMatches.$inferSelect;
 export type DailyDrip = typeof dailyDrips.$inferSelect;
 export type SplashUsage = typeof splashUsage.$inferSelect;
 export type CrawlerJob = typeof crawlerJobs.$inferSelect;
+export type EmailSetting = typeof emailSettings.$inferSelect;
