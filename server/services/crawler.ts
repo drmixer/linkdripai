@@ -1,6 +1,6 @@
 import { CrawlerJob, DiscoveredOpportunity } from '@shared/schema';
 import { db } from '../db';
-import { eq, inArray, sql } from 'drizzle-orm';
+import { eq, inArray, sql, and, or, isNull, lt, gt, ne } from 'drizzle-orm';
 import { crawlerJobs, discoveredOpportunities } from '@shared/schema';
 import { getMozApiService, MozApiService } from './moz';
 import { getValidationPipeline } from './validation-pipeline';
@@ -1100,10 +1100,10 @@ export class OpportunityCrawler {
     try {
       console.log('[Crawler] Running continuous crawl cycle');
       
-      // Define opportunity types by their quality potential
-      const premiumTypes = ['guest_post', 'resource_page']; // Highest quality opportunities
-      const highValueTypes = ['blog', 'directory']; // Good quality opportunities
-      const supplementaryTypes = ['competitor_backlink', 'forum', 'social_mention', 'comment_section']; // Supplementary opportunities
+      // Enhanced opportunity types categorization by quality potential
+      const premiumTypes = ['guest_post', 'resource_page']; // Highest quality opportunities (DA 50+, low spam)
+      const highValueTypes = ['blog', 'directory', 'forum']; // Good quality opportunities (DA 30-50, low-med spam)
+      const supplementaryTypes = ['competitor_backlink', 'social_mention', 'comment_section']; // Supporting opportunities
       
       // Get current date to help determine crawl strategy
       const now = new Date();
@@ -1112,47 +1112,110 @@ export class OpportunityCrawler {
       
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       const isBusinessHours = currentHour >= 9 && currentHour <= 17;
+      const isEvening = currentHour >= 18 && currentHour <= 23;
+      
+      // Define crawl depth strategy by type
+      const crawlDepthByType = {
+        guest_post: 4,    // Deeper crawl for highest value opportunities
+        resource_page: 3, // Resource pages need moderate depth
+        blog: 3,          // Blogs need moderate depth to find good content
+        directory: 2,     // Directories are typically shallow
+        forum: 3,         // Forums need deeper crawl to find relevant threads
+        competitor_backlink: 2, // Just enough to verify the link
+        social_mention: 2,      // Social mentions are typically shallow
+        comment_section: 1      // Comment sections don't need deep crawling
+      };
       
       let typesToCrawl = [];
       let premiumFocus = false;
       let highQualityFocus = false;
       
+      // Select crawl types based on time patterns for maximum efficiency
+      
       // Weekend strategy - focus heavily on premium opportunities
       if (isWeekend) {
-        // Weekend: Prioritize premium opportunities
+        // Weekend: Prioritize premium opportunities (more people post high-quality content on weekends)
         typesToCrawl = [...premiumTypes];
-        // Add 1 high value type for diversity
-        typesToCrawl.push(highValueTypes[Math.floor(Math.random() * highValueTypes.length)]);
+        // Add high-DA forums and blogs for diversity
+        typesToCrawl.push('forum');
+        typesToCrawl.push('blog');
         premiumFocus = true;
+        
+        // Increase depth for weekend crawls to compensate for fewer crawl types
+        crawlDepthByType.guest_post = 5;
+        crawlDepthByType.blog = 4;
+        crawlDepthByType.forum = 4;
       } 
-      // Weekday strategy - varies by time of day
+      // Early morning/night strategy - when servers are less busy, go deeper
       else if (currentHour >= 0 && currentHour < 7) {
-        // Night/Early morning: Focus exclusively on premium opportunities
+        // Night/Early morning: Focus exclusively on premium opportunities & deep crawling
         typesToCrawl = [...premiumTypes];
-        // Add 1 forum type as forums often have high DA
+        // Add high-authority forums which often have better content at night
         typesToCrawl.push('forum');
         premiumFocus = true;
         highQualityFocus = true;
+        
+        // Maximum depth during off-hours when servers are less loaded
+        crawlDepthByType.guest_post = 5;
+        crawlDepthByType.resource_page = 4;
+        crawlDepthByType.forum = 4;
       } else if (currentHour >= 7 && currentHour < 12) {
-        // Morning business hours: Balanced approach with emphasis on guest posts (often published in mornings)
+        // Morning business hours: Target newly published content
+        // Many sites publish new content in the morning, especially guest post opportunities
         typesToCrawl.push('guest_post');
-        typesToCrawl.push('blog'); // Blogs often publish in mornings
-        typesToCrawl.push('forum'); // Forums are active in mornings
-        highQualityFocus = true;
+        typesToCrawl.push('blog'); // Content creators most active in mornings
+        typesToCrawl.push('directory'); // Directories often update in mornings
+        
+        // Adjust morning crawl depths
+        crawlDepthByType.guest_post = 4; // Go deeper for morning guest posts
+        crawlDepthByType.blog = 3;
+        
+        highQualityFocus = true; // Focus on high-quality in morning hours
       } else if (currentHour >= 12 && currentHour < 17) {
-        // Afternoon: Mix of all types with emphasis on resource pages and directories
+        // Afternoon: Business hours strategy - focus on resource pages and professional directories
+        // Prioritize resource pages which are maintained by professionals during work hours
         typesToCrawl.push('resource_page');
         typesToCrawl.push('directory');
-        typesToCrawl.push(supplementaryTypes[Math.floor(Math.random() * supplementaryTypes.length)]);
+        
+        // Add one premium type based on day of week
+        // Early week: guest posts, late week: resource pages (content planning cycles)
+        if (dayOfWeek <= 3) { // Monday-Wednesday
+          typesToCrawl.push('guest_post');
+          crawlDepthByType.guest_post = 4;
+        } else { // Thursday-Friday
+          typesToCrawl.push('resource_page');
+          crawlDepthByType.resource_page = 4;
+        }
+        
+        // Slightly increased depth for afternoon crawls
+        crawlDepthByType.directory = 3;
       } else if (currentHour >= 17 && currentHour < 21) {
-        // Evening: Focus on forum and community content (more active in evenings)
+        // Evening: Focus on community content which is more active after work hours
+        // Forums, communities and social platforms are most active during evening hours
         typesToCrawl.push('forum');
         typesToCrawl.push('social_mention');
-        typesToCrawl.push(premiumTypes[Math.floor(Math.random() * premiumTypes.length)]);
+        
+        // Add guest post hunting for blogs that post in evenings
+        typesToCrawl.push('guest_post');
+        
+        // Increase forum depth in evenings when more content is being posted
+        crawlDepthByType.forum = 4;
+        crawlDepthByType.social_mention = 3;
+        
+        // Still maintain focus on quality opportunities
+        highQualityFocus = true;
       } else {
-        // Late evening: Premium focus again when server loads are typically lower
+        // Late evening: Premium focus when server loads are typically lower
+        // Plus opportunity to discover international content posted during different time zones
         typesToCrawl = [...premiumTypes];
-        typesToCrawl.push(highValueTypes[Math.floor(Math.random() * highValueTypes.length)]);
+        // Add high-value blogs which often publish at night
+        typesToCrawl.push('blog');
+        
+        // Maximum crawl depths during off-peak hours
+        crawlDepthByType.guest_post = 5;
+        crawlDepthByType.resource_page = 4;
+        crawlDepthByType.blog = 4;
+        
         premiumFocus = true;
       }
       
@@ -1732,28 +1795,76 @@ export class OpportunityCrawler {
   
   /**
    * Refresh a batch of opportunities
-   * Updates metadata and checks if they're still valid
+   * Updates metadata and checks if they're still valid, with special priority for premium opportunities
    */
   private async refreshOpportunities() {
     try {
       console.log('[Crawler] Refreshing opportunities');
       
-      // Get opportunities that haven't been checked recently
-      // For this example, we'll refresh opportunities that haven't been checked in the last 7 days
+      // Define refresh timeframes based on opportunity quality
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
-      const opportunities = await db.select()
-        .from(discoveredOpportunities)
-        .where(sql`(${discoveredOpportunities.lastChecked} IS NULL OR ${discoveredOpportunities.lastChecked} < ${sevenDaysAgo})`)
-        .limit(25); // Process in batches to avoid overloading
+      const fourteenDaysAgo = new Date();
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
       
-      console.log(`[Crawler] Found ${opportunities.length} opportunities to refresh`);
+      // First, get premium opportunities that need refreshing
+      // We refresh premium opportunities more frequently (every 3 days)
+      const premiumOpportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(and(
+          eq(discoveredOpportunities.status, 'premium'),
+          or(
+            isNull(discoveredOpportunities.lastChecked),
+            lt(discoveredOpportunities.lastChecked, threeDaysAgo)
+          )
+        ))
+        .limit(15); // Process premium opportunities first
+      
+      // Then get high-DA opportunities (even if not marked premium)
+      const highDaOpportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(and(
+          gt(discoveredOpportunities.domainAuthority, 40),
+          lt(discoveredOpportunities.spamScore, 30),
+          or(
+            isNull(discoveredOpportunities.lastChecked),
+            lt(discoveredOpportunities.lastChecked, sevenDaysAgo)
+          )
+        ))
+        .limit(15 - premiumOpportunities.length); // Fill up to a combined total of 15
+      
+      // Finally, get regular opportunities that haven't been checked in 14 days
+      const regularOpportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(and(
+          ne(discoveredOpportunities.status, 'premium'),
+          or(
+            isNull(discoveredOpportunities.lastChecked),
+            lt(discoveredOpportunities.lastChecked, fourteenDaysAgo)
+          )
+        ))
+        .limit(10); // Add 10 regular opportunities
+      
+      // Combine all opportunities, with premium ones first
+      const opportunities = [
+        ...premiumOpportunities,
+        ...highDaOpportunities.filter(o => !premiumOpportunities.some(p => p.id === o.id)), // Avoid duplicates
+        ...regularOpportunities.filter(o => 
+          !premiumOpportunities.some(p => p.id === o.id) && 
+          !highDaOpportunities.some(h => h.id === o.id)
+        )
+      ];
+      
+      console.log(`[Crawler] Found ${opportunities.length} opportunities to refresh (${premiumOpportunities.length} premium, ${highDaOpportunities.length} high-DA, ${regularOpportunities.length} regular)`);
       
       // Process each opportunity
       for (const opportunity of opportunities) {
         try {
-          console.log(`[Crawler] Refreshing opportunity: ${opportunity.id} (${opportunity.url})`);
+          console.log(`[Crawler] Refreshing opportunity: ${opportunity.id} (${opportunity.url}) - ${opportunity.status === 'premium' ? 'PREMIUM' : 'regular'}`);
           
           // Update last checked timestamp
           await db.update(discoveredOpportunities)
