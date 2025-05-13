@@ -322,9 +322,30 @@ export const discoveredOpportunities = pgTable("discoveredOpportunities", {
   pageTitle: text("pageTitle"),
   pageContent: text("pageContent"),
   contactInfo: json("contactInfo").$type<{
-    email?: string;
+    emails?: string[];
     form?: string;
-    social?: string[];
+    social?: Array<{
+      platform: string;
+      url: string;
+      username: string;
+      displayName?: string;
+    }>;
+    phoneNumbers?: string[];
+    addresses?: Array<{
+      street?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      postalCode?: string;
+    }>;
+    contactPerson?: {
+      name?: string;
+      title?: string;
+      department?: string;
+    };
+    lastVerified?: string; // ISO date string
+    sources?: string[]; // Where this contact info was found
+    confidence?: number; // 0-1 confidence score for the contact info
   }>(),
   // Metrics from validation process
   domainAuthority: integer("domainAuthority").default(0),

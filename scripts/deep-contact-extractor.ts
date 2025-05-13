@@ -727,12 +727,18 @@ async function extractDeepContactInfo() {
           // Format contact information in standardized structure
           const contactInfo = {
             emails: finalEmails,
-            form: contactForm,
+            form: contactForm || undefined,
             social: socialProfiles.map(profile => ({
               platform: profile.platform,
               url: profile.url,
-              username: profile.username
-            }))
+              username: profile.username,
+              displayName: profile.displayName
+            })),
+            lastVerified: new Date().toISOString(),
+            sources: ['deep-contact-extractor'],
+            confidence: finalEmails.length > 0 ? 0.9 : 
+                        (contactForm ? 0.7 : 
+                        (socialProfiles.length > 0 ? 0.5 : 0.1))
           };
           
           // Update the database with the extracted contact information
