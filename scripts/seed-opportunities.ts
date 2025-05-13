@@ -138,7 +138,24 @@ const nicheBasedDomains = {
     'convinceandconvert.com',
     'copyblogger.com',
     'searchengineland.com',
-    'marketingprofs.com'
+    'marketingprofs.com',
+    'themarketinghelp.co',
+    'digitalmarketer.com',
+    'conductor.com',
+    'brightedge.com',
+    'majestic.com',
+    'similarweb.com',
+    'marketingland.com',
+    'searchmetrics.com',
+    'authorityhacker.com',
+    'rankranger.com',
+    'diggitymarketing.com',
+    'sistrix.com',
+    'linkresearchtools.com',
+    'cognitive.seo',
+    'searchenginewatch.com',
+    'seoroundtable.com',
+    'webmasterworldcom'
   ],
   'social_media': [
     'buffer.com',
@@ -147,7 +164,27 @@ const nicheBasedDomains = {
     'hootsuite.com',
     'socialmediacollege.com',
     'socialmediatoday.com',
-    'socialmediastrategiessummit.com'
+    'socialmediastrategiessummit.com',
+    'socialmediamarketing.com',
+    'influencermarketinghub.com',
+    'falcon.io',
+    'later.com',
+    'sendible.com',
+    'agorapulse.com',
+    'socialreport.com',
+    'talkwalker.com',
+    'brandwatch.com',
+    'socialmeep.com',
+    'meetedgar.com',
+    'crowdfireapp.com',
+    'socialoomph.com',
+    'socialpilot.co',
+    'tailwindapp.com',
+    'loomly.com',
+    'recurpost.com',
+    'socialbakers.com',
+    'mention.com',
+    'awario.com'
   ],
   'content_creation': [
     'contently.com',
@@ -159,7 +196,27 @@ const nicheBasedDomains = {
     'gathercontent.com',
     'clearvoice.com',
     'copyblogger.com',
-    'semrush.com/blog/category/content-marketing/'
+    'semrush.com/blog/category/content-marketing/',
+    'grammarly.com',
+    'wordwise.com',
+    'marketmuse.com',
+    'surferseo.com',
+    'frase.io',
+    'buzzsumo.com',
+    'answerthepublic.com',
+    'expresswriters.com',
+    'articulate.com',
+    'contentfac.com',
+    'writeraccess.com',
+    'verblio.com',
+    'scripted.com',
+    'textbroker.com',
+    'rocketcontent.co',
+    'clickcease.com',
+    'wordable.io',
+    'paperform.co',
+    'hubspot.com/blog',
+    'bloggingwizard.com'
   ],
   'tech_and_saas': [
     'techcrunch.com',
@@ -172,7 +229,26 @@ const nicheBasedDomains = {
     'saasacademy.com',
     'forexample.com',
     'microsoftstartups.com',
-    'saas.group'
+    'saas.group',
+    'venturebeat.com',
+    'wired.com',
+    'cnet.com',
+    'techradar.com',
+    'theverge.com',
+    'engadget.com',
+    'zdnet.com',
+    'digitaltrends.com',
+    'gartner.com',
+    'forrester.com',
+    'getapp.com',
+    'softwareadvice.com',
+    'trustradius.com',
+    'crunchbase.com',
+    'saasmag.com',
+    'cloudwards.net',
+    'technopedia.com',
+    'saasworthy.com',
+    'stackshare.io'
   ],
   'health_and_wellness': [
     'webmd.com',
@@ -184,7 +260,27 @@ const nicheBasedDomains = {
     'draxe.com',
     'medicalnewstoday.com',
     'shape.com',
-    'prevention.com'
+    'prevention.com',
+    'health.com',
+    'menshealth.com',
+    'womenshealthmag.com',
+    'self.com',
+    'greatist.com',
+    'verywellhealth.com',
+    'fitnessmagazine.com',
+    'wellness.com',
+    'naturopathic.org',
+    'yogajournal.com',
+    'bodybuilding.com',
+    'betterhealthwholelife.com',
+    'drweil.com',
+    'acefitness.org',
+    'marksdailyapple.com',
+    'precisionnutrition.com',
+    'sparkpeople.com',
+    'mensjournal.com/health-fitness',
+    'nourishmovelove.com',
+    'acupuncture.com'
   ],
   'finance': [
     'investopedia.com',
@@ -196,7 +292,27 @@ const nicheBasedDomains = {
     'thepennyhoarder.com',
     'consumerfinance.gov',
     'finance.yahoo.com',
-    'kiplinger.com'
+    'kiplinger.com',
+    'motleyfool.com',
+    'moneyunder30.com',
+    'thebalance.com',
+    'marketwatch.com',
+    'bloomberg.com',
+    'morningstar.com',
+    'mintlife.intuit.com',
+    'wisebread.com',
+    'daveramsey.com',
+    'financialsamurai.com',
+    'mrmoneymustache.com',
+    'moneycrashers.com',
+    'seekingalpha.com',
+    'investinganswers.com',
+    'fool.com',
+    'bogleheads.org',
+    'getrichslowly.org',
+    'valuepenguin.com',
+    'wallstreetmojo.com',
+    'investmentwatchblog.com'
   ],
   'travel': [
     'lonelyplanet.com',
@@ -208,7 +324,27 @@ const nicheBasedDomains = {
     'cntraveler.com',
     'wanderlust.co.uk',
     'fodors.com',
-    'thepointsguy.com'
+    'thepointsguy.com',
+    'worldofwanderlust.com',
+    'travelpulse.com',
+    'skift.com',
+    'smartertravel.com',
+    'wanderlustcrew.com',
+    'ricksteves.com',
+    'expertvagabond.com',
+    'tripsavvy.com',
+    'travelchannel.com',
+    'lonelyplanettraveller.com',
+    'nationalgeographic.com/travel',
+    'atlasobscura.com',
+    'matadornetwork.com',
+    'theplanetd.com',
+    'twowanderers.com',
+    'traveloffpath.com',
+    'goatsontheroad.com',
+    'theculturetrip.com',
+    'ourtasteforlife.com',
+    'adventurouskate.com'
   ],
   'education': [
     'edutopia.org',
@@ -220,7 +356,27 @@ const nicheBasedDomains = {
     'teachthought.com',
     'edx.org',
     'edsurge.com',
-    'chronicle.com'
+    'chronicle.com',
+    'insidehighered.com',
+    'scholastic.com',
+    'udemy.com/blog',
+    'eschoolnews.com',
+    'study.com',
+    'thelearningnetwork.nytimes.com',
+    'brighthubeducation.com',
+    'thecornerstoneforteachers.com',
+    'harvardmagazine.com/topic/education',
+    'educatorstechnology.com',
+    'onlinecoursereport.com',
+    'educationdive.com',
+    'educationnext.org',
+    'learningscientists.org',
+    'edublogs.org',
+    'thetechedvocate.org',
+    'campustechnology.com',
+    'facultyfocus.com',
+    'graduatetutor.com',
+    'edtech4beginners.com'
   ]
 };
 
@@ -374,8 +530,8 @@ async function seedDiscoveredOpportunities() {
     const domains = nicheBasedDomains[niche];
     
     for (const domain of domains) {
-      // Create 1-3 opportunities per domain with different source types
-      const numOpportunities = Math.floor(Math.random() * 3) + 1;
+      // Create 5-8 opportunities per domain with different source types
+      const numOpportunities = Math.floor(Math.random() * 4) + 5;
       
       for (let i = 0; i < numOpportunities; i++) {
         const sourceType = sourceTypes[Math.floor(Math.random() * sourceTypes.length)];
@@ -383,9 +539,12 @@ async function seedDiscoveredOpportunities() {
         const title = generateTitle(topic);
         const urlPath = generateUrlPath(topic, sourceType);
         
+        // Add a unique identifier to the URL to avoid duplication
+        const uniqueId = Math.floor(Math.random() * 1000000);
+        
         const opportunityData = {
           domain: domain,
-          url: `https://${domain}${urlPath}`,
+          url: `https://${domain}${urlPath}?id=${uniqueId}`,
           title: title,
           description: `A ${sourceType.replace('_', ' ')} about ${topic.toLowerCase()} from ${domain}`,
           sourceType: sourceType,
