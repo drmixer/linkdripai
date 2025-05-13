@@ -4,6 +4,7 @@ import { eq, inArray, sql } from 'drizzle-orm';
 import { crawlerJobs, discoveredOpportunities } from '@shared/schema';
 import { getMozApiService, MozApiService } from './moz';
 import { getValidationPipeline } from './validation-pipeline';
+import { getDomainValidationService } from './validation-service';
 import puppeteer from 'puppeteer';
 import * as cheerio from 'cheerio';
 
