@@ -187,23 +187,37 @@ async function seedDiscoveredOpportunities() {
         url = `https://www.${domain}/blog/${topic.toLowerCase().replace(/\s+/g, '-')}`;
     }
     
+    // Create contact info structure to match schema
+    const contactInfo = {
+      email: generateContactEmail(domain),
+      form: Math.random() > 0.3 ? `https://www.${domain}/contact` : null, // 70% chance of having a contact form
+      social: Math.random() > 0.5 ? [`https://twitter.com/${domain.split('.')[0]}`] : []
+    };
+    
+    // Generate a simple validation data object
+    const validationData = {
+      relevanceScore: 60 + Math.floor(Math.random() * 40),
+      qualityScore: domainAuthority * 0.8,
+      contentRelevance: 70 + Math.floor(Math.random() * 30),
+      keywordDensity: 50 + Math.floor(Math.random() * 50),
+      topicMatch: 60 + Math.floor(Math.random() * 40)
+    };
+    
     opportunities.push({
       url,
       domain,
       sourceType,
-      title,
-      description: `A ${topic} focused opportunity on ${domain}`,
-      contactEmail: generateContactEmail(domain),
-      hasContactForm: Math.random() > 0.3, // 70% chance of having a contact form
-      content: `This is sample content for a ${topic} opportunity on ${domain}. It would contain relevant information that matches user websites.`,
-      categories: [topic, ...getRandomElement(topics).split(' ')],
+      pageTitle: title,
+      pageContent: `This is sample content for a ${topic} opportunity on ${domain}. It would contain relevant information that matches user websites.`,
+      contactInfo,
       domainAuthority,
       pageAuthority,
       spamScore,
+      isPremium,
       discoveredAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)), // Random date in the last 30 days
       lastChecked: new Date(),
       status: 'validated',
-      isPremium
+      validationData
     });
   }
   

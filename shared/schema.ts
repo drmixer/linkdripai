@@ -343,26 +343,26 @@ export const discoveredOpportunities = pgTable("discoveredOpportunities", {
 export const opportunityMatches = pgTable("opportunityMatches", {
   id: serial("id").primaryKey(),
   websiteId: integer("websiteId").notNull().references(() => websites.id),
-  prospectId: integer("prospectId").notNull().references(() => prospects.id),
-  matchScore: integer("matchScore").notNull(), // 0-100 matching score
+  userId: integer("userId").notNull().references(() => users.id),
+  opportunityId: integer("opportunityId").notNull().references(() => discoveredOpportunities.id),
+  matchScore: integer("matchScore").default(0), // 0-100 matching score
   matchReason: json("matchReason").$type<string[]>(), // Reasons for match
   assignedAt: timestamp("assignedAt").defaultNow(),
   showDate: timestamp("showDate"), // When to show in the feed
   status: text("status").default("pending"), // pending, shown, interacted, expired
   userDismissed: boolean("userDismissed").default(false),
   userSaved: boolean("userSaved").default(false),
+  isPremium: boolean("isPremium").default(false), // Is this a premium (Splash) match
 });
 
 // Daily drip allocations
 export const dailyDrips = pgTable("dailyDrips", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull().references(() => users.id),
-  websiteId: integer("websiteId").notNull().references(() => websites.id),
-  date: timestamp("date").defaultNow(),
-  opportunitiesLimit: integer("opportunitiesLimit").notNull(),
-  opportunitiesDelivered: integer("opportunitiesDelivered").default(0),
-  isPurchasedExtra: boolean("isPurchasedExtra").default(false),
-  matches: json("matches").$type<number[]>().default([]), // Array of opportunityMatch IDs
+  opportunityId: integer("opportunityId").notNull().references(() => discoveredOpportunities.id),
+  dripDate: timestamp("dripDate").defaultNow(),
+  status: text("status").default("active"), // active, clicked, saved, hidden
+  isPremium: boolean("isPremium").default(false), // Is this a premium (Splash) match
 });
 
 // Splash usage tracking
