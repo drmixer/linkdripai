@@ -36,47 +36,56 @@ async function checkContactInfo() {
     .from(discoveredOpportunities)
     .where(sql`"isPremium" = true AND "contactInfo" IS NOT NULL`);
     
-    // Count opportunities with emails
+    // Count opportunities with emails (checking both 'email' and 'emails' fields)
     const [withEmailCount] = await db.select({
       count: sql`count(*)`
     })
     .from(discoveredOpportunities)
-    .where(sql`jsonb_array_length("contactInfo"->'emails') > 0`);
+    .where(sql`("contactInfo"->>'email' IS NOT NULL AND "contactInfo"->>'email' != 'null') OR 
+               ("contactInfo"->'emails' IS NOT NULL AND jsonb_array_length("contactInfo"->'emails') > 0)`);
     
     // Count premium opportunities with emails
     const [premiumWithEmailCount] = await db.select({
       count: sql`count(*)`
     })
     .from(discoveredOpportunities)
-    .where(sql`"isPremium" = true AND jsonb_array_length("contactInfo"->'emails') > 0`);
+    .where(sql`"isPremium" = true AND 
+              (("contactInfo"->>'email' IS NOT NULL AND "contactInfo"->>'email' != 'null') OR 
+               ("contactInfo"->'emails' IS NOT NULL AND jsonb_array_length("contactInfo"->'emails') > 0))`);
     
-    // Count opportunities with contact forms
+    // Count opportunities with contact forms (checking both 'form' and 'contactForm' fields)
     const [withFormCount] = await db.select({
       count: sql`count(*)`
     })
     .from(discoveredOpportunities)
-    .where(sql`"contactInfo"->'contactForm' IS NOT NULL AND "contactInfo"->'contactForm' != 'null'`);
+    .where(sql`("contactInfo"->>'form' IS NOT NULL AND "contactInfo"->>'form' != 'null') OR
+              ("contactInfo"->>'contactForm' IS NOT NULL AND "contactInfo"->>'contactForm' != 'null')`);
     
     // Count premium opportunities with contact forms
     const [premiumWithFormCount] = await db.select({
       count: sql`count(*)`
     })
     .from(discoveredOpportunities)
-    .where(sql`"isPremium" = true AND "contactInfo"->'contactForm' IS NOT NULL AND "contactInfo"->'contactForm' != 'null'`);
+    .where(sql`"isPremium" = true AND 
+              (("contactInfo"->>'form' IS NOT NULL AND "contactInfo"->>'form' != 'null') OR
+               ("contactInfo"->>'contactForm' IS NOT NULL AND "contactInfo"->>'contactForm' != 'null'))`);
     
     // Count opportunities with social profiles
     const [withSocialCount] = await db.select({
       count: sql`count(*)`
     })
     .from(discoveredOpportunities)
-    .where(sql`jsonb_array_length("contactInfo"->'socialProfiles') > 0`);
+    .where(sql`("contactInfo"->'social' IS NOT NULL AND jsonb_array_length("contactInfo"->'social') > 0) OR 
+              ("contactInfo"->'socialProfiles' IS NOT NULL AND jsonb_array_length("contactInfo"->'socialProfiles') > 0)`);
     
     // Count premium opportunities with social profiles
     const [premiumWithSocialCount] = await db.select({
       count: sql`count(*)`
     })
     .from(discoveredOpportunities)
-    .where(sql`"isPremium" = true AND jsonb_array_length("contactInfo"->'socialProfiles') > 0`);
+    .where(sql`"isPremium" = true AND 
+              (("contactInfo"->'social' IS NOT NULL AND jsonb_array_length("contactInfo"->'social') > 0) OR 
+               ("contactInfo"->'socialProfiles' IS NOT NULL AND jsonb_array_length("contactInfo"->'socialProfiles') > 0))`);
     
     // Calculate percentages
     const calculatePercentage = (value: number, total: number) => 
@@ -113,10 +122,14 @@ async function checkContactInfo() {
     })
     .from(discoveredOpportunities)
     .where(sql`
-      JSON_ARRAY_LENGTH("contactInfo"->'$.emails') > 0
-      AND "contactInfo"->'$.contactForm' IS NOT NULL
-      AND "contactInfo"->'$.contactForm' != 'null'
-      AND JSON_ARRAY_LENGTH("contactInfo"->'$.socialProfiles') > 0
+      (("contactInfo"->>'email' IS NOT NULL AND "contactInfo"->>'email' != 'null') OR 
+       ("contactInfo"->'emails' IS NOT NULL AND jsonb_array_length("contactInfo"->'emails') > 0))
+      AND
+      (("contactInfo"->>'form' IS NOT NULL AND "contactInfo"->>'form' != 'null') OR
+       ("contactInfo"->>'contactForm' IS NOT NULL AND "contactInfo"->>'contactForm' != 'null'))
+      AND
+      (("contactInfo"->'social' IS NOT NULL AND jsonb_array_length("contactInfo"->'social') > 0) OR 
+       ("contactInfo"->'socialProfiles' IS NOT NULL AND jsonb_array_length("contactInfo"->'socialProfiles') > 0))
     `)
     .limit(5);
     
@@ -124,15 +137,34 @@ async function checkContactInfo() {
     
     if (completeSamples.length > 0) {
       completeSamples.forEach(sample => {
-        const contactInfo = JSON.parse(sample.contactInfo as string);
+        const contactInfo = typeof sample.contactInfo === 'string' 
+          ? JSON.parse(sample.contactInfo) 
+          : sample.contactInfo;
+        
         console.log(`Domain: ${sample.domain} (Premium: ${sample.isPremium ? 'Yes' : 'No'})`);
         console.log(`URL: ${sample.url}`);
-        console.log(`Email(s): ${contactInfo.emails.join(', ')}`);
-        console.log(`Contact Form: ${contactInfo.contactForm}`);
-        console.log(`Social Profiles: ${contactInfo.socialProfiles.length} profiles`);
-        contactInfo.socialProfiles.forEach((profile: any) => {
-          console.log(`  - ${profile.platform}: ${profile.url}`);
-        });
+        
+        // Display emails
+        const emails = [];
+        if (contactInfo.email) emails.push(contactInfo.email);
+        if (contactInfo.emails && Array.isArray(contactInfo.emails)) {
+          emails.push(...contactInfo.emails);
+        }
+        console.log(`Email(s): ${emails.length > 0 ? emails.join(', ') : 'None'}`);
+        
+        // Display form
+        const form = contactInfo.contactForm || contactInfo.form || 'None';
+        console.log(`Contact Form: ${form}`);
+        
+        // Display social profiles
+        const socialProfiles = contactInfo.socialProfiles || contactInfo.social || [];
+        console.log(`Social Profiles: ${socialProfiles.length} profiles`);
+        if (socialProfiles.length > 0) {
+          socialProfiles.forEach((profile: any) => {
+            console.log(`  - ${profile.platform}: ${profile.url}`);
+          });
+        }
+        
         console.log('---');
       });
     } else {
