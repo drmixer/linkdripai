@@ -727,11 +727,11 @@ async function enhanceOpportunityContactInfo() {
   console.log('Starting to enhance contact information for premium opportunities...');
   
   try {
-    // Get all premium opportunities
+    // Get all premium opportunities - note the "isPremium" column casing is correct here
     const opportunities = await db.select()
       .from(discoveredOpportunities)
       .where(
-        sql`isPremium = true`
+        sql`"isPremium" = true`
       )
       .limit(25); // Process in smaller batches for better error handling
     
