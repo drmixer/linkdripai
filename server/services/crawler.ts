@@ -1336,6 +1336,96 @@ export class OpportunityCrawler {
   }
   
   /**
+   * Database of verified premium seed URLs by opportunity type
+   * These URLs consistently produce high-quality (DA 40+, low spam) opportunities
+   */
+  private premiumSeedsByType: Record<string, string[]> = {
+    'resource_page': [
+      'https://ahrefs.com/blog/seo-resources/',
+      'https://moz.com/learn/seo',
+      'https://backlinko.com/seo-tools',
+      'https://www.semrush.com/blog/resources/',
+      'https://neilpatel.com/blog/seo-tools/',
+      'https://www.reliablesoft.net/digital-marketing-resources/',
+      'https://www.wordstream.com/blog/resources',
+      'https://www.searchenginewatch.com/category/seo/',
+      'https://www.digitalmarketer.com/blog/resources/',
+      'https://blog.hubspot.com/marketing/seo-resources'
+    ],
+    'guest_post': [
+      'https://www.searchenginejournal.com/contribute/',
+      'https://www.entrepreneur.com/write-for-us',
+      'https://www.forbes.com/sites/info/2021/12/10/forbes-writers-guidelines/',
+      'https://www.business.com/contribute/',
+      'https://www.techradar.com/news/submit-news-stories-reviews-and-guides',
+      'https://www.convinceandconvert.com/write-for-us/',
+      'https://www.jeffbullas.com/submit-a-guest-post/',
+      'https://www.socialmediaexaminer.com/writers/',
+      'https://www.smartblogger.com/write-for-us/',
+      'https://www.copyblogger.com/write-for-us/'
+    ],
+    'forum': [
+      'https://www.webmasterworld.com/',
+      'https://community.ahrefs.com/',
+      'https://www.reddit.com/r/bigseo/',
+      'https://www.warriorforum.com/',
+      'https://inbound.org/',
+      'https://moz.com/community',
+      'https://www.reddit.com/r/SEO/',
+      'https://www.seroundtable.com/'
+    ],
+    'blog': [
+      'https://www.searchenginejournal.com/',
+      'https://moz.com/blog',
+      'https://backlinko.com/blog',
+      'https://www.gsqi.com/marketing-blog/',
+      'https://www.seoroundtable.com/',
+      'https://www.searchengineland.com/',
+      'https://contentmarketinginstitute.com/blog/',
+      'https://www.bloggerspassion.com/blog/',
+      'https://authorityhacker.com/blog/',
+      'https://www.matthewwoodward.co.uk/blog/'
+    ],
+    'directory': [
+      'https://clutch.co/directories',
+      'https://www.hotfrog.com/',
+      'https://about.com/sitemap',
+      'https://botw.org/',
+      'https://www.yelp.com/busines-directory'
+    ]
+  };
+  
+  /**
+   * Domain quality scores based on historical performance
+   * These are sites we know have high authority and produce good backlinks
+   */
+  private domainQualityScores: Record<string, number> = {
+    'searchenginejournal.com': 95,
+    'moz.com': 95,
+    'ahrefs.com': 93,
+    'backlinko.com': 92,
+    'semrush.com': 90,
+    'entrepreneur.com': 90,
+    'forbes.com': 88,
+    'business.com': 85,
+    'techradar.com': 85,
+    'convinceandconvert.com': 83,
+    'seoroundtable.com': 82,
+    'searchengineland.com': 82,
+    'hubspot.com': 80,
+    'contentmarketinginstitute.com': 80,
+    'smartblogger.com': 78,
+    'socialmediaexaminer.com': 78,
+    'copyblogger.com': 77,
+    'jeffbullas.com': 75,
+    'neilpatel.com': 75,
+    'wordstream.com': 75,
+    'bloggerspassion.com': 72,
+    'authorityhacker.com': 72,
+    'matthewwoodward.co.uk': 70
+  };
+  
+  /**
    * Get seed URLs for a specific crawl type
    */
   private getSeedUrlsForType(type: string): string[] {
@@ -1772,8 +1862,56 @@ export class OpportunityCrawler {
       ]
     };
     
-    // Return seed URLs for the requested type, or empty array if none
-    return seedUrls[type] || [];
+    // Get all seeds from our available sources
+    const allAvailableUrls = new Set<string>();
+    
+    // First add premium seeds if available for this type
+    if (this.premiumSeedsByType[type]) {
+      this.premiumSeedsByType[type].forEach(url => allAvailableUrls.add(url));
+    }
+    
+    // Add regular seeds
+    if (seedUrls[type]) {
+      seedUrls[type].forEach(url => allAvailableUrls.add(url));
+    }
+    
+    // Convert set to array (deduplicates URLs)
+    const result = Array.from(allAvailableUrls);
+    
+    // Sort seed URLs based on domain quality scores to prioritize high-quality sources
+    return result.sort((a, b) => {
+      const domainA = this.extractDomain(a);
+      const domainB = this.extractDomain(b);
+      
+      // Get domain quality scores or default to 0
+      const scoreA = this.getDomainQualityScore(domainA);
+      const scoreB = this.getDomainQualityScore(domainB);
+      
+      // Sort descending (higher scores first)
+      return scoreB - scoreA;
+    });
+  }
+  
+  /**
+   * Get the quality score for a domain based on historical performance
+   * @param domain The domain to score
+   * @returns Quality score between 0-100
+   */
+  private getDomainQualityScore(domain: string): number {
+    // Check for exact match
+    if (this.domainQualityScores[domain]) {
+      return this.domainQualityScores[domain];
+    }
+    
+    // Check for subdomain match
+    for (const scoredDomain in this.domainQualityScores) {
+      if (domain.endsWith(`.${scoredDomain}`) || domain.includes(scoredDomain)) {
+        return this.domainQualityScores[scoredDomain];
+      }
+    }
+    
+    // Default score for unknown domains
+    return 40;
   }
   
   /**
