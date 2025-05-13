@@ -1743,69 +1743,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register email webhook routes
   app.use('/api/webhooks', emailWebhookRoutes);
   
-  // Onboarding routes
-  app.post("/api/onboarding/subscription", isAuthenticated, async (req, res) => {
-    try {
-      const { plan } = req.body;
-      
-      if (!plan || !["Free Trial", "Starter", "Grow", "Pro"].includes(plan)) {
-        return res.status(400).json({ message: "Invalid subscription plan" });
-      }
-      
-      const user = await storage.updateUserSubscription(req.user!.id, plan);
-      
-      return res.status(200).json({ user });
-    } catch (error) {
-      console.error("Error updating subscription:", error);
-      return res.status(500).json({ message: "Failed to update subscription" });
-    }
-  });
-  
-  app.post("/api/onboarding/websites", isAuthenticated, async (req, res) => {
-    try {
-      const { websites } = req.body;
-      
-      if (!websites || !Array.isArray(websites)) {
-        return res.status(400).json({ message: "Invalid websites data" });
-      }
-      
-      const user = await storage.updateUserWebsites(req.user!.id, websites);
-      
-      return res.status(200).json({ user });
-    } catch (error) {
-      console.error("Error updating websites:", error);
-      return res.status(500).json({ message: "Failed to update websites" });
-    }
-  });
-  
-  app.post("/api/onboarding/website-preferences", isAuthenticated, async (req, res) => {
-    try {
-      const { websiteIndex, preferences } = req.body;
-      
-      if (typeof websiteIndex !== 'number' || !preferences) {
-        return res.status(400).json({ message: "Invalid preferences data" });
-      }
-      
-      const user = await storage.updateWebsitePreferences(req.user!.id, websiteIndex, preferences);
-      
-      return res.status(200).json({ user });
-    } catch (error) {
-      console.error("Error updating website preferences:", error);
-      return res.status(500).json({ message: "Failed to update website preferences" });
-    }
-  });
-  
-  app.post("/api/onboarding/complete", isAuthenticated, async (req, res) => {
-    try {
-      const user = await storage.completeOnboarding(req.user!.id);
-      
-      return res.status(200).json({ user });
-    } catch (error) {
-      console.error("Error completing onboarding:", error);
-      return res.status(500).json({ message: "Failed to complete onboarding" });
-    }
-  });
-  
   // Create HTTP server
   const httpServer = createServer(app);
   
