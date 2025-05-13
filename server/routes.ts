@@ -1531,6 +1531,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Register email webhook routes
+  app.use('/api', emailWebhookRoutes);
+  
+  // Enhanced email sending endpoint with tracking and threading
+  app.post("/api/email/send-tracked", isAuthenticated, async (req, res) => {
+    try {
+      const { prospectId, subject, body } = req.body;
+      
+      if (!prospectId || !subject || !body) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const prospect = await storage.getProspectById(prospectId);
+      if (!prospect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+
+      // Create the email record first
+      const emailData = {
+        prospectId,
+        userId: req.user!.id,
+        subject,
+        body,
+        siteName: prospect.siteName || prospect.siteType,
+        contactEmail: prospect.contactEmail!,
+        contactRole: prospect.contactRole,
+        domainAuthority: prospect.domainAuthority,
+      };
+
+      const emailSchema = insertEmailSchema.parse(emailData);
+      const email = await storage.sendEmail(emailSchema);
+      
+      // Then send it through the email service with tracking
+      const emailService = await createEmailServiceForUser(req.user!.id);
+      if (!emailService) {
+        return res.status(400).json({ 
+          message: "Email service not configured. Please set up your email settings first.",
+          email
+        });
+      }
+      
+      const emailContent = {
+        to: prospect.contactEmail!,
+        subject: subject,
+        body: body,
+      };
+      
+      const result = await emailService.sendEmail(email.id, req.user!.id, prospectId, emailContent);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: `Failed to send email: ${result.error}`,
+          email
+        });
+      }
+      
+      res.json({ 
+        ...email, 
+        messageId: result.messageId,
+        threadId: result.threadId
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Verify email address
+  app.post("/api/email/verify", isAuthenticated, async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email address is required" });
+      }
+      
+      // Check if user has configured email settings
+      const [user] = await db.select()
+        .from(users)
+        .where(eq(users.id, req.user!.id));
+      
+      if (!user || !user.emailProvider || !user.fromEmail) {
+        return res.status(400).json({ message: "Email settings not configured" });
+      }
+      
+      // Create temporary service to send verification
+      // Create email service directly using the factory function
+      const emailService = await createEmailServiceForUser(req.user!.id);
+      
+      if (!emailService) {
+        return res.status(400).json({ message: "Failed to create email service with your settings" });
+      }
+      const result = await emailService.sendVerificationEmail(req.user!.id, email);
+      
+      if (!result.success) {
+        return res.status(500).json({ message: `Failed to send verification email: ${result.error}` });
+      }
+      
+      res.json({ success: true, message: "Verification email sent" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // Start the opportunity discovery scheduler in development

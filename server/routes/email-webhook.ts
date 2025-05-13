@@ -5,7 +5,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { EmailService } from '../services/email-service';
+import { EmailService, createEmailServiceForUser } from '../services/email-service';
 import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -50,11 +50,12 @@ router.post('/webhook/sendgrid', async (req, res) => {
         }
         
         // Create email service for this user
-        const emailService = new EmailService({
-          provider: 'sendgrid',
-          fromEmail: user.fromEmail || '',
-          sendgridApiKey: user.sendgridApiKey || '',
-        });
+        const emailService = await createEmailServiceForUser(user.id);
+        
+        if (!emailService) {
+          console.log(`Could not create email service for user ${user.id}`);
+          continue; // Skip if no valid email service could be created
+        }
         
         // Process the incoming email
         const result = await emailService.processIncomingEmail(email);
@@ -108,38 +109,6 @@ router.post('/webhook/email', async (req, res) => {
   }
 });
 
-/**
- * Function to create an email service for a user
- */
-async function createEmailServiceForUser(userId: number) {
-  // Get user details
-  const [user] = await db.select().from(users).where(eq(users.id, userId));
-  
-  if (!user || !user.emailProvider || !user.fromEmail) {
-    return null;
-  }
-  
-  // Create config based on user settings
-  const config: any = {
-    provider: user.emailProvider,
-    fromEmail: user.fromEmail,
-  };
-  
-  // Add provider-specific settings
-  if (user.emailProvider === 'sendgrid') {
-    config.sendgridApiKey = user.sendgridApiKey;
-  } else if (user.emailProvider === 'smtp') {
-    config.smtpHost = user.smtpHost;
-    config.smtpPort = user.smtpPort || 587;
-    config.smtpUsername = user.smtpUsername;
-    config.smtpPassword = user.smtpPassword;
-  } else if (user.emailProvider === 'gmail') {
-    config.gmailClientId = user.gmailClientId;
-    config.gmailClientSecret = user.gmailClientSecret;
-    config.gmailRefreshToken = user.gmailRefreshToken;
-  }
-  
-  return new EmailService(config);
-}
+// Email service utility is already imported at the top
 
 export default router;

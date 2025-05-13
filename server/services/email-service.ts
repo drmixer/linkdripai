@@ -324,7 +324,7 @@ export async function createEmailServiceForUser(userId: number): Promise<EmailSe
     // Get user's email settings
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     
-    if (!user || !user.emailProvider || !user.fromEmail) {
+    if (!user || !user.emailProvider || !user.fromEmail || !user.emailProviderSettings) {
       return null;
     }
     
@@ -335,18 +335,30 @@ export async function createEmailServiceForUser(userId: number): Promise<EmailSe
       fromName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : undefined,
     };
     
-    // Add provider-specific settings
-    if (user.emailProvider === 'sendgrid' && user.sendgridApiKey) {
-      config.sendgridApiKey = user.sendgridApiKey;
-    } else if (user.emailProvider === 'smtp' && user.smtpHost && user.smtpUsername && user.smtpPassword) {
-      config.smtpHost = user.smtpHost;
-      config.smtpPort = user.smtpPort || 587;
-      config.smtpUsername = user.smtpUsername;
-      config.smtpPassword = user.smtpPassword;
-    } else if (user.emailProvider === 'gmail' && user.gmailClientId && user.gmailClientSecret && user.gmailRefreshToken) {
-      config.gmailClientId = user.gmailClientId;
-      config.gmailClientSecret = user.gmailClientSecret;
-      config.gmailRefreshToken = user.gmailRefreshToken;
+    // Add provider-specific settings based on provider
+    const providerSettings = user.emailProviderSettings;
+    
+    if (user.emailProvider === 'sendgrid' && providerSettings.sendgrid?.apiKey) {
+      config.sendgridApiKey = providerSettings.sendgrid.apiKey;
+    } else if (user.emailProvider === 'smtp' && providerSettings.smtp) {
+      const smtpSettings = providerSettings.smtp;
+      if (smtpSettings.server && smtpSettings.username && smtpSettings.password) {
+        config.smtpHost = smtpSettings.server;
+        config.smtpPort = typeof smtpSettings.port === 'number' ? smtpSettings.port : parseInt(smtpSettings.port) || 587;
+        config.smtpUsername = smtpSettings.username;
+        config.smtpPassword = smtpSettings.password;
+      } else {
+        return null; // Missing required SMTP settings
+      }
+    } else if (user.emailProvider === 'gmail' && providerSettings.gmail) {
+      const gmailSettings = providerSettings.gmail;
+      if (gmailSettings.clientId && gmailSettings.clientSecret && gmailSettings.refreshToken) {
+        config.gmailClientId = gmailSettings.clientId;
+        config.gmailClientSecret = gmailSettings.clientSecret;
+        config.gmailRefreshToken = gmailSettings.refreshToken;
+      } else {
+        return null; // Missing required Gmail settings
+      }
     } else {
       return null; // Missing required provider settings
     }
