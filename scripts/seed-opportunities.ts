@@ -23,6 +23,106 @@ const sourceTypes = [
   'blog'
 ];
 
+// Niche-based topics for website profiles
+const nicheTopics = {
+  'digital_marketing': [
+    'SEO Strategies', 
+    'Link Building Techniques', 
+    'Content Marketing', 
+    'Analytics and Data', 
+    'Google Algorithm Updates',
+    'Keyword Research',
+    'On-page Optimization',
+    'Technical SEO',
+    'Local SEO',
+    'Mobile SEO'
+  ],
+  'social_media': [
+    'Social Media Strategy',
+    'Community Management',
+    'Platform Algorithms',
+    'Social Analytics',
+    'Content Creation',
+    'Influencer Marketing',
+    'Paid Social',
+    'Engagement Strategies',
+    'Social Listening',
+    'Social ROI'
+  ],
+  'content_creation': [
+    'Content Strategy',
+    'Copywriting',
+    'Storytelling',
+    'Visual Content',
+    'Content Distribution',
+    'Audience Development',
+    'Editorial Planning',
+    'Content Formats',
+    'Content Optimization',
+    'Content Measurement'
+  ],
+  'tech_and_saas': [
+    'Product Development',
+    'User Experience',
+    'SaaS Metrics',
+    'Customer Success',
+    'API Integration',
+    'DevOps',
+    'Software Architecture',
+    'Growth Hacking',
+    'Product Marketing',
+    'Technology Trends'
+  ],
+  'health_and_wellness': [
+    'Nutrition',
+    'Fitness',
+    'Mental Health',
+    'Preventive Healthcare',
+    'Wellness Practices',
+    'Medical Research',
+    'Alternative Medicine',
+    'Health Technology',
+    'Patient Education',
+    'Healthcare Policy'
+  ],
+  'finance': [
+    'Personal Finance',
+    'Investing',
+    'Financial Planning',
+    'Retirement',
+    'Tax Strategies',
+    'Insurance',
+    'Banking',
+    'Cryptocurrency',
+    'Financial Independence',
+    'Debt Management'
+  ],
+  'travel': [
+    'Destination Guides',
+    'Travel Tips',
+    'Budget Travel',
+    'Luxury Travel',
+    'Adventure Travel',
+    'Family Travel',
+    'Solo Travel',
+    'Sustainable Tourism',
+    'Travel Technology',
+    'Cultural Experiences'
+  ],
+  'education': [
+    'Learning Methodologies',
+    'Educational Technology',
+    'Curriculum Development',
+    'Student Success',
+    'Higher Education',
+    'Online Learning',
+    'Professional Development',
+    'Education Policy',
+    'Teacher Resources',
+    'Learning Assessment'
+  ]
+};
+
 // Organized by niche for better opportunity matching
 const nicheBasedDomains = {
   'digital_marketing': [
