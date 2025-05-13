@@ -418,36 +418,144 @@ async function seedCrawlerJobs() {
   
   const jobs = [];
   
-  // Generate sample jobs for different types
-  const jobTypes = ['resource_page', 'guest_post', 'directory', 'all'];
+  // Create real crawler jobs for various niches and source types
   
-  for (const jobType of jobTypes) {
-    // Create completed job
-    jobs.push({
-      jobType: jobType,
-      targetUrl: `https://example.com/${jobType}`,
-      status: 'completed',
-      startedAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
-      completedAt: new Date(Date.now() - 86400000), // 1 day ago
-      error: null,
-      results: JSON.stringify({
-        crawled: 15,
-        discovered: 8,
-        errors: 2
-      })
-    });
-    
-    // Create pending job
-    jobs.push({
-      jobType: jobType,
-      targetUrl: `https://example2.com/${jobType}`,
-      status: 'pending',
-      startedAt: null,
-      completedAt: null,
-      error: null,
-      results: JSON.stringify({})
-    });
-  }
+  // Digital Marketing resources and guest posts
+  jobs.push({
+    jobType: 'resource_page',
+    targetUrl: 'https://ahrefs.com/blog/seo-resources/',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'digital_marketing'
+    })
+  });
+  
+  jobs.push({
+    jobType: 'guest_post',
+    targetUrl: 'https://www.searchenginejournal.com/contribute/',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'digital_marketing'
+    })
+  });
+  
+  // Content Creation resources
+  jobs.push({
+    jobType: 'resource_page',
+    targetUrl: 'https://www.copyblogger.com/copywriting-101/',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'content_creation'
+    })
+  });
+  
+  jobs.push({
+    jobType: 'guest_post',
+    targetUrl: 'https://www.jeffbullas.com/submit-a-guest-post/',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'content_creation'
+    })
+  });
+  
+  // Tech & SaaS resources
+  jobs.push({
+    jobType: 'resource_page',
+    targetUrl: 'https://www.producthunt.com/',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'tech_and_saas'
+    })
+  });
+  
+  jobs.push({
+    jobType: 'directory',
+    targetUrl: 'https://www.g2.com/categories/seo',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'tech_and_saas'
+    })
+  });
+  
+  // Social Media resources
+  jobs.push({
+    jobType: 'blog',
+    targetUrl: 'https://buffer.com/resources/',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'social_media'
+    })
+  });
+  
+  // Finance resources
+  jobs.push({
+    jobType: 'blog',
+    targetUrl: 'https://www.investopedia.com/',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'finance'
+    })
+  });
+  
+  // Health & Wellness resources
+  jobs.push({
+    jobType: 'blog',
+    targetUrl: 'https://www.healthline.com/',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'health_and_wellness'
+    })
+  });
+  
+  // General/mixed resources
+  jobs.push({
+    jobType: 'all',
+    targetUrl: 'https://indiehackers.com/groups/marketing',
+    status: 'pending',
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    results: JSON.stringify({
+      status: 'queued',
+      niche: 'mixed'
+    })
+  });
   
   // Insert the jobs into the database
   const insertedJobs = await db.insert(crawlerJobs).values(jobs).returning();
