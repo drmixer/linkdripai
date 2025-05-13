@@ -267,7 +267,7 @@ const REAL_PREMIUM_DOMAINS = [
     domain: 'cognitiveseo.com',
     url: 'https://cognitiveseo.com/blog',
     title: 'cognitiveSEO Blog - SEO Tips, Tactics & News',
-    description: 'CognitiveSEO's blog covers SEO tactics, in-depth analysis, case studies and news to help you improve your search engine visibility.',
+    description: 'CognitiveSEO\'s blog covers SEO tactics, in-depth analysis, case studies and news to help you improve your search engine visibility.',
     sourceType: 'blog',
     domainAuthority: 75,
     spamScore: 1
@@ -388,17 +388,42 @@ async function seedRealPremiumOpportunities() {
       newOpportunities.push(newOpportunity);
     }
     
-    // Insert the new opportunities
+    // Insert the new opportunities, handling duplicates
+    let insertedCount = 0;
+    let updatedCount = 0;
+    
     for (const opportunity of newOpportunities) {
-      await db.insert(discoveredOpportunities).values(opportunity);
+      try {
+        // Check if opportunity with this URL already exists
+        const existing = await db.select().from(discoveredOpportunities).where(sql`url = ${opportunity.url}`);
+        
+        if (existing.length === 0) {
+          // Insert new opportunity if it doesn't exist
+          await db.insert(discoveredOpportunities).values(opportunity);
+          insertedCount++;
+        } else {
+          // Update existing opportunity with premium data
+          await db.update(discoveredOpportunities)
+            .set({ 
+              isPremium: true,
+              domainAuthority: opportunity.domainAuthority,
+              spamScore: opportunity.spamScore,
+              description: opportunity.description
+            })
+            .where(sql`url = ${opportunity.url}`);
+          updatedCount++;
+        }
+      } catch (error) {
+        console.error(`Error processing opportunity ${opportunity.url}:`, error.message);
+      }
     }
     
-    console.log(`Successfully added ${newOpportunities.length} real premium opportunities`);
+    console.log(`Successfully added ${insertedCount} new real premium opportunities and updated ${updatedCount} existing ones`);
     
-    // Mark these as premium
+    // Make sure all domains from our premium list are marked as premium
     await db.update(discoveredOpportunities)
       .set({ isPremium: true })
-      .where(sql`domain IN (${REAL_PREMIUM_DOMAINS.map(d => d.domain)})`);
+      .where(sql`"domain" IN (${REAL_PREMIUM_DOMAINS.map(d => d.domain).join(',')})`);
     
     console.log('Successfully marked opportunities as premium');
     
