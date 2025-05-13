@@ -652,7 +652,7 @@ async function extractSocialProfiles(url: string): Promise<Array<{platform: stri
 /**
  * Main function to extract contact information from opportunities
  */
-async function extractDeepContactInfo() {
+export async function extractDeepContactInfo() {
   console.log('Starting deep contact information extraction...');
   
   try {

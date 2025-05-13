@@ -143,8 +143,8 @@ export class MozApiService {
             });
             results[domain] = result;
           }
-        } catch (apiError) {
-          console.warn(`[MozAPI] API request failed, using synthetic metrics: ${apiError.message}`);
+        } catch (error: any) {
+          console.warn(`[MozAPI] API request failed, using synthetic metrics: ${error.message || 'Unknown error'}`);
           
           // Generate fallback metrics for domains we couldn't fetch
           for (const domain of domainsToFetch) {
