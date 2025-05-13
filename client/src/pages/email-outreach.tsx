@@ -288,8 +288,11 @@ export default function EmailOutreach() {
       </Dialog>
       
       {/* Email Setup Modal */}
-      <Dialog open={showEmailSetupModal}>
-        <DialogContent className="max-w-4xl">
+      <Dialog 
+        open={showEmailSetupModal} 
+        onOpenChange={setShowEmailSetupModal}
+      >
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Email Configuration</DialogTitle>
           </DialogHeader>
