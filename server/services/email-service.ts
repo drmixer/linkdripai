@@ -179,10 +179,11 @@ export class EmailService {
       log(`Failed to send email: ${error}`, 'email-service');
       
       // Update the email record to reflect the failure
+      const errorMsg = error instanceof Error ? error.message : 'Failed to send email';
       await db.update(outreachEmails)
         .set({
           status: 'Failed',
-          errorMessage: error.message || 'Failed to send email',
+          errorMessage: errorMsg,
         })
         .where(eq(outreachEmails.id, emailId));
       
@@ -310,16 +311,16 @@ export async function createEmailServiceForUser(userId: number): Promise<EmailSe
     
     // Add provider-specific settings
     if (userSettings.provider === 'sendgrid') {
-      config.sendgridApiKey = userSettings.sendgridApiKey;
+      config.sendgridApiKey = userSettings.sendgridApiKey || undefined;
     } else if (userSettings.provider === 'smtp') {
-      config.smtpHost = userSettings.smtpHost;
-      config.smtpPort = userSettings.smtpPort;
-      config.smtpUsername = userSettings.smtpUsername;
-      config.smtpPassword = userSettings.smtpPassword;
+      config.smtpHost = userSettings.smtpHost || undefined;
+      config.smtpPort = userSettings.smtpPort || undefined;
+      config.smtpUsername = userSettings.smtpUsername || undefined;
+      config.smtpPassword = userSettings.smtpPassword || undefined;
     } else if (userSettings.provider === 'gmail') {
-      config.gmailClientId = userSettings.gmailClientId;
-      config.gmailClientSecret = userSettings.gmailClientSecret;
-      config.gmailRefreshToken = userSettings.gmailRefreshToken;
+      config.gmailClientId = userSettings.gmailClientId || undefined;
+      config.gmailClientSecret = userSettings.gmailClientSecret || undefined;
+      config.gmailRefreshToken = userSettings.gmailRefreshToken || undefined;
     }
     
     // Create and return the email service

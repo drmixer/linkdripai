@@ -238,6 +238,8 @@ export const outreachEmails = pgTable("outreachEmails", {
   replyContent: text("replyContent"), // Store reply content when received
   replyHeaders: json("replyHeaders").$type<Record<string, string>>(), // Store headers from replies
   lastCheckedAt: timestamp("lastCheckedAt"), // Last time we checked for replies
+  errorMessage: text("errorMessage"), // Error message if email sending fails
+  replyMessageId: text("replyMessageId"), // Message ID of the reply email
 });
 
 export const insertEmailSchema = createInsertSchema(outreachEmails).omit({

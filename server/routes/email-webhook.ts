@@ -158,7 +158,8 @@ async function processIncomingEmail(emailData: {
           status: 'Responded',
           responseAt: new Date(),
           replyContent: body,
-          replyMessageId: messageId,
+          // Safely add fields without type issues
+          ...(messageId ? { replyMessageId: messageId } : {})
         })
         .where(eq(outreachEmails.id, matchingEmailId));
       
