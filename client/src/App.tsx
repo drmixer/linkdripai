@@ -16,6 +16,7 @@ import Analytics from "@/pages/analytics";
 import LandingPage from "@/pages/landing-page";
 import PricingPage from "@/pages/pricing-page";
 import Onboarding from "@/pages/onboarding-improved";
+import OnboardingJourney from "@/pages/onboarding-journey";
 import WebsitesPage from "@/pages/websites";
 import BillingPage from "@/pages/billing";
 import HelpPage from "@/pages/help";
@@ -35,7 +36,8 @@ function Router() {
       <ProtectedRoute path="/saved-prospects" component={SavedProspects} />
       <ProtectedRoute path="/email-outreach" component={EmailOutreach} />
       <ProtectedRoute path="/analytics" component={Analytics} />
-      <ProtectedRoute path="/onboarding" component={Onboarding} skipOnboardingCheck={true} />
+      <ProtectedRoute path="/onboarding" component={OnboardingJourney} skipOnboardingCheck={true} />
+      <ProtectedRoute path="/onboarding/journey" component={OnboardingJourney} skipOnboardingCheck={true} />
       <ProtectedRoute path="/onboarding/improved" component={Onboarding} skipOnboardingCheck={true} />
       <ProtectedRoute path="/websites" component={WebsitesPage} />
       <ProtectedRoute path="/billing" component={BillingPage} />
