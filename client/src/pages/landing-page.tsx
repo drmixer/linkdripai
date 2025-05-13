@@ -1,17 +1,55 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Icons } from "@/lib/icons";
-import { Check, CheckCircle, ArrowRight, Link2, Zap, BarChart, Mail, Shield, Droplets, LineChart, Globe } from "lucide-react";
-import { motion } from "framer-motion";
+import { 
+  Check, 
+  CheckCircle, 
+  ArrowRight, 
+  Link2, 
+  Zap, 
+  BarChart, 
+  Mail, 
+  Shield, 
+  Droplets, 
+  LineChart, 
+  Globe, 
+  ArrowUp, 
+  ChevronUp 
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/logo";
 import HowItWorksAnimation from "@/components/HowItWorksAnimation";
 
 export default function LandingPage() {
   const { user } = useAuth();
   const [pricingInterval, setPricingInterval] = useState<"monthly" | "annual">("monthly");
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  // Handle scroll for back-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 500) {
+        setShowBackToTop(true);
+      } else {
+        setShowBackToTop(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
 
   // Redirect to dashboard if already logged in
   if (user) {
@@ -27,11 +65,11 @@ export default function LandingPage() {
             <Logo size="lg" className="cursor-pointer scale-120" />
           </div>
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
-              Features
-            </a>
             <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
               How It Works
+            </a>
+            <a href="#features" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
+              Features
             </a>
             <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
               Pricing
@@ -1035,6 +1073,22 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Back to Top Button - appears when scrolling */}
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, bottom: "1rem" }}
+            animate={{ opacity: 1, bottom: "2rem" }}
+            exit={{ opacity: 0, bottom: "1rem" }}
+            onClick={scrollToTop}
+            className="fixed right-6 bottom-8 z-50 flex items-center justify-center w-12 h-12 p-3 bg-primary hover:bg-primary/90 text-white rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+            aria-label="Back to top"
+          >
+            <ChevronUp className="h-6 w-6" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
