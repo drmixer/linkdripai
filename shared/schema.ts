@@ -206,6 +206,14 @@ export const outreachEmails = pgTable("outreachEmails", {
   responseAt: timestamp("responseAt"),
   isFollowUp: boolean("isFollowUp").default(false),
   parentEmailId: integer("parentEmailId"),
+  
+  // New fields for email tracking and threading
+  messageId: text("messageId"), // Unique ID for tracking in email headers
+  threadId: text("threadId"), // For grouping conversations
+  providerMessageId: text("providerMessageId"), // External provider's message ID
+  replyContent: text("replyContent"), // Store reply content when received
+  replyHeaders: json("replyHeaders").$type<Record<string, string>>(), // Store headers from replies
+  lastCheckedAt: timestamp("lastCheckedAt"), // Last time we checked for replies
 });
 
 export const insertEmailSchema = createInsertSchema(outreachEmails).omit({
@@ -214,6 +222,12 @@ export const insertEmailSchema = createInsertSchema(outreachEmails).omit({
   responseAt: true,
   isFollowUp: true,
   parentEmailId: true,
+  messageId: true,
+  threadId: true,
+  providerMessageId: true,
+  replyContent: true,
+  replyHeaders: true,
+  lastCheckedAt: true,
 });
 
 // Stats/Analytics table
