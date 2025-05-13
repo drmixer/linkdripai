@@ -213,7 +213,7 @@ const REAL_PREMIUM_DOMAINS = [
     domain: 'optinmonster.com',
     url: 'https://optinmonster.com/blog',
     title: 'OptinMonster Blog - Conversion Optimization Strategies',
-    description: 'OptinMonster's blog provides actionable conversion rate optimization strategies to help you grow your email list and boost sales.',
+    description: 'OptinMonster\'s blog provides actionable conversion rate optimization strategies to help you grow your email list and boost sales.',
     sourceType: 'blog',
     domainAuthority: 81,
     spamScore: 2
