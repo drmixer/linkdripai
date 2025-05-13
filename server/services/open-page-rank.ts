@@ -33,12 +33,18 @@ export class OpenPageRankService {
     domainAuthority: number;
   }> {
     try {
+      // Clean the domain to ensure it's in the correct format
+      const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+      
+      console.log(`[OpenPageRank] Requesting metrics for domain: ${cleanDomain}`);
+      
       const response = await axios.get(`${this.baseUrl}/getPageRank`, {
         params: {
-          domains: domain
+          domains: [cleanDomain]  // Send as array in params for proper URL encoding
         },
         headers: {
-          'API-OPR': this.apiKey
+          'API-OPR': this.apiKey,
+          'Accept': 'application/json'
         }
       });
       
@@ -53,7 +59,9 @@ export class OpenPageRankService {
         // Convert page rank (0-10) to domain authority (0-100)
         // PageRank of 6+ is considered very good, so we scale accordingly
         const pageRank = Number(domainData.page_rank_decimal) || 0;
-        const calculatedDA = Math.min(100, Math.round(pageRank * 10));
+        const calculatedDA = this.convertToDA(pageRank);
+        
+        console.log(`[OpenPageRank] Successfully got metrics for ${cleanDomain}: PageRank=${pageRank}, DA=${calculatedDA}`);
         
         return {
           pageRank: pageRank,
@@ -61,7 +69,7 @@ export class OpenPageRankService {
           domainAuthority: calculatedDA
         };
       } else {
-        console.warn(`[OpenPageRank] No data returned for domain: ${domain}`);
+        console.warn(`[OpenPageRank] No data returned for domain: ${cleanDomain}`);
         return {
           pageRank: 0,
           rank: 0,
@@ -70,6 +78,11 @@ export class OpenPageRankService {
       }
     } catch (error: any) {
       console.error('[OpenPageRank] Error fetching domain metrics:', error.message);
+      // Additional error details for debugging
+      if (error.response) {
+        console.error(`[OpenPageRank] Status: ${error.response.status}, Data:`, error.response.data);
+      }
+      
       // Return default values on error
       return {
         pageRank: 0,
@@ -89,45 +102,45 @@ export class OpenPageRankService {
     domainAuthority: number;
   }>> {
     // Limit batch size to 100 domains per request (API limit)
-    const batchSize = 100;
+    const batchSize = 25; // Reduced batch size to avoid overloading API
     const results: Record<string, {
       pageRank: number;
       rank: number;
       domainAuthority: number;
     }> = {};
     
+    // Clean domains to ensure proper formatting
+    const cleanDomains = domains.map(domain => 
+      domain.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
+    );
+    
+    console.log(`[OpenPageRank] Processing batch of ${cleanDomains.length} domains`);
+    
     // Process domains in batches
-    for (let i = 0; i < domains.length; i += batchSize) {
-      const batchDomains = domains.slice(i, i + batchSize);
-      try {
-        const response = await axios.get(`${this.baseUrl}/getPageRank`, {
-          params: {
-            domains: batchDomains.join(',')
-          },
-          headers: {
-            'API-OPR': this.apiKey
-          }
-        });
-        
-        // Process response
-        if (response.data && 
-            response.data.status_code === 200 && 
-            response.data.response) {
+    for (let i = 0; i < cleanDomains.length; i += batchSize) {
+      const batchDomains = cleanDomains.slice(i, i + batchSize);
+      
+      // Process each domain individually to ensure higher success rate
+      for (const domain of batchDomains) {
+        try {
+          const metrics = await this.getDomainMetrics(domain);
+          results[domain] = metrics;
           
-          response.data.response.forEach((domainData: any) => {
-            const domain = domainData.domain;
-            const pageRank = Number(domainData.page_rank_decimal) || 0;
-            const calculatedDA = Math.min(100, Math.round(pageRank * 10));
-            
-            results[domain] = {
-              pageRank: pageRank,
-              rank: Number(domainData.rank) || 0,
-              domainAuthority: calculatedDA
-            };
-          });
+          // Add a small delay between requests to avoid rate limits
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error(`[OpenPageRank] Error fetching metrics for domain ${domain}:`, error);
+          results[domain] = {
+            pageRank: 0,
+            rank: 0,
+            domainAuthority: 0
+          };
         }
-      } catch (error: any) {
-        console.error(`[OpenPageRank] Error fetching batch metrics (domains ${i} to ${i + batchSize}):`, error.message);
+      }
+      
+      // Add delay between batches
+      if (i + batchSize < cleanDomains.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
     
