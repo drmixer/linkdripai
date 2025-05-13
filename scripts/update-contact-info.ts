@@ -212,9 +212,9 @@ async function updateOpportunityContactInfo() {
       let metadataObj: Record<string, any> = {};
       
       // Parse existing metadata if available
-      if (opp.metadataRaw) {
+      if (opp.rawData) {
         try {
-          metadataObj = JSON.parse(typeof opp.metadataRaw === 'string' ? opp.metadataRaw : '{}');
+          metadataObj = typeof opp.rawData === 'string' ? JSON.parse(opp.rawData) : opp.rawData;
         } catch (e) {
           console.log(`Error parsing metadata for opportunity #${opp.id}`);
         }
@@ -273,7 +273,7 @@ async function updateOpportunityContactInfo() {
       await db.execute(sql`
         UPDATE "discoveredOpportunities"
         SET "contactInfo" = ${Object.keys(contactInfoObj).length > 0 ? JSON.stringify(contactInfoObj) : null}, 
-            "metadataRaw" = ${JSON.stringify(metadataObj)}
+            "rawData" = ${JSON.stringify(metadataObj)}
         WHERE "id" = ${opp.id}
       `);
       
