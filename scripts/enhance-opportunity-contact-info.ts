@@ -789,11 +789,14 @@ async function enhanceOpportunityContactInfo() {
       
       try {
         // Get existing contact info if any
-        const existingContactInfo = opportunity.contactInfo ? JSON.parse(opportunity.contactInfo) : {
-          emails: [],
-          contactForm: null,
-          socialProfiles: []
-        };
+        let existingContactInfo: any = {};
+        
+        if (opportunity.contactInfo) {
+          // Parse contact info if it's a string
+          existingContactInfo = typeof opportunity.contactInfo === 'string' 
+            ? JSON.parse(opportunity.contactInfo) 
+            : opportunity.contactInfo;
+        }
         
         // Extract emails from the page
         const emails = await extractEmailsFromPage(opportunity.url);
@@ -833,18 +836,73 @@ async function enhanceOpportunityContactInfo() {
           }
         }
         
-        // Combine all found emails with existing emails
-        const allEmails = [...new Set([
-          ...existingContactInfo.emails,
-          ...emails, 
-          ...aboutPageEmails
-        ])];
+        // Get existing emails in standardized format
+        const existingEmails: string[] = [];
         
-        // Prepare enhanced contactInfo object
+        // Get primary email if it exists
+        if (existingContactInfo.email && typeof existingContactInfo.email === 'string' && 
+            existingContactInfo.email.includes('@') && 
+            !existingContactInfo.email.includes('.jpg') && 
+            !existingContactInfo.email.includes('.png')) {
+          existingEmails.push(existingContactInfo.email);
+        }
+        
+        // Get from emails array if it exists
+        if (existingContactInfo.emails && Array.isArray(existingContactInfo.emails)) {
+          existingEmails.push(...existingContactInfo.emails.filter((email: string) => 
+            typeof email === 'string' && 
+            email.includes('@') && 
+            !email.includes('.jpg') && 
+            !email.includes('.png')
+          ));
+        }
+        
+        // Get from additionalEmails array if it exists
+        if (existingContactInfo.additionalEmails && Array.isArray(existingContactInfo.additionalEmails)) {
+          existingEmails.push(...existingContactInfo.additionalEmails.filter((email: string) => 
+            typeof email === 'string' && 
+            email.includes('@') && 
+            !email.includes('.jpg') && 
+            !email.includes('.png')
+          ));
+        }
+        
+        // Combine and deduplicate all emails
+        const allEmails = [...new Set([...existingEmails, ...emails, ...aboutPageEmails])];
+        
+        // Determine primary email (first one in the list)
+        const primaryEmail = allEmails.length > 0 ? allEmails[0] : null;
+        
+        // Get remaining emails (excluding primary)
+        const remainingEmails = allEmails.length > 1 ? allEmails.slice(1) : [];
+        
+        // Get existing form in standardized format
+        const existingForm = existingContactInfo.form || existingContactInfo.contactForm || null;
+        
+        // Get existing social profiles in standardized format
+        let existingSocialProfiles: any[] = [];
+        
+        if (existingContactInfo.social && Array.isArray(existingContactInfo.social)) {
+          existingSocialProfiles = [...existingContactInfo.social];
+        } else if (existingContactInfo.socialProfiles && Array.isArray(existingContactInfo.socialProfiles)) {
+          existingSocialProfiles = [...existingContactInfo.socialProfiles];
+        }
+        
+        // Prepare enhanced contactInfo object with standardized structure
         const enhancedContactInfo = {
-          emails: allEmails,
-          contactForm: contactFormUrl || existingContactInfo.contactForm,
-          socialProfiles: socialProfiles.length > 0 ? socialProfiles : existingContactInfo.socialProfiles,
+          // Primary email (if available)
+          email: primaryEmail,
+          
+          // Additional emails array
+          emails: remainingEmails,
+          
+          // Contact form URL
+          form: contactFormUrl || existingForm,
+          
+          // Social profiles array
+          social: socialProfiles.length > 0 ? socialProfiles : existingSocialProfiles,
+          
+          // Metadata
           lastUpdated: new Date().toISOString(),
           extractionDetails: {
             mainPageEmailsFound: emails.length,
@@ -867,14 +925,28 @@ async function enhanceOpportunityContactInfo() {
         console.error(`Error processing opportunity ${opportunity.url}: ${error.message}`);
         
         // Update with error information but preserve existing data
-        const existingContactInfo = opportunity.contactInfo ? JSON.parse(opportunity.contactInfo) : {
-          emails: [],
-          contactForm: null,
-          socialProfiles: []
-        };
+        let existingContactInfo: any = {};
         
+        if (opportunity.contactInfo) {
+          // Parse contact info if it's a string
+          existingContactInfo = typeof opportunity.contactInfo === 'string' 
+            ? JSON.parse(opportunity.contactInfo) 
+            : opportunity.contactInfo;
+        }
+        
+        // Create a standardized fallback structure that keeps existing data
         const fallbackContactInfo = {
-          ...existingContactInfo,
+          // Preserve email fields if they exist
+          email: existingContactInfo.email || null,
+          emails: existingContactInfo.emails || [],
+          
+          // Preserve form fields
+          form: existingContactInfo.form || existingContactInfo.contactForm || null,
+          
+          // Preserve social fields
+          social: existingContactInfo.social || existingContactInfo.socialProfiles || [],
+          
+          // Add metadata with error information
           lastUpdated: new Date().toISOString(),
           extractionDetails: {
             ...(existingContactInfo.extractionDetails || {}),
