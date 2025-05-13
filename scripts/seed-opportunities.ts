@@ -501,20 +501,70 @@ async function createWebsiteProfiles() {
   console.log('Using niche-based topics and keywords for website profiles...');
   const profiles = [];
   
-  // Create profiles for each website
+  // Create profiles for each website with niche-specific data
   for (const website of websitesWithoutProfiles) {
-    const topicIndex = Math.floor(Math.random() * sampleTopics.length);
+    // Assign a random niche to the website
+    const niche = getRandomNiche();
+    const websiteTopics = [];
+    const websiteKeywords = [];
+    
+    // Get topics for this niche
+    const nicheSpecificTopics = nicheTopics[niche as keyof typeof nicheTopics];
+    
+    // Select 3-5 random topics from this niche
+    const numTopics = 3 + Math.floor(Math.random() * 3);
+    const shuffledTopics = [...nicheSpecificTopics].sort(() => 0.5 - Math.random());
+    
+    for (let i = 0; i < Math.min(numTopics, shuffledTopics.length); i++) {
+      websiteTopics.push(shuffledTopics[i]);
+      
+      // Generate keywords from each topic
+      const topicWords = shuffledTopics[i].toLowerCase().split(' ');
+      for (const word of topicWords) {
+        if (word.length > 3) { // Only add meaningful words
+          websiteKeywords.push(word);
+        }
+      }
+    }
+    
+    // Add some niche-specific keywords
+    if (niche === 'digital_marketing') {
+      websiteKeywords.push('seo', 'analytics', 'backlinks', 'optimization', 'traffic');
+    } else if (niche === 'social_media') {
+      websiteKeywords.push('engagement', 'followers', 'reach', 'platform', 'social');
+    } else if (niche === 'content_creation') {
+      websiteKeywords.push('writing', 'blog', 'article', 'audience', 'publishing');
+    } else if (niche === 'tech_and_saas') {
+      websiteKeywords.push('software', 'platform', 'solution', 'integration', 'product');
+    } else if (niche === 'health_and_wellness') {
+      websiteKeywords.push('wellness', 'nutrition', 'fitness', 'health', 'lifestyle');
+    } else if (niche === 'finance') {
+      websiteKeywords.push('investing', 'budgeting', 'financial', 'money', 'wealth');
+    } else if (niche === 'travel') {
+      websiteKeywords.push('travel', 'destination', 'tourism', 'adventure', 'experience');
+    } else if (niche === 'education') {
+      websiteKeywords.push('learning', 'education', 'teaching', 'courses', 'students');
+    }
+    
+    // Remove duplicate keywords
+    const uniqueKeywords = [...new Set(websiteKeywords)];
+    
+    // Create rich content description
+    const nicheFormatted = niche.replace('_', ' ');
+    const content = `Website about ${nicheFormatted} focusing on ${websiteTopics.join(', ')}. 
+This site provides valuable resources and information for professionals in the ${nicheFormatted} industry.`;
     
     profiles.push({
       websiteId: website.id,
-      content: `Sample content for ${website.url} covering topics like ${sampleTopics[topicIndex].join(', ')}`,
-      topics: sampleTopics[topicIndex],
-      keywords: sampleKeywords[topicIndex],
+      content: content,
+      topics: websiteTopics,
+      keywords: uniqueKeywords,
       metadata: {
-        title: `${website.name} - Professional Website`,
-        description: `${website.name} is focused on ${sampleTopics[topicIndex][0]} and related topics`,
+        title: `${website.name} - ${niche.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Website`,
+        description: `${website.name} focuses on ${websiteTopics[0]} and related topics in the ${nicheFormatted} space`,
         h1: website.name,
-        wordCount: 2500 + Math.floor(Math.random() * 2500)
+        wordCount: 2500 + Math.floor(Math.random() * 2500),
+        niche: niche // Store the niche for better opportunity matching
       },
       lastAnalyzed: new Date()
     });
@@ -573,7 +623,7 @@ async function createOpportunityMatches() {
   // Get user IDs for the websites
   const userIds = [...new Set(websiteWithProfiles.map(item => item.website.userId))];
   
-  // Create 5-10 matches per user
+  // Create 5-10 matches per user with niche-specific reasoning
   for (const userId of userIds) {
     // Get websites for this user
     const userWebsites = websiteWithProfiles.filter(item => item.website.userId === userId);
@@ -594,19 +644,77 @@ async function createOpportunityMatches() {
       // Determine if this is a premium match
       const isPremium = opportunity.isPremium || false;
       
-      // Create matchReason object
+      // Get niche information if available
+      let websiteNiche = 'unknown';
+      let opportunityNiche = 'unknown';
+      
+      // Extract niche from website profile metadata
+      if (userWebsites[websiteIndex].profile.metadata && 
+          typeof userWebsites[websiteIndex].profile.metadata === 'object' &&
+          'niche' in userWebsites[websiteIndex].profile.metadata) {
+        websiteNiche = userWebsites[websiteIndex].profile.metadata.niche;
+      }
+      
+      // Extract niche from opportunity validation data
+      if (opportunity.validationData && 
+          typeof opportunity.validationData === 'object' &&
+          'niche' in opportunity.validationData) {
+        opportunityNiche = opportunity.validationData.niche;
+      }
+      
+      // Higher scores for niche matching
+      const nicheMatch = websiteNiche === opportunityNiche;
+      const relevanceScore = nicheMatch ? 
+                            85 + Math.floor(Math.random() * 15) : // 85-100 for matching niches
+                            60 + Math.floor(Math.random() * 25);  // 60-85 for non-matching niches
+      
+      // Quality score based on domain authority and spam score
+      const qualityScore = opportunity.domainAuthority ?
+                          Math.min(100, opportunity.domainAuthority * 1.2) :
+                          55 + Math.floor(Math.random() * 30);
+                          
+      // Opportunity score 
+      let opportunityScore = 75 + Math.floor(Math.random() * 20);
+      
+      // Premium opportunities get higher scores
+      if (isPremium) {
+        opportunityScore = 90 + Math.floor(Math.random() * 10);
+      }
+      
+      // Create more detailed matchReason object
       const matchReason = {
         relevance: {
-          score: 70 + Math.floor(Math.random() * 30),
-          factors: ['Content topic match', 'Niche alignment']
+          score: relevanceScore,
+          factors: [
+            nicheMatch ? `Strong match in ${websiteNiche.replace('_', ' ')} niche` : 'Complementary niche alignment',
+            'Content topic relevance',
+            opportunity.sourceType === 'resource_page' ? 'Resource page opportunity' : 
+              (opportunity.sourceType === 'guest_post' ? 'Guest posting opportunity' : 'Link opportunity')
+          ],
+          niche_match: nicheMatch
         },
         quality: {
-          score: Math.floor(Math.random() * 100),
-          factors: ['Domain authority', 'Low spam score']
+          score: qualityScore,
+          factors: [
+            opportunity.domainAuthority ? `Domain authority: ${opportunity.domainAuthority}` : 'Average domain authority',
+            opportunity.spamScore && opportunity.spamScore < 3 ? 'Very low spam score' : 
+              (opportunity.spamScore && opportunity.spamScore < 6 ? 'Acceptable spam score' : 'Moderate spam metrics')
+          ],
+          metrics: {
+            domain_authority: opportunity.domainAuthority || 'unknown',
+            spam_score: opportunity.spamScore || 'unknown'
+          }
         },
         opportunity: {
-          score: 80 + Math.floor(Math.random() * 20),
-          factors: ['Contact info available', 'Resource page']
+          score: opportunityScore,
+          factors: [
+            'Contact information available',
+            isPremium ? 'Premium opportunity' : 'Standard opportunity',
+            opportunity.sourceType === 'resource_page' ? 'Resource page link' : 
+              (opportunity.sourceType === 'guest_post' ? 'Guest post opportunity' : 
+               (opportunity.sourceType === 'blog' ? 'Blog mention opportunity' : 'General opportunity'))
+          ],
+          type: opportunity.sourceType
         }
       };
       
@@ -638,27 +746,46 @@ async function createOpportunityMatches() {
         // Add to matches count for logging
         matches.push(matchResult.rows[0].id);
         
-        // Create daily drip (for a portion of matches)
-        if (i < 5) { // Only create drips for the first 5 matches
-          const dripResult = await db.execute(sql`
-            INSERT INTO "dailyDrips" (
-              "userId",
-              "opportunityId",
-              "dripDate",
-              "isPremium",
-              "status"
-            ) VALUES (
-              ${userId},
-              ${opportunity.id},
-              ${new Date()},
-              ${isPremium},
-              ${'active'}
-            )
-            RETURNING id
-          `);
-          
-          // Add to drips count for logging
-          drips.push(dripResult.rows[0].id);
+        // Create daily drip with more focused approach
+        // For premium content:
+        // - If it's premium, add as a drip about 80% of the time 
+        // - If it's standard, add as a drip about 50% of the time
+        // Overall, this should result in a mix of premium and standard opportunities
+        // with premium ones being more frequently included
+        const shouldCreateDrip = isPremium ? 
+                                (Math.random() < 0.8) : // 80% chance for premium
+                                (Math.random() < 0.5);  // 50% chance for standard
+                                
+        // Limit to first 7 matches to avoid too many drips
+        if (i < 7 && shouldCreateDrip) {
+          try {
+            // Create a drip date that's within the last 7 days
+            const daysAgo = Math.floor(Math.random() * 7); // 0-6 days ago
+            const dripDate = new Date();
+            dripDate.setDate(dripDate.getDate() - daysAgo);
+            
+            const dripResult = await db.execute(sql`
+              INSERT INTO "dailyDrips" (
+                "userId",
+                "opportunityId",
+                "dripDate",
+                "isPremium",
+                "status"
+              ) VALUES (
+                ${userId},
+                ${opportunity.id},
+                ${dripDate},
+                ${isPremium},
+                ${'active'}
+              )
+              RETURNING id
+            `);
+            
+            // Add to drips count for logging
+            drips.push(dripResult.rows[0].id);
+          } catch (dripError) {
+            console.error(`Error creating drip: ${dripError.message}`);
+          }
         }
       } catch (error) {
         console.error(`Error creating match/drip: ${error.message}`);
