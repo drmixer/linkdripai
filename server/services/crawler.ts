@@ -34,7 +34,7 @@ export class OpportunityCrawler {
   ];
   
   private targetPatterns = {
-    resourcePage: [
+    resource_page: [
       'resources',
       'links',
       'useful-links',
@@ -42,7 +42,7 @@ export class OpportunityCrawler {
       'recommended',
       'tools',
     ],
-    guestPost: [
+    guest_post: [
       'write-for-us',
       'guest-post',
       'contribute',
@@ -62,6 +62,31 @@ export class OpportunityCrawler {
       'community',
       'discussions',
       'board',
+    ],
+    blog: [
+      'blog',
+      'article',
+      'news',
+      'posts',
+      'stories',
+    ],
+    competitor_backlink: [
+      'backlinks',
+      'links',
+      'referrals',
+      'referring-domains',
+    ],
+    social_mention: [
+      'mentions',
+      'social',
+      'share',
+      'shares',
+    ],
+    comment_section: [
+      'comments',
+      'responses',
+      'discussion',
+      'feedback',
     ],
   };
   
@@ -243,7 +268,7 @@ export class OpportunityCrawler {
       // Check URL path for opportunity type indicators
       const urlObj = new URL(formattedUrl);
       const urlPath = urlObj.pathname.toLowerCase();
-      let opportunityType = 'generic';
+      let opportunityType = 'blog'; // Default to blog as it's a valid enum value
       
       for (const [type, patterns] of Object.entries(this.targetPatterns)) {
         if (patterns.some(pattern => urlPath.includes(pattern))) {
@@ -260,7 +285,7 @@ export class OpportunityCrawler {
                           lowerBodyText.includes('submission guidelines');
       
       if (isGuestPost) {
-        opportunityType = 'guestPost';
+        opportunityType = 'guest_post';
       }
       
       // Check for resource page indicators
@@ -269,8 +294,8 @@ export class OpportunityCrawler {
                             lowerBodyText.includes('useful links') ||
                             externalLinks > 20;
       
-      if (isResourcePage && opportunityType === 'generic') {
-        opportunityType = 'resourcePage';
+      if (isResourcePage && opportunityType === 'blog') {
+        opportunityType = 'resource_page';
       }
       
       // Extract niche/category info
