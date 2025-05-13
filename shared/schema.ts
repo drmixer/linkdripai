@@ -335,6 +335,7 @@ export const discoveredOpportunities = pgTable("discoveredOpportunities", {
   discoveredAt: timestamp("discoveredAt").defaultNow(),
   lastChecked: timestamp("lastChecked").defaultNow(),
   status: discoveryStatusEnum("status").default('discovered'),
+  statusNote: text("statusNote"), // Additional status information like error messages
   rawData: json("rawData"),
   validationData: json("validationData"), // Store detailed validation metrics
 });

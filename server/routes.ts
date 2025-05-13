@@ -25,6 +25,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Run every 12 hours (in production this would be configured based on system load)
   discoveryScheduler.startScheduler(12);
   
+  // Start continuous crawling process
+  const crawler = getOpportunityCrawler();
+  // Run every 60 minutes in development (would be less frequent in production)
+  crawler.startContinuousDiscovery(60);
+  
   // Run the discovery pipeline once at startup to initialize opportunities
   setTimeout(() => {
     discoveryScheduler.runDiscoveryPipeline()

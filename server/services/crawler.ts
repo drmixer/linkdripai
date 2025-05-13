@@ -1,6 +1,6 @@
 import { CrawlerJob, DiscoveredOpportunity } from '@shared/schema';
 import { db } from '../db';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { crawlerJobs, discoveredOpportunities } from '@shared/schema';
 import { getMozApiService, MozApiService } from './moz';
 import { getValidationPipeline } from './validation-pipeline';
@@ -581,6 +581,206 @@ export class OpportunityCrawler {
     }, 0);
     
     return job;
+  }
+  
+  /**
+   * Start continuous discovery
+   * Runs crawls on regular intervals and refreshes existing opportunities
+   */
+  startContinuousDiscovery(intervalMinutes = 60) {
+    if (this.continuousCrawlRunning) {
+      console.log('[Crawler] Continuous discovery is already running');
+      return;
+    }
+    
+    console.log(`[Crawler] Starting continuous discovery, running every ${intervalMinutes} minutes`);
+    this.continuousCrawlRunning = true;
+    
+    // Run immediately
+    this.runContinuousCrawlCycle();
+    
+    // Schedule future runs
+    const intervalMs = intervalMinutes * 60 * 1000;
+    this.continuousIntervalId = setInterval(() => {
+      this.runContinuousCrawlCycle();
+    }, intervalMs);
+    
+    // Also start opportunity refreshing
+    this.startOpportunityRefreshing();
+  }
+  
+  /**
+   * Stop continuous discovery
+   */
+  stopContinuousDiscovery() {
+    console.log('[Crawler] Stopping continuous discovery');
+    this.continuousCrawlRunning = false;
+    
+    if (this.continuousIntervalId) {
+      clearInterval(this.continuousIntervalId);
+      this.continuousIntervalId = null;
+    }
+    
+    if (this.refreshIntervalId) {
+      clearInterval(this.refreshIntervalId);
+      this.refreshIntervalId = null;
+    }
+  }
+  
+  /**
+   * Run one cycle of continuous crawling
+   * This selects random crawl types and seed URLs to maintain diversity
+   */
+  private async runContinuousCrawlCycle() {
+    try {
+      console.log('[Crawler] Running continuous crawl cycle');
+      
+      // Crawl types to choose from
+      const crawlTypes = ['resource_page', 'directory', 'guest_post', 'forum'];
+      
+      // Randomly select 1-2 crawl types for this cycle
+      const numTypesToCrawl = Math.floor(Math.random() * 2) + 1;
+      const typesToCrawl = [];
+      
+      for (let i = 0; i < numTypesToCrawl; i++) {
+        const randomIndex = Math.floor(Math.random() * crawlTypes.length);
+        typesToCrawl.push(crawlTypes[randomIndex]);
+        // Remove selected type to avoid duplicates
+        crawlTypes.splice(randomIndex, 1);
+        
+        if (crawlTypes.length === 0) break;
+      }
+      
+      // For each type, run a crawl job
+      for (const type of typesToCrawl) {
+        // Select seed URLs based on type
+        const seedUrls = this.getSeedUrlsForType(type);
+        if (seedUrls.length > 0) {
+          console.log(`[Crawler] Starting crawl for type: ${type} with ${seedUrls.length} seed URLs`);
+          await this.startDiscoveryCrawl(type, seedUrls);
+          
+          // Add a delay between crawl jobs to avoid overloading
+          await new Promise(resolve => setTimeout(resolve, this.crawlDelay));
+        }
+      }
+    } catch (error) {
+      console.error('[Crawler] Error in continuous crawl cycle:', error);
+    }
+  }
+  
+  /**
+   * Get seed URLs for a specific crawl type
+   */
+  private getSeedUrlsForType(type: string): string[] {
+    // These are just example seed URLs - in production this would be more extensive
+    const seedUrls: Record<string, string[]> = {
+      resource_page: [
+        'https://ahrefs.com/blog/seo-resources/',
+        'https://moz.com/learn/seo',
+        'https://backlinko.com/seo-tools',
+        'https://www.semrush.com/blog/resources/'
+      ],
+      directory: [
+        'https://botw.org/',
+        'https://directorysearch.com/',
+        'https://www.jasminedirectory.com/'
+      ],
+      guest_post: [
+        'https://www.searchenginejournal.com/contribute/',
+        'https://www.convinceandconvert.com/write-for-us/',
+        'https://www.entrepreneur.com/getpublished'
+      ],
+      forum: [
+        'https://forums.digitalpoint.com/',
+        'https://www.webmasterworld.com/',
+        'https://moz.com/community/q/'
+      ]
+    };
+    
+    // Return seed URLs for the requested type, or empty array if none
+    return seedUrls[type] || [];
+  }
+  
+  /**
+   * Start automatically refreshing opportunities
+   * This updates metadata for existing opportunities
+   */
+  private startOpportunityRefreshing(intervalHours = 24) {
+    console.log(`[Crawler] Starting opportunity refreshing, running every ${intervalHours} hours`);
+    
+    // Run immediately
+    this.refreshOpportunities();
+    
+    // Schedule future runs
+    const intervalMs = intervalHours * 60 * 60 * 1000;
+    this.refreshIntervalId = setInterval(() => {
+      this.refreshOpportunities();
+    }, intervalMs);
+  }
+  
+  /**
+   * Refresh a batch of opportunities
+   * Updates metadata and checks if they're still valid
+   */
+  private async refreshOpportunities() {
+    try {
+      console.log('[Crawler] Refreshing opportunities');
+      
+      // Get opportunities that haven't been checked recently
+      // For this example, we'll refresh opportunities that haven't been checked in the last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const opportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(sql`(${discoveredOpportunities.lastChecked} IS NULL OR ${discoveredOpportunities.lastChecked} < ${sevenDaysAgo})`)
+        .limit(25); // Process in batches to avoid overloading
+      
+      console.log(`[Crawler] Found ${opportunities.length} opportunities to refresh`);
+      
+      // Process each opportunity
+      for (const opportunity of opportunities) {
+        try {
+          console.log(`[Crawler] Refreshing opportunity: ${opportunity.id} (${opportunity.url})`);
+          
+          // Update last checked timestamp
+          await db.update(discoveredOpportunities)
+            .set({ lastChecked: new Date() })
+            .where(eq(discoveredOpportunities.id, opportunity.id));
+          
+          // Re-crawl the URL to verify it's still active
+          const crawlResult = await this.crawlUrl(opportunity.url, 0, 0);
+          
+          if (crawlResult.status === 'error') {
+            console.log(`[Crawler] Opportunity no longer available: ${opportunity.id} (${opportunity.url})`);
+            
+            // Mark as expired
+            await db.update(discoveredOpportunities)
+              .set({ 
+                status: 'expired',
+                // Store error in validationData since it's a JSON field
+                validationData: { error: crawlResult.error }
+              })
+              .where(eq(discoveredOpportunities.id, opportunity.id));
+              
+            continue;
+          }
+          
+          // Refresh Moz metrics
+          const opportunityIds = [opportunity.id];
+          await this.processDiscoveredBatch(opportunityIds);
+          
+          // Add a delay between requests
+          await new Promise(resolve => setTimeout(resolve, this.crawlDelay));
+        } catch (error) {
+          console.error(`[Crawler] Error refreshing opportunity ${opportunity.id}:`, error);
+        }
+      }
+      
+      console.log('[Crawler] Opportunity refresh complete');
+    } catch (error) {
+      console.error('[Crawler] Error in opportunity refresh:', error);
+    }
   }
 }
 
