@@ -1100,78 +1100,74 @@ export class OpportunityCrawler {
     try {
       console.log('[Crawler] Running continuous crawl cycle');
       
-      // Get current hour to determine crawl strategy
-      const currentHour = new Date().getHours();
+      // Define opportunity types by their quality potential
+      const premiumTypes = ['guest_post', 'resource_page']; // Highest quality opportunities
+      const highValueTypes = ['blog', 'directory']; // Good quality opportunities
+      const supplementaryTypes = ['competitor_backlink', 'forum', 'social_mention', 'comment_section']; // Supplementary opportunities
       
-      // Define crawl strategies based on time of day
-      // Early/late hours: Focus on high-authority sites (resource pages, blogs)
-      // Mid-day hours: Focus on guest posts and directories
-      // Afternoon: Focus on forums and social mentions
-      let primaryTypes: string[] = [];
-      let secondaryTypes: string[] = [];
+      // Increase premium opportunity discovery based on time of day
+      const currentHour = new Date().getHours();
+      let typesToCrawl = [];
+      let premiumFocus = false;
       
       if (currentHour >= 0 && currentHour < 8) {
-        // Early morning: Focus on resource pages and blogs
-        primaryTypes = ['resource_page', 'blog'];
-        secondaryTypes = ['guest_post', 'directory'];
+        // Night/Early morning: Focus heavily on premium opportunities
+        typesToCrawl = [...premiumTypes];
+        // Add 1 high value type
+        typesToCrawl.push(highValueTypes[Math.floor(Math.random() * highValueTypes.length)]);
+        premiumFocus = true;
       } else if (currentHour >= 8 && currentHour < 14) {
-        // Mid-day: Focus on guest posts and directories
-        primaryTypes = ['guest_post', 'directory'];
-        secondaryTypes = ['competitor_backlink', 'forum'];
+        // Business hours: Balanced approach with emphasis on guest posts
+        typesToCrawl.push('guest_post');
+        typesToCrawl.push(highValueTypes[Math.floor(Math.random() * highValueTypes.length)]);
+        typesToCrawl.push(supplementaryTypes[Math.floor(Math.random() * supplementaryTypes.length)]);
       } else if (currentHour >= 14 && currentHour < 20) {
-        // Afternoon: Focus on forums and social mentions
-        primaryTypes = ['forum', 'social_mention'];
-        secondaryTypes = ['comment_section', 'blog'];
+        // Afternoon/Evening: Mix of all types with emphasis on resource pages
+        typesToCrawl.push('resource_page');
+        typesToCrawl.push(highValueTypes[Math.floor(Math.random() * highValueTypes.length)]);
+        typesToCrawl.push(supplementaryTypes[Math.floor(Math.random() * supplementaryTypes.length)]);
       } else {
-        // Evening: Focus on competitor backlinks and comment sections
-        primaryTypes = ['competitor_backlink', 'comment_section'];
-        secondaryTypes = ['resource_page', 'guest_post'];
-      }
-      
-      // Determine number of types to crawl (2-3 types)
-      const numTypesToCrawl = Math.floor(Math.random() * 2) + 2;
-      const typesToCrawl = [];
-      
-      // Always include at least one primary type
-      const primaryType = primaryTypes[Math.floor(Math.random() * primaryTypes.length)];
-      typesToCrawl.push(primaryType);
-      
-      // Add secondary types to complete the selection
-      const remainingTypes = [...secondaryTypes];
-      for (let i = 1; i < numTypesToCrawl; i++) {
-        if (remainingTypes.length === 0) break;
-        
-        const randomIndex = Math.floor(Math.random() * remainingTypes.length);
-        typesToCrawl.push(remainingTypes[randomIndex]);
-        remainingTypes.splice(randomIndex, 1);
+        // Late evening: Focus on blogs and directories plus one premium type
+        typesToCrawl = [...highValueTypes];
+        typesToCrawl.push(premiumTypes[Math.floor(Math.random() * premiumTypes.length)]);
       }
       
       console.log(`[Crawler] Selected crawl types for this cycle: ${typesToCrawl.join(', ')}`);
       
-      // For each type, run a crawl job with randomized seed URLs
+      // For each type, run a crawl job with strategically selected seed URLs
       for (const type of typesToCrawl) {
         // Get all seed URLs for this type
         const allSeedUrls = this.getSeedUrlsForType(type);
         
         if (allSeedUrls.length > 0) {
-          // Select a random subset of seed URLs to avoid hitting the same URLs repeatedly
-          // and to distribute the load
-          const numUrlsToUse = Math.min(5, allSeedUrls.length);
-          const seedUrls = [];
+          // Determine number of URLs to use and crawl depth based on type
+          let numUrlsToUse = 5; // Default
+          let crawlDepth = 2; // Default
+          
+          // Adjust strategy based on opportunity type
+          if (premiumTypes.includes(type)) {
+            numUrlsToUse = premiumFocus ? 7 : 5; // More seeds for premium types during premium focus hours
+            crawlDepth = 3; // Deeper crawl for premium types
+          } else if (highValueTypes.includes(type)) {
+            numUrlsToUse = 5;
+            crawlDepth = 2;
+          } else {
+            numUrlsToUse = 4;
+            crawlDepth = 1; // Shallower crawl for supplementary types
+          }
           
           // Create a copy of the array to sample from
           const availableUrls = [...allSeedUrls];
+          const seedUrls = [];
           
-          for (let i = 0; i < numUrlsToUse; i++) {
-            if (availableUrls.length === 0) break;
-            
+          for (let i = 0; i < numUrlsToUse && availableUrls.length > 0; i++) {
             const randomIndex = Math.floor(Math.random() * availableUrls.length);
             seedUrls.push(availableUrls[randomIndex]);
             availableUrls.splice(randomIndex, 1);
           }
           
-          console.log(`[Crawler] Starting crawl for type: ${type} with ${seedUrls.length} seed URLs`);
-          await this.startDiscoveryCrawl(type, seedUrls);
+          console.log(`[Crawler] Starting crawl for type: ${type} with ${seedUrls.length} seed URLs at depth ${crawlDepth}`);
+          await this.startDiscoveryCrawl(type, seedUrls, crawlDepth);
           
           // Add a variable delay between crawl jobs to avoid predictable patterns
           // and to be more respectful to servers
@@ -1180,15 +1176,26 @@ export class OpportunityCrawler {
         }
       }
       
-      // Occasionally run a full depth crawl on high-value opportunity types
-      if (Math.random() < 0.2) {  // 20% chance
-        const highValueType = Math.random() < 0.5 ? 'guest_post' : 'resource_page';
-        const highValueSeeds = this.getSeedUrlsForType(highValueType).slice(0, 3);
+      // Run a focused premium crawl with increased probability (30% chance or 50% during premium focus hours)
+      const premiumCrawlChance = premiumFocus ? 0.5 : 0.3;
+      if (Math.random() < premiumCrawlChance) {
+        // Target high-authority domains for premium opportunities
+        const premiumType = Math.random() < 0.7 ? 'guest_post' : 'resource_page'; // 70% focus on guest posts
+        const allPremiumSeeds = this.getSeedUrlsForType(premiumType);
         
-        if (highValueSeeds.length > 0) {
-          console.log(`[Crawler] Running deep crawl for high-value ${highValueType} opportunities`);
-          // When crawling high-value opportunities, we want to go deeper
-          await this.startDiscoveryCrawl(highValueType, highValueSeeds, 3);  // Deeper crawl depth
+        // Select 3 seed URLs for deep crawling
+        const premiumSeeds = [];
+        const availablePremiumUrls = [...allPremiumSeeds];
+        
+        for (let i = 0; i < 3 && availablePremiumUrls.length > 0; i++) {
+          const randomIndex = Math.floor(Math.random() * availablePremiumUrls.length);
+          premiumSeeds.push(availablePremiumUrls[randomIndex]);
+          availablePremiumUrls.splice(randomIndex, 1);
+        }
+        
+        if (premiumSeeds.length > 0) {
+          console.log(`[Crawler] Running deep premium crawl for ${premiumType} opportunities`);
+          await this.startDiscoveryCrawl(premiumType, premiumSeeds, 4); // Maximum depth for premium sources
         }
       }
     } catch (error) {
@@ -1266,6 +1273,13 @@ export class OpportunityCrawler {
         'https://www.brownbook.net/',
         'https://www.angieslist.com/',
         'https://www.manta.com/',
+        'https://www.cybo.com/',
+        'https://www.europages.co.uk/',
+        'https://www.bizjournals.com/',
+        'https://www.thumbtack.com/',
+        'https://www.clutch.co/directories',
+        'https://www.bloggerspassion.com/web-directories-list/',
+        'https://www.webwiki.com/',
         'https://www.superpages.com/',
         'https://www.aboutus.com/',
         
@@ -1284,17 +1298,40 @@ export class OpportunityCrawler {
         'https://www.producthunt.com/topics/',
         'https://www.allbusiness.com/business-directory/',
         
+        // Marketing and SEO-specific directories
+        'https://www.semrush.com/agencies/',
+        'https://ahrefs.com/blog/list-of-web-directories/',
+        'https://www.hubspot.com/agency-directory',
+        'https://www.searchenginejournal.com/seo-agencies/',
+        'https://moz.com/learn/seo/resources',
+        'https://www.seobythesea.com/web-directories/',
+        'https://www.seobook.com/directories',
+        'https://www.betterteam.com/digital-marketing-agency-directory',
+        'https://digitalagencynetwork.com/agencies/',
+        'https://www.sortlist.com/marketing-agencies',
+        
         // Local business directories
         'https://www.yellowpages.com/',
         'https://www.bbb.org/',
         'https://www.thomasnet.com/',
         'https://www.angi.com/',
+        'https://www.foursquare.com/',
         'https://www.tripadvisor.com/',
-        'https://www.merchantcircle.com/',
-        'https://www.citysearch.com/',
-        'https://www.insiderpages.com/',
+        'https://www.yelp.com/',
+        'https://www.zomato.com/',
+        'https://www.opentable.com/',
+        'https://www.justdial.com/',
+        'https://www.mapquest.com/',
         'https://www.local.com/',
-        'https://www.foursquare.com/'
+        'https://www.citysearch.com/',
+        'https://www.localsolver.com/',
+        'https://www.localiq.com/',
+        'https://www.merchantcircle.com/',
+        'https://www.insiderpages.com/',
+        'https://www.dexknows.com/',
+        'https://www.shopify.com/local-business-directory',
+        'https://www.localeze.com/',
+        'https://www.whereorg.com/'
       ],
       guest_post: [
         // Marketing/SEO blogs that accept guest posts
