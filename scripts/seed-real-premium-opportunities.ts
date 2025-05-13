@@ -15,7 +15,7 @@ const REAL_PREMIUM_DOMAINS = [
     domain: 'ahrefs.com',
     url: 'https://ahrefs.com/blog',
     title: 'Ahrefs Blog - SEO Tips, Case Studies & Industry News',
-    description: 'The Ahrefs blog shares SEO tips, case studies, and actionable strategies to help you grow your website's organic traffic.',
+    description: 'The Ahrefs blog shares SEO tips, case studies, and actionable strategies to help you grow your website\'s organic traffic.',
     sourceType: 'blog',
     domainAuthority: 92,
     spamScore: 1
@@ -87,7 +87,7 @@ const REAL_PREMIUM_DOMAINS = [
     domain: 'hubspot.com',
     url: 'https://blog.hubspot.com',
     title: 'HubSpot Marketing Blog - Marketing, Sales, Agency, and CRM',
-    description: 'HubSpot's Marketing Blog – attracting over 4.5 million monthly readers – covers everything you need to know to master inbound marketing.',
+    description: 'HubSpot\'s Marketing Blog - attracting over 4.5 million monthly readers - covers everything you need to know to master inbound marketing.',
     sourceType: 'blog',
     domainAuthority: 93,
     spamScore: 1
@@ -204,7 +204,7 @@ const REAL_PREMIUM_DOMAINS = [
     domain: 'unbounce.com',
     url: 'https://unbounce.com/blog',
     title: 'Unbounce Blog - Conversion Rate Optimization',
-    description: 'Unbounce's blog covers conversion rate optimization, landing page design, and tips for optimizing your marketing campaigns.',
+    description: 'Unbounce\'s blog covers conversion rate optimization, landing page design, and tips for optimizing your marketing campaigns.',
     sourceType: 'blog',
     domainAuthority: 83,
     spamScore: 1
