@@ -1,188 +1,181 @@
 /**
  * This script checks the status of contact information for opportunities
  */
+
 import { db } from '../server/db';
 import { discoveredOpportunities } from '../shared/schema';
 import { sql } from 'drizzle-orm';
 
 async function checkContactInfo() {
-  console.log('Checking contact information status for opportunities...');
+  console.log('Analyzing contact information for opportunities...');
   
   try {
-    // Count total opportunities
-    const [totalCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities);
+    // Get all opportunities
+    const allOpportunities = await db.select()
+      .from(discoveredOpportunities);
     
-    // Count premium opportunities
-    const [premiumCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities)
-    .where(sql`"isPremium" = true`);
+    // Get opportunities with contactInfo
+    const opportunitiesWithContactInfo = allOpportunities.filter(
+      opp => opp.contactInfo !== null
+    );
     
-    // Count opportunities with contact info
-    const [withContactInfoCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities)
-    .where(sql`"contactInfo" IS NOT NULL`);
+    // Basic stats
+    console.log(`
+Total opportunities in database: ${allOpportunities.length}
+Opportunities with contact info: ${opportunitiesWithContactInfo.length} (${((opportunitiesWithContactInfo.length / allOpportunities.length) * 100).toFixed(2)}%)
+    `);
     
-    // Count premium opportunities with contact info
-    const [premiumWithContactInfoCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities)
-    .where(sql`"isPremium" = true AND "contactInfo" IS NOT NULL`);
+    // Detailed contact info analysis
+    let opportunitiesWithEmail = 0;
+    let opportunitiesWithForm = 0;
+    let opportunitiesWithSocial = 0;
+    let opportunitiesWithMultipleEmails = 0;
+    let opportunitiesWithMultipleSocial = 0;
     
-    // Count opportunities with emails (checking both 'email' and 'emails' fields)
-    const [withEmailCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities)
-    .where(sql`("contactInfo"->>'email' IS NOT NULL AND "contactInfo"->>'email' != 'null') OR 
-               ("contactInfo"->'emails' IS NOT NULL AND jsonb_array_length("contactInfo"->'emails') > 0)`);
+    // Premium opportunity stats
+    const premiumOpportunities = allOpportunities.filter(opp => opp.isPremium === true);
+    const premiumWithContactInfo = premiumOpportunities.filter(opp => opp.contactInfo !== null);
     
-    // Count premium opportunities with emails
-    const [premiumWithEmailCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities)
-    .where(sql`"isPremium" = true AND 
-              (("contactInfo"->>'email' IS NOT NULL AND "contactInfo"->>'email' != 'null') OR 
-               ("contactInfo"->'emails' IS NOT NULL AND jsonb_array_length("contactInfo"->'emails') > 0))`);
+    // Count by social platform type
+    const socialPlatformCounts: Record<string, number> = {};
     
-    // Count opportunities with contact forms (checking both 'form' and 'contactForm' fields)
-    const [withFormCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities)
-    .where(sql`("contactInfo"->>'form' IS NOT NULL AND "contactInfo"->>'form' != 'null') OR
-              ("contactInfo"->>'contactForm' IS NOT NULL AND "contactInfo"->>'contactForm' != 'null')`);
+    // Collect sample opportunities with good contact info
+    const sampleOpportunitiesWithGoodContactInfo: any[] = [];
     
-    // Count premium opportunities with contact forms
-    const [premiumWithFormCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities)
-    .where(sql`"isPremium" = true AND 
-              (("contactInfo"->>'form' IS NOT NULL AND "contactInfo"->>'form' != 'null') OR
-               ("contactInfo"->>'contactForm' IS NOT NULL AND "contactInfo"->>'contactForm' != 'null'))`);
-    
-    // Count opportunities with social profiles
-    const [withSocialCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities)
-    .where(sql`("contactInfo"->'social' IS NOT NULL AND jsonb_array_length("contactInfo"->'social') > 0) OR 
-              ("contactInfo"->'socialProfiles' IS NOT NULL AND jsonb_array_length("contactInfo"->'socialProfiles') > 0)`);
-    
-    // Count premium opportunities with social profiles
-    const [premiumWithSocialCount] = await db.select({
-      count: sql`count(*)`
-    })
-    .from(discoveredOpportunities)
-    .where(sql`"isPremium" = true AND 
-              (("contactInfo"->'social' IS NOT NULL AND jsonb_array_length("contactInfo"->'social') > 0) OR 
-               ("contactInfo"->'socialProfiles' IS NOT NULL AND jsonb_array_length("contactInfo"->'socialProfiles') > 0))`);
-    
-    // Calculate percentages
-    const calculatePercentage = (value: number, total: number) => 
-      total > 0 ? ((value / total) * 100).toFixed(2) + '%' : '0%';
-    
-    // Print statistics
-    console.log('\n=== Contact Information Statistics ===\n');
-    console.log(`Total opportunities: ${totalCount.count}`);
-    console.log(`Premium opportunities: ${premiumCount.count} (${calculatePercentage(Number(premiumCount.count), Number(totalCount.count))} of total)`);
-    
-    console.log('\n--- Overall Contact Info ---');
-    console.log(`Opportunities with any contact info: ${withContactInfoCount.count} (${calculatePercentage(Number(withContactInfoCount.count), Number(totalCount.count))})`);
-    console.log(`Premium opportunities with any contact info: ${premiumWithContactInfoCount.count} (${calculatePercentage(Number(premiumWithContactInfoCount.count), Number(premiumCount.count))})`);
-    
-    console.log('\n--- Email Availability ---');
-    console.log(`Opportunities with email addresses: ${withEmailCount.count} (${calculatePercentage(Number(withEmailCount.count), Number(totalCount.count))})`);
-    console.log(`Premium opportunities with email addresses: ${premiumWithEmailCount.count} (${calculatePercentage(Number(premiumWithEmailCount.count), Number(premiumCount.count))})`);
-    
-    console.log('\n--- Contact Form Availability ---');
-    console.log(`Opportunities with contact forms: ${withFormCount.count} (${calculatePercentage(Number(withFormCount.count), Number(totalCount.count))})`);
-    console.log(`Premium opportunities with contact forms: ${premiumWithFormCount.count} (${calculatePercentage(Number(premiumWithFormCount.count), Number(premiumCount.count))})`);
-    
-    console.log('\n--- Social Profiles Availability ---');
-    console.log(`Opportunities with social profiles: ${withSocialCount.count} (${calculatePercentage(Number(withSocialCount.count), Number(totalCount.count))})`);
-    console.log(`Premium opportunities with social profiles: ${premiumWithSocialCount.count} (${calculatePercentage(Number(premiumWithSocialCount.count), Number(premiumCount.count))})`);
-    
-    // Sample opportunities with complete contact info (email, form, and social)
-    const completeSamples = await db.select({
-      id: discoveredOpportunities.id,
-      domain: discoveredOpportunities.domain,
-      url: discoveredOpportunities.url,
-      contactInfo: discoveredOpportunities.contactInfo,
-      isPremium: discoveredOpportunities.isPremium
-    })
-    .from(discoveredOpportunities)
-    .where(sql`
-      (("contactInfo"->>'email' IS NOT NULL AND "contactInfo"->>'email' != 'null') OR 
-       ("contactInfo"->'emails' IS NOT NULL AND jsonb_array_length("contactInfo"->'emails') > 0))
-      AND
-      (("contactInfo"->>'form' IS NOT NULL AND "contactInfo"->>'form' != 'null') OR
-       ("contactInfo"->>'contactForm' IS NOT NULL AND "contactInfo"->>'contactForm' != 'null'))
-      AND
-      (("contactInfo"->'social' IS NOT NULL AND jsonb_array_length("contactInfo"->'social') > 0) OR 
-       ("contactInfo"->'socialProfiles' IS NOT NULL AND jsonb_array_length("contactInfo"->'socialProfiles') > 0))
-    `)
-    .limit(5);
-    
-    console.log('\n=== Sample Opportunities with Complete Contact Info ===\n');
-    
-    if (completeSamples.length > 0) {
-      completeSamples.forEach(sample => {
-        const contactInfo = typeof sample.contactInfo === 'string' 
-          ? JSON.parse(sample.contactInfo) 
-          : sample.contactInfo;
-        
-        console.log(`Domain: ${sample.domain} (Premium: ${sample.isPremium ? 'Yes' : 'No'})`);
-        console.log(`URL: ${sample.url}`);
-        
-        // Display emails
-        const emails = [];
-        if (contactInfo.email) emails.push(contactInfo.email);
-        if (contactInfo.emails && Array.isArray(contactInfo.emails)) {
-          emails.push(...contactInfo.emails);
-        }
-        console.log(`Email(s): ${emails.length > 0 ? emails.join(', ') : 'None'}`);
-        
-        // Display form
-        const form = contactInfo.contactForm || contactInfo.form || 'None';
-        console.log(`Contact Form: ${form}`);
-        
-        // Display social profiles
-        const socialProfiles = contactInfo.socialProfiles || contactInfo.social || [];
-        console.log(`Social Profiles: ${socialProfiles.length} profiles`);
-        if (socialProfiles.length > 0) {
-          socialProfiles.forEach((profile: any) => {
-            console.log(`  - ${profile.platform}: ${profile.url}`);
-          });
+    for (const opp of opportunitiesWithContactInfo) {
+      try {
+        // Parse contact info
+        const contactInfo = typeof opp.contactInfo === 'string' 
+          ? JSON.parse(opp.contactInfo) 
+          : opp.contactInfo;
+          
+        // Check for email
+        let hasEmail = false;
+        if (contactInfo.email) {
+          opportunitiesWithEmail++;
+          hasEmail = true;
         }
         
-        console.log('---');
-      });
-    } else {
-      console.log('No opportunities with complete contact information found.');
+        // Check for additional emails
+        if (contactInfo.emails && Array.isArray(contactInfo.emails) && contactInfo.emails.length > 0) {
+          opportunitiesWithMultipleEmails++;
+          hasEmail = true;
+        }
+        
+        // For backwards compatibility, check additionalEmails field too
+        if (contactInfo.additionalEmails && Array.isArray(contactInfo.additionalEmails) && contactInfo.additionalEmails.length > 0) {
+          opportunitiesWithMultipleEmails++;
+          hasEmail = true;
+        }
+        
+        // If we didn't find email in the standard fields, do one more check
+        if (!hasEmail && typeof contactInfo === 'object') {
+          // Try to find any property that might contain an email
+          for (const key in contactInfo) {
+            const value = contactInfo[key];
+            if (typeof value === 'string' && value.includes('@') && !value.includes('.jpg') && !value.includes('.png')) {
+              opportunitiesWithEmail++;
+              hasEmail = true;
+              break;
+            }
+          }
+        }
+        
+        // Check for contact form
+        let hasForm = false;
+        if (contactInfo.form) {
+          opportunitiesWithForm++;
+          hasForm = true;
+        } else if (contactInfo.contactForm) {
+          opportunitiesWithForm++;
+          hasForm = true;
+        }
+        
+        // Check for social profiles
+        let hasSocial = false;
+        let socialProfiles: any[] = [];
+        
+        if (contactInfo.social && Array.isArray(contactInfo.social)) {
+          socialProfiles = contactInfo.social;
+          hasSocial = socialProfiles.length > 0;
+        } else if (contactInfo.socialProfiles && Array.isArray(contactInfo.socialProfiles)) {
+          socialProfiles = contactInfo.socialProfiles;
+          hasSocial = socialProfiles.length > 0;
+        }
+        
+        if (hasSocial) {
+          opportunitiesWithSocial++;
+          
+          if (socialProfiles.length > 1) {
+            opportunitiesWithMultipleSocial++;
+          }
+          
+          // Count by platform
+          for (const profile of socialProfiles) {
+            if (profile.platform) {
+              socialPlatformCounts[profile.platform] = (socialPlatformCounts[profile.platform] || 0) + 1;
+            }
+          }
+        }
+        
+        // Collect sample opportunities with good contact info
+        if ((hasEmail || hasForm) && hasSocial) {
+          // Only collect a max of 5 samples
+          if (sampleOpportunitiesWithGoodContactInfo.length < 5) {
+            sampleOpportunitiesWithGoodContactInfo.push({
+              id: opp.id,
+              domain: opp.domain,
+              isPremium: opp.isPremium,
+              email: contactInfo.email,
+              form: contactInfo.form || contactInfo.contactForm,
+              socialCount: socialProfiles.length,
+              platforms: socialProfiles.map((p: any) => p.platform).join(', ')
+            });
+          }
+        }
+        
+      } catch (error) {
+        console.error(`Error parsing contact info for opportunity ${opp.id}: ${error.message}`);
+      }
     }
     
-  } catch (error) {
-    console.error('Error checking contact information:', error);
+    // Print detailed stats
+    console.log(`
+Detailed contact information analysis:
+- Opportunities with email: ${opportunitiesWithEmail} (${((opportunitiesWithEmail / allOpportunities.length) * 100).toFixed(2)}%)
+- Opportunities with multiple emails: ${opportunitiesWithMultipleEmails} (${((opportunitiesWithMultipleEmails / allOpportunities.length) * 100).toFixed(2)}%)
+- Opportunities with contact form: ${opportunitiesWithForm} (${((opportunitiesWithForm / allOpportunities.length) * 100).toFixed(2)}%)
+- Opportunities with social profiles: ${opportunitiesWithSocial} (${((opportunitiesWithSocial / allOpportunities.length) * 100).toFixed(2)}%)
+- Opportunities with multiple social profiles: ${opportunitiesWithMultipleSocial} (${((opportunitiesWithMultipleSocial / allOpportunities.length) * 100).toFixed(2)}%)
+
+Premium opportunity stats:
+- Total premium opportunities: ${premiumOpportunities.length} (${((premiumOpportunities.length / allOpportunities.length) * 100).toFixed(2)}% of total)
+- Premium opportunities with contact info: ${premiumWithContactInfo.length} (${((premiumWithContactInfo.length / premiumOpportunities.length) * 100).toFixed(2)}% of premium)
+
+Social platform distribution:
+${Object.entries(socialPlatformCounts)
+  .sort((a, b) => b[1] - a[1])
+  .map(([platform, count]) => `- ${platform}: ${count} (${((count / opportunitiesWithSocial) * 100).toFixed(2)}% of social profiles)`)
+  .join('\n')}
+
+Sample opportunities with good contact info:
+${sampleOpportunitiesWithGoodContactInfo.map(sample => 
+  `- ID: ${sample.id}, Domain: ${sample.domain}, Premium: ${sample.isPremium ? 'Yes' : 'No'}
+   Email: ${sample.email || 'None'}, Form: ${sample.form ? 'Yes' : 'No'}, Social: ${sample.socialCount} (${sample.platforms})`
+).join('\n')}
+    `);
+    
+  } catch (error: any) {
+    console.error(`Error analyzing contact information: ${error.message}`);
   }
 }
 
-// Run the check function
+// Run the script
 checkContactInfo()
-  .then(() => {
-    console.log('Contact information check complete!');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('Script failed:', error);
+  .catch(error => {
+    console.error('Error running script:', error);
     process.exit(1);
+  })
+  .finally(() => {
+    console.log('Script execution completed');
   });

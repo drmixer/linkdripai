@@ -745,7 +745,14 @@ async function updatePremiumOpportunityContactInfo() {
       try {
         console.log(`Processing premium opportunity #${opp.id}: ${opp.domain}`);
         
-        let contactInfoObj: Record<string, any> = {};
+        // Initialize standardized contact info structure
+        let contactInfoObj: Record<string, any> = {
+          email: null,      // Primary email (first in the list)
+          emails: [],       // Additional emails array
+          form: null,       // Contact form URL
+          social: []        // Social profiles array
+        };
+        
         let metadataObj: Record<string, any> = {};
         
         // Parse existing metadata if available
@@ -757,27 +764,84 @@ async function updatePremiumOpportunityContactInfo() {
           }
         }
         
-        // Check if we already have email info in metadata
-        if (metadataObj.allEmails && Array.isArray(metadataObj.allEmails) && metadataObj.allEmails.length > 0) {
-          contactInfoObj.additionalEmails = metadataObj.allEmails;
-          
-          // Use first email as primary
-          if (metadataObj.allEmails.length > 0) {
-            contactInfoObj.email = metadataObj.allEmails[0];
+        // Parse existing contact info if available
+        if (opp.contactInfo) {
+          try {
+            const existingContactInfo = typeof opp.contactInfo === 'string' 
+              ? JSON.parse(opp.contactInfo) 
+              : opp.contactInfo;
+              
+            // Merge existing contact info into our standardized structure
+            if (existingContactInfo.email) {
+              contactInfoObj.email = existingContactInfo.email;
+            }
+            
+            if (existingContactInfo.emails && Array.isArray(existingContactInfo.emails)) {
+              contactInfoObj.emails = existingContactInfo.emails;
+            }
+            
+            if (existingContactInfo.form || existingContactInfo.contactForm) {
+              contactInfoObj.form = existingContactInfo.form || existingContactInfo.contactForm;
+            }
+            
+            if (existingContactInfo.social && Array.isArray(existingContactInfo.social)) {
+              contactInfoObj.social = existingContactInfo.social;
+            } else if (existingContactInfo.socialProfiles && Array.isArray(existingContactInfo.socialProfiles)) {
+              contactInfoObj.social = existingContactInfo.socialProfiles;
+            }
+          } catch (e) {
+            console.log(`Error parsing existing contact info for opportunity #${opp.id}`);
           }
-        } 
-        // If we have a contact email in the metadata
-        else if (metadataObj.contactEmail) {
-          contactInfoObj.email = metadataObj.contactEmail;
         }
-        // If we have no email info at all, try to fetch from the page
-        else {
+        
+        // Collect available emails from metadata
+        const allMetadataEmails: string[] = [];
+        
+        // Check if we have emails in metadata
+        if (metadataObj.allEmails && Array.isArray(metadataObj.allEmails)) {
+          allMetadataEmails.push(...metadataObj.allEmails.filter(email => 
+            typeof email === 'string' && 
+            email.includes('@') &&
+            !email.includes('.jpg') && 
+            !email.includes('.png')
+          ));
+        }
+        
+        // Check for contact email in metadata
+        if (metadataObj.contactEmail && 
+            typeof metadataObj.contactEmail === 'string' && 
+            metadataObj.contactEmail.includes('@') &&
+            !metadataObj.contactEmail.includes('.jpg') && 
+            !metadataObj.contactEmail.includes('.png')) {
+          allMetadataEmails.push(metadataObj.contactEmail);
+        }
+        
+        // If we have emails from metadata, use them
+        if (allMetadataEmails.length > 0) {
+          // Deduplicate emails
+          const uniqueEmails = [...new Set(allMetadataEmails)];
+          
+          // Set primary email if not already set
+          if (!contactInfoObj.email) {
+            contactInfoObj.email = uniqueEmails[0];
+          }
+          
+          // Add remaining emails to the emails array
+          if (uniqueEmails.length > 1) {
+            // Filter out the primary email from additional emails
+            const additionalEmails = uniqueEmails.filter(email => email !== contactInfoObj.email);
+            contactInfoObj.emails = [...new Set([...contactInfoObj.emails, ...additionalEmails])];
+          }
+        }
+        
+        // If we still have no emails, try to fetch from the page
+        if (!contactInfoObj.email && contactInfoObj.emails.length === 0) {
           try {
             const emails = await extractEmailsFromPage(opp.url);
             if (emails.length > 0) {
               contactInfoObj.email = emails[0];
               if (emails.length > 1) {
-                contactInfoObj.additionalEmails = emails.slice(1);
+                contactInfoObj.emails = emails.slice(1);
               }
               
               // Update metadata as well
@@ -792,28 +856,30 @@ async function updatePremiumOpportunityContactInfo() {
         const baseUrl = new URL(opp.url);
         const homepageUrl = `${baseUrl.protocol}//${baseUrl.hostname}`;
         
-        // Try to find a contact form - homepage is more likely to have navigation to contact page
-        try {
-          // Try homepage first, then fall back to specific page URL
-          const contactFormUrl = await findContactFormUrl(homepageUrl) || 
-                               await findContactFormUrl(opp.url);
-          
-          if (contactFormUrl) {
-            contactInfoObj.form = contactFormUrl;
-            metadataObj.contactFormUrl = contactFormUrl;
+        // Try to find a contact form if we don't already have one
+        if (!contactInfoObj.form) {
+          try {
+            // Try homepage first, then fall back to specific page URL
+            const contactFormUrl = await findContactFormUrl(homepageUrl) || 
+                                await findContactFormUrl(opp.url);
+            
+            if (contactFormUrl) {
+              contactInfoObj.form = contactFormUrl;
+              metadataObj.contactFormUrl = contactFormUrl;
+            }
+          } catch (formError) {
+            console.log(`Error finding contact form for ${homepageUrl}: ${formError.message}`);
           }
-        } catch (formError) {
-          console.log(`Error finding contact form for ${homepageUrl}: ${formError.message}`);
         }
         
         // If we don't have emails yet, try to extract from homepage
-        if (!contactInfoObj.email && !contactInfoObj.additionalEmails) {
+        if (!contactInfoObj.email && contactInfoObj.emails.length === 0) {
           try {
             const emails = await extractEmailsFromPage(homepageUrl);
             if (emails.length > 0) {
               contactInfoObj.email = emails[0];
               if (emails.length > 1) {
-                contactInfoObj.additionalEmails = emails.slice(1);
+                contactInfoObj.emails = emails.slice(1);
               }
               
               // Update metadata as well
@@ -824,27 +890,44 @@ async function updatePremiumOpportunityContactInfo() {
           }
         }
         
-        // Extract social profiles if not already in metadata
-        if (!metadataObj.socialProfiles || !Array.isArray(metadataObj.socialProfiles) || metadataObj.socialProfiles.length === 0) {
-          try {
-            // Prioritize homepage for social profiles since they're usually in the footer
-            const socialProfiles = await extractSocialProfiles(homepageUrl);
-                                
-            if (socialProfiles.length > 0) {
-              contactInfoObj.social = socialProfiles;
-              metadataObj.socialProfiles = socialProfiles;
+        // Extract social profiles if we don't have any yet
+        if (contactInfoObj.social.length === 0) {
+          // Check if we have social profiles in metadata first
+          if (metadataObj.socialProfiles && Array.isArray(metadataObj.socialProfiles) && metadataObj.socialProfiles.length > 0) {
+            contactInfoObj.social = metadataObj.socialProfiles;
+          } else {
+            try {
+              // Prioritize homepage for social profiles since they're usually in the footer
+              const socialProfiles = await extractSocialProfiles(homepageUrl);
+                                  
+              if (socialProfiles.length > 0) {
+                contactInfoObj.social = socialProfiles;
+                metadataObj.socialProfiles = socialProfiles;
+              }
+            } catch (socialError) {
+              console.log(`Error extracting social profiles for ${homepageUrl}: ${socialError.message}`);
             }
-          } catch (socialError) {
-            console.log(`Error extracting social profiles for ${homepageUrl}: ${socialError.message}`);
           }
-        } else if (metadataObj.socialProfiles && Array.isArray(metadataObj.socialProfiles) && metadataObj.socialProfiles.length > 0) {
-          contactInfoObj.social = metadataObj.socialProfiles;
         }
+        
+        // Add a timestamp for when the contact info was last updated
+        contactInfoObj.lastUpdated = new Date().toISOString();
+        
+        // Add extraction metadata
+        contactInfoObj.extractionDetails = {
+          lastExtracted: new Date().toISOString(),
+          hasEmail: !!contactInfoObj.email,
+          hasAdditionalEmails: contactInfoObj.emails.length > 0,
+          hasContactForm: !!contactInfoObj.form,
+          hasSocialProfiles: contactInfoObj.social.length > 0,
+          source: 'premium-opportunity-contact-extraction',
+          version: '1.0'
+        };
         
         // Update the database - use quoted names for PostgreSQL
         await db.execute(sql`
           UPDATE "discoveredOpportunities"
-          SET "contactInfo" = ${Object.keys(contactInfoObj).length > 0 ? JSON.stringify(contactInfoObj) : null}, 
+          SET "contactInfo" = ${JSON.stringify(contactInfoObj)}, 
               "rawData" = ${JSON.stringify(metadataObj)}
           WHERE "id" = ${opp.id}
         `);
