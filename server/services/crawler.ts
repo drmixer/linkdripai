@@ -284,6 +284,29 @@ export class OpportunityCrawler {
         }
       }
       
+      // Create proper contact information JSON structure
+      const contactInfoObj: Record<string, any> = {};
+      
+      // Add primary email if available
+      if (data.contactEmail) {
+        contactInfoObj.email = data.contactEmail;
+      }
+      
+      // Check for additional emails in metadata
+      if (metadataObj.allEmails && Array.isArray(metadataObj.allEmails) && metadataObj.allEmails.length > 0) {
+        contactInfoObj.additionalEmails = metadataObj.allEmails.filter(email => email !== data.contactEmail);
+      }
+      
+      // Check for contact form
+      if (data.hasContactForm && data.url) {
+        contactInfoObj.form = data.url;
+      }
+      
+      // Add social profiles if found (stored in metadata)
+      if (metadataObj.socialProfiles && Array.isArray(metadataObj.socialProfiles)) {
+        contactInfoObj.social = metadataObj.socialProfiles;
+      }
+      
       // Determine if it might be a premium opportunity based on relevance score
       const isPotentialPremium = (data.relevanceScore && data.relevanceScore >= 7);
       
@@ -291,6 +314,9 @@ export class OpportunityCrawler {
       const existingOpps = await db.select()
         .from(discoveredOpportunities)
         .where(eq(discoveredOpportunities.url, data.url));
+      
+      // Create contactInfo JSON object if we have contact information
+      const contactInfo = Object.keys(contactInfoObj).length > 0 ? contactInfoObj : null;
       
       if (existingOpps.length > 0) {
         // Update existing record instead of creating a new one
@@ -305,6 +331,7 @@ export class OpportunityCrawler {
             categories: processedCategories || existingOpps[0].categories,
             sourceType: data.sourceType || existingOpps[0].sourceType,
             metadataRaw: JSON.stringify(metadataObj),
+            contactInfo: contactInfo, // Store contact info in JSON field
             // Only update status if it's potentially premium and not already assigned
             ...(isPotentialPremium && existingOpps[0].status === 'discovered' ? { status: 'analyzed' } : {})
           })
@@ -323,7 +350,8 @@ export class OpportunityCrawler {
           lastChecked: new Date(),
           status: isPotentialPremium ? 'analyzed' : 'discovered', // Mark high-relevance scores for faster analysis
           categories: processedCategories,
-          metadataRaw: JSON.stringify(metadataObj)
+          metadataRaw: JSON.stringify(metadataObj),
+          contactInfo: contactInfo // Store contact info in JSON field
         })
         .returning();
         
@@ -419,14 +447,66 @@ export class OpportunityCrawler {
         'textarea'
       ];
       
+      // Store contact form URL if we find one
+      let contactFormUrl = null;
       let hasContactForm = false;
+      
       for (const selector of contactSelectors) {
-        const elements = $(selector).length;
-        if (elements > 0) {
+        const elements = $(selector);
+        if (elements.length > 0) {
           hasContactForm = true;
-          break;
+          
+          // Try to get the contact page URL from the first matching link
+          if (selector.startsWith('a[') || selector.startsWith('a:')) {
+            const href = elements.first().attr('href');
+            if (href) {
+              try {
+                // Convert relative URL to absolute
+                const resolvedUrl = new URL(href, formattedUrl).toString();
+                contactFormUrl = resolvedUrl;
+                break;
+              } catch (error) {
+                // Invalid URL, continue with next selector
+              }
+            }
+          }
         }
       }
+      
+      // Extract social media profiles
+      const socialMediaPatterns = [
+        { platform: 'twitter', regex: /twitter\.com\/([^\/\?"']+)/ },
+        { platform: 'facebook', regex: /facebook\.com\/([^\/\?"']+)/ },
+        { platform: 'linkedin', regex: /linkedin\.com\/(?:company|in)\/([^\/\?"']+)/ },
+        { platform: 'instagram', regex: /instagram\.com\/([^\/\?"']+)/ },
+        { platform: 'pinterest', regex: /pinterest\.com\/([^\/\?"']+)/ },
+        { platform: 'youtube', regex: /youtube\.com\/(?:channel|user|c)\/([^\/\?"']+)/ },
+        { platform: 'github', regex: /github\.com\/([^\/\?"']+)/ }
+      ];
+      
+      const socialProfiles: Array<{platform: string, url: string, username: string}> = [];
+      
+      // Find social media links in all <a> tags
+      $('a[href]').each((_, element) => {
+        const href = $(element).attr('href');
+        if (!href) return;
+        
+        for (const pattern of socialMediaPatterns) {
+          const match = href.match(pattern.regex);
+          if (match && match[1]) {
+            try {
+              const url = new URL(href.startsWith('http') ? href : `https://${href}`).toString();
+              socialProfiles.push({
+                platform: pattern.platform,
+                url: url,
+                username: match[1]
+              });
+            } catch (error) {
+              // Invalid URL, skip
+            }
+          }
+        }
+      });
       
       // Extract page text with better noise filtering
       // Remove script, style, and common footer/header elements
@@ -438,9 +518,27 @@ export class OpportunityCrawler {
       const emailRegex = /[a-zA-Z0-9._%+-]{1,64}@(?:[a-zA-Z0-9-]{1,63}\.){1,125}[a-zA-Z]{2,63}/g;
       const tempEmails = bodyText.match(emailRegex) || [];
       
+      // Check for emails in href="mailto:" links too
+      $('a[href^="mailto:"]').each((_, element) => {
+        const href = $(element).attr('href');
+        if (href && href.startsWith('mailto:')) {
+          const email = href.substring(7).split('?')[0].trim();
+          if (email && email.includes('@') && !tempEmails.includes(email)) {
+            tempEmails.push(email);
+          }
+        }
+      });
+      
       // Filter out common false positives and limit to reasonable number
       const emails = tempEmails
-        .filter(email => !email.includes('example.com') && !email.includes('domain.com') && !email.startsWith('email@'))
+        .filter(email => 
+          !email.includes('example.com') && 
+          !email.includes('domain.com') && 
+          !email.startsWith('email@') &&
+          !email.includes('your@') &&
+          !email.includes('@example') &&
+          email.length < 100 // Some regex matches can get very long
+        )
         .slice(0, 5); // Limit to 5 emails
       
       // Check URL path for opportunity type indicators
