@@ -310,6 +310,20 @@ export class LemonSqueezyService {
       return false;
     }
   }
+  
+  /**
+   * Get plan variant IDs
+   */
+  getPlanVariantIds(): Record<SubscriptionPlan, string> {
+    return PLAN_VARIANT_IDS;
+  }
+  
+  /**
+   * Get splash variant IDs
+   */
+  getSplashVariantIds(): Record<SplashPackage, string> {
+    return SPLASH_VARIANT_IDS;
+  }
 }
 
 // Create a singleton instance

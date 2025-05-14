@@ -200,14 +200,20 @@ paymentRouter.post('/webhook', async (req, res) => {
       const [user] = await db.select().from(users).where(eq(users.subscriptionId, subscriptionId));
       
       if (user) {
-        // Update user subscription status
-        await db.update(users)
-          .set({
-            subscriptionStatus: 'cancelled',
-          })
-          .where(eq(users.id, user.id));
-        
-        console.log(`[Payment] Marked subscription as cancelled for user ${user.id}: ${subscriptionId}`);
+        try {
+          // Update user subscription status - we'll reuse the update method 
+          // but pass 'cancelled' as the status, the service will handle the rest
+          await subscriptionService.updateUserSubscription(
+            user.id,
+            subscriptionId,
+            user.customerId || '',
+            user.planVariantId || ''
+          );
+          
+          console.log(`[Payment] Marked subscription as cancelled for user ${user.id}: ${subscriptionId}`);
+        } catch (error) {
+          console.error(`[Payment] Error marking subscription as cancelled for user ${user.id}:`, error);
+        }
       } else {
         console.error(`[Payment] No user found for cancelled subscription: ${subscriptionId}`);
       }
@@ -216,7 +222,7 @@ paymentRouter.post('/webhook', async (req, res) => {
     // Handle order (one-time purchase like splash packages)
     else if (event === 'order_created') {
       const { attributes } = data;
-      const { custom_data: customData, total } = attributes;
+      const { custom_data: customData, first_order_item: firstOrderItem } = attributes;
       
       // Get user ID from custom data
       const userId = customData?.userId;
@@ -226,32 +232,21 @@ paymentRouter.post('/webhook', async (req, res) => {
         return res.status(400).json({ message: 'No user ID in custom data' });
       }
       
-      // Determine splash quantity from total amount
-      let splashQuantity = 0;
+      // Get variant ID from the first order item
+      const variantId = firstOrderItem?.variant_id;
       
-      if (total === 700) { // $7.00
-        splashQuantity = 1;
-      } else if (total === 1800) { // $18.00
-        splashQuantity = 3;
-      } else if (total === 3500) { // $35.00
-        splashQuantity = 7;
+      if (!variantId) {
+        console.error('[Payment] No variant ID found in order');
+        return res.status(400).json({ message: 'No variant ID in order' });
       }
       
-      if (splashQuantity > 0) {
-        // Update user's splash credits
-        const [user] = await db.select().from(users).where(eq(users.id, Number(userId)));
+      try {
+        // Use the subscription service to add splash credits
+        const result = await subscriptionService.addSplashCredits(Number(userId), String(variantId));
         
-        if (user) {
-          await db.update(users)
-            .set({
-              splashesAllowed: (user.splashesAllowed || 0) + splashQuantity,
-            })
-            .where(eq(users.id, user.id));
-          
-          console.log(`[Payment] Added ${splashQuantity} splash credits for user ${userId}`);
-        } else {
-          console.error(`[Payment] No user found for order user ID: ${userId}`);
-        }
+        console.log(`[Payment] Added splash credits for user ${userId}: ${result.addedCredits} credits (total: ${result.totalCredits})`);
+      } catch (error) {
+        console.error(`[Payment] Error adding splash credits for user ${userId}:`, error);
       }
     }
     

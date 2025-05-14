@@ -32,8 +32,8 @@ export class SubscriptionService {
     }
     
     const status = subscriptionDetails.status || 'active';
-    const renewsAt = subscriptionDetails.renews_at ? new Date(subscriptionDetails.renews_at) : null;
-    const endsAt = subscriptionDetails.ends_at ? new Date(subscriptionDetails.ends_at) : null;
+    const renewsAt = subscriptionDetails.renewsAt ? new Date(subscriptionDetails.renewsAt) : null;
+    const endsAt = subscriptionDetails.endsAt ? new Date(subscriptionDetails.endsAt) : null;
     
     // Determine the plan type based on variant ID
     const planName = this.getPlanNameFromVariantId(variantId);
