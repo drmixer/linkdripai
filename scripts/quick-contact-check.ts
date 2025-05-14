@@ -1,75 +1,78 @@
 /**
- * Quick Contact Info Check
+ * Quick Contact Coverage Check
  * 
- * This script performs a quick check of the contact information coverage
- * without the more complex analysis that might cause timeouts.
+ * This script checks the current contact information coverage rate
+ * for both regular and premium opportunities.
  */
 
 import { db } from "../server/db";
-import { count, and, isNotNull, ne, sql } from "drizzle-orm";
 import { discoveredOpportunities } from "../shared/schema";
+import { eq, not, isNull } from "drizzle-orm";
 
-async function quickCheckContactInfo() {
-  console.log("Running quick contact information coverage check...");
-  
+async function checkContactCoverage() {
+  console.log("🔍 Checking current contact information coverage...");
+
   try {
     // Count total opportunities
-    const [totalResult] = await db.select({ 
-      value: count() 
-    }).from(discoveredOpportunities);
+    const totalOpportunities = await db.select({ count: db.fn.count() }).from(discoveredOpportunities);
+    const totalCount = Number(totalOpportunities[0]?.count || 0);
     
-    const totalOpportunities = totalResult.value;
-    
-    // Count opportunities with contact info
-    const [withContactResult] = await db.select({
-      value: count()
-    }).from(discoveredOpportunities)
-    .where(
-      and(
-        isNotNull(discoveredOpportunities.contactInfo),
-        ne(discoveredOpportunities.contactInfo, '{}'),
-        ne(discoveredOpportunities.contactInfo, '[]')
-      )
-    );
-    
-    const withContactInfo = withContactResult.value;
+    // Count opportunities with contact info (non-null contactInfo)
+    const opportunitiesWithContact = await db.select({ count: db.fn.count() })
+      .from(discoveredOpportunities)
+      .where(not(isNull(discoveredOpportunities.contactInfo)));
+    const contactCount = Number(opportunitiesWithContact[0]?.count || 0);
     
     // Count premium opportunities
-    const [premiumResult] = await db.select({
-      value: count()
-    }).from(discoveredOpportunities)
-    .where(discoveredOpportunities.isPremium);
-    
-    const premiumOpportunities = premiumResult.value;
+    const premiumOpportunities = await db.select({ count: db.fn.count() })
+      .from(discoveredOpportunities)
+      .where(eq(discoveredOpportunities.isPremium, true));
+    const premiumCount = Number(premiumOpportunities[0]?.count || 0);
     
     // Count premium opportunities with contact info
-    const [premiumWithContactResult] = await db.select({
-      value: count()
-    }).from(discoveredOpportunities)
-    .where(
-      and(
-        discoveredOpportunities.isPremium,
-        isNotNull(discoveredOpportunities.contactInfo),
-        ne(discoveredOpportunities.contactInfo, '{}'),
-        ne(discoveredOpportunities.contactInfo, '[]')
-      )
-    );
+    const premiumWithContact = await db.select({ count: db.fn.count() })
+      .from(discoveredOpportunities)
+      .where(
+        eq(discoveredOpportunities.isPremium, true),
+        not(isNull(discoveredOpportunities.contactInfo))
+      );
+    const premiumContactCount = Number(premiumWithContact[0]?.count || 0);
     
-    const premiumWithContactInfo = premiumWithContactResult.value;
+    // Calculate coverage percentages
+    const overallCoverage = totalCount > 0 ? (contactCount / totalCount) * 100 : 0;
+    const premiumCoverage = premiumCount > 0 ? (premiumContactCount / premiumCount) * 100 : 0;
     
-    // Display results
-    console.log(`\nContact Information Coverage`);
-    console.log(`===========================`);
-    console.log(`Total opportunities: ${totalOpportunities}`);
-    console.log(`Opportunities with contact info: ${withContactInfo} (${(withContactInfo / totalOpportunities * 100).toFixed(2)}%)`);
-    console.log(`\nPremium opportunities: ${premiumOpportunities}`);
-    console.log(`Premium with contact info: ${premiumWithContactInfo} (${(premiumWithContactInfo / premiumOpportunities * 100).toFixed(2)}%)`);
+    console.log("📊 Contact Coverage Report");
+    console.log("=======================");
+    console.log(`Total opportunities: ${totalCount}`);
+    console.log(`Opportunities with contact info: ${contactCount} (${overallCoverage.toFixed(2)}%)`);
+    console.log(`\nPremium opportunities: ${premiumCount}`);
+    console.log(`Premium with contact info: ${premiumContactCount} (${premiumCoverage.toFixed(2)}%)`);
+    console.log("\n📈 Target coverage rates:");
+    console.log(`  Overall: 65-80% (Current: ${overallCoverage.toFixed(2)}%)`);
+    console.log(`  Premium: 90-95% (Current: ${premiumCoverage.toFixed(2)}%)`);
     
-    console.log(`\nCheck completed!`);
+    // Check progress toward targets
+    if (overallCoverage < 65) {
+      console.log("\n⚠️ Overall coverage below target range. Continue running contact extraction.");
+    } else if (overallCoverage >= 65 && overallCoverage <= 80) {
+      console.log("\n✅ Overall coverage within target range!");
+    } else {
+      console.log("\n🎉 Overall coverage exceeds target range!");
+    }
+    
+    if (premiumCoverage < 90) {
+      console.log("⚠️ Premium coverage below target range. Prioritize premium opportunities.");
+    } else if (premiumCoverage >= 90 && premiumCoverage <= 95) {
+      console.log("✅ Premium coverage within target range!");
+    } else {
+      console.log("🎉 Premium coverage exceeds target range!");
+    }
+    
   } catch (error) {
-    console.error("Error checking contact information coverage:", error);
+    console.error("Error checking contact coverage:", error);
   }
 }
 
 // Run the check
-quickCheckContactInfo().catch(console.error);
+checkContactCoverage().catch(console.error);

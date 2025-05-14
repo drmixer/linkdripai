@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Run the quick contact check
-# This script quickly checks the contact information coverage stats
-# without the detailed analysis that might cause timeouts
+# Quick contact coverage check
+# This script runs a quick check of current contact information coverage rates
 
 # Import the .env file if it exists
 if [ -f .env ]; then
@@ -12,7 +11,6 @@ fi
 # Set proper Node options for memory optimization
 export NODE_OPTIONS="--max-old-space-size=2048"
 
-# Run the script
 echo "Running quick contact coverage check..."
 npx tsx scripts/quick-contact-check.ts
 
