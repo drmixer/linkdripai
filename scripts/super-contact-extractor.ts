@@ -25,7 +25,6 @@ import * as fs from "fs";
 import * as os from "os";
 import puppeteer from "puppeteer";
 import whoisJson from "whois-json";
-import * as pdfjsLib from "pdfjs-dist";
 import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
 import { Worker, isMainThread, parentPort, workerData } from "worker_threads";
@@ -44,9 +43,6 @@ const BROWSER_TIMEOUT = 25000; // Timeout for browser operations in ms
 if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR, { recursive: true });
 }
-
-// Initialize PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = require.resolve("pdfjs-dist/build/pdf.worker.js");
 
 // User agent rotation to avoid detection
 const USER_AGENTS = [
@@ -677,10 +673,13 @@ async function extractWhoisData(domain: string): Promise<{
 }
 
 /**
- * Download and extract text from PDF files
+ * Get PDF links but don't process them with PDF.js
+ * This is a simplified version that just looks for visible emails on PDF-linking pages
  */
 async function extractEmailsFromPDFs(baseUrl: string): Promise<string[]> {
   try {
+    // Instead of parsing PDFs (which has compatibility issues),
+    // we'll check for emails on pages that link to PDFs, as they often have contact info
     const html = await fetchHtml(baseUrl);
     if (!html) return [];
     
@@ -701,70 +700,33 @@ async function extractEmailsFromPDFs(baseUrl: string): Promise<string[]> {
       }
     });
     
-    // Limit the number of PDFs to prevent excessive processing
-    const limitedPdfLinks = pdfLinks.slice(0, MAX_PDFS_PER_DOMAIN);
-    
-    if (limitedPdfLinks.length === 0) {
+    if (pdfLinks.length === 0) {
       return [];
     }
     
-    console.log(`Found ${limitedPdfLinks.length} PDFs to process from ${baseUrl}`);
+    console.log(`Found ${pdfLinks.length} PDF links on ${baseUrl}`);
     
-    const allEmails: string[] = [];
+    // Extract emails from the current page, as pages with PDFs often have contact info
+    const emails = extractEmailsFromText($.text());
     
-    // Process each PDF
-    for (const pdfUrl of limitedPdfLinks) {
-      try {
-        const tempFilePath = path.join(TEMP_DIR, `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.pdf`);
-        
-        // Download the PDF
-        const response = await axios({
-          method: 'GET',
-          url: pdfUrl,
-          responseType: 'stream',
-          timeout: 30000
-        });
-        
-        // Save to temp file
-        const writer = fs.createWriteStream(tempFilePath);
-        response.data.pipe(writer);
-        
-        // Wait for download to complete
-        await new Promise((resolve, reject) => {
-          writer.on('finish', resolve);
-          writer.on('error', reject);
-        });
-        
-        // Load and parse the PDF
-        const pdf = await pdfjsLib.getDocument(tempFilePath).promise;
-        const totalPages = pdf.numPages;
-        
-        // Extract text from each page (limit to first 5 pages)
-        const pagesToExtract = Math.min(totalPages, 5);
-        let text = '';
-        
-        for (let i = 1; i <= pagesToExtract; i++) {
-          const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
-          const pageText = content.items.map((item: any) => item.str).join(' ');
-          text += pageText + ' ';
-        }
-        
-        // Extract emails from PDF text
-        const pdfEmails = extractEmailsFromText(text);
-        allEmails.push(...pdfEmails);
-        
-        // Clean up temp file
-        fs.unlinkSync(tempFilePath);
-      } catch (error) {
-        console.error(`Error processing PDF ${pdfUrl}:`, error);
-      }
-    }
+    // Extract emails from anchor element text and surrounding elements
+    const pdfContextEmails: string[] = [];
+    $('a[href$=".pdf"]').each((_, element) => {
+      // Get text of the link
+      const linkText = $(element).text();
+      
+      // Get text of parent element
+      const parentText = $(element).parent().text();
+      
+      // Try to extract emails from both
+      pdfContextEmails.push(...extractEmailsFromText(linkText));
+      pdfContextEmails.push(...extractEmailsFromText(parentText));
+    });
     
-    // Deduplicate emails
-    return [...new Set(allEmails)];
+    // Combine and deduplicate emails
+    return [...new Set([...emails, ...pdfContextEmails])];
   } catch (error) {
-    console.error(`Error extracting emails from PDFs at ${baseUrl}:`, error);
+    console.error(`Error extracting emails from PDF links at ${baseUrl}:`, error);
     return [];
   }
 }
