@@ -894,15 +894,5 @@ async function processOpportunity(opportunity: any, isPremium: boolean) {
   }
 }
 
-// Run the contact coverage improvement process
-if (require.main === module) {
-  increaseContactCoverage()
-    .then(() => {
-      console.log('Script execution completed');
-      process.exit(0);
-    })
-    .catch(error => {
-      console.error('Script execution failed:', error);
-      process.exit(1);
-    });
-}
+// For ESM modules we can't use require.main, but we can use import.meta.url
+// We don't need this for now since we're running the script directly from run-contact-coverage-improvement.ts
