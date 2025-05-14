@@ -15,9 +15,10 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import * as schema from '../shared/schema';
 
 // Constants for crawling behavior
-const MAX_RETRIES = 3;
-const REQUEST_TIMEOUT = 10000; // 10 seconds
-const THROTTLE_DELAY = 3000; // 3 seconds between requests to same domain
+const MAX_RETRIES = 2;          // Reduce retries to save time
+const REQUEST_TIMEOUT = 5000;   // 5 seconds timeout to avoid hanging
+const THROTTLE_DELAY = 3000;    // 3 seconds between requests to same domain
+const BATCH_DELAY = 8000;       // 8 seconds between batches
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
@@ -561,9 +562,9 @@ export async function enhanceCrawlerContactCollection() {
       .where(
         // Select opportunities that are in one of these statuses
         // We'll check for email presence in the batch processing logic
-        schema.discoveredOpportunities.status.in(['discovered', 'analyzed', 'validated'])
+        inArray(schema.discoveredOpportunities.status, ['discovered', 'analyzed', 'validated'])
       )
-      .limit(100); // Process in batches
+      .limit(20); // Process in smaller batches to avoid timeouts
     
     console.log(`Found ${opportunities.length} opportunities to process`);
     
@@ -572,8 +573,8 @@ export async function enhanceCrawlerContactCollection() {
       return;
     }
     
-    // Process in smaller batches to avoid overwhelming the network
-    const batchSize = 10;
+    // Process in smaller batches to avoid overwhelming the network and timeouts
+    const batchSize = 5;
     let totalUpdated = 0;
     
     for (let i = 0; i < opportunities.length; i += batchSize) {
@@ -583,8 +584,9 @@ export async function enhanceCrawlerContactCollection() {
       const updatedCount = await processBatch(batch);
       totalUpdated += updatedCount;
       
-      // Wait a bit between batches
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // Wait between batches to avoid rate limiting and timeouts
+      console.log(`Waiting ${BATCH_DELAY/1000} seconds before next batch...`);
+      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
     }
     
     console.log(`🎉 Crawler contact enhancement complete! Updated ${totalUpdated} opportunities`);
