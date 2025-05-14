@@ -31,7 +31,14 @@ async function runQuickTest() {
     console.log(`- Premium opportunities: ${premiumStats[0].total}`);
     console.log(`- Premium with contact info: ${premiumStats[0].with_contact} (${((premiumStats[0].with_contact / premiumStats[0].total) * 100).toFixed(1)}%)`);
     
-    // Run the advanced contact extractor on a small sample (5 premium opportunities)
+    // First let's check that we have opportunities with sourceUrl field
+    const opportunitiesWithUrls = await db.select({
+      count: sql`COUNT(*) FILTER (WHERE "sourceUrl" IS NOT NULL)`
+    }).from(discoveredOpportunities);
+    
+    console.log(`\nOpportunities with URLs: ${opportunitiesWithUrls[0].count}`);
+    
+    // Run the advanced contact extractor on a small sample (5 premium opportunities with URLs)
     // Use dry run mode to avoid making database changes during the test
     await runAdvancedContactExtraction({
       isDryRun: true,

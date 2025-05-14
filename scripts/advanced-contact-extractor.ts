@@ -850,12 +850,12 @@ export async function runAdvancedContactExtraction(options: {
     console.log(`- Premium opportunities: ${premiumStats[0].total}`);
     console.log(`- Premium with contact info: ${premiumStats[0].with_contact} (${((premiumStats[0].with_contact / premiumStats[0].total) * 100).toFixed(1)}%)`);
     
-    // Determine which opportunities to process
+    // Determine which opportunities to process - make sure we only get ones with valid sourceUrl
     let whereClause;
     if (premiumOnly) {
-      whereClause = sql`"isPremium" = true AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`;
+      whereClause = sql`"isPremium" = true AND "sourceUrl" IS NOT NULL AND "sourceUrl" != '' AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`;
     } else {
-      whereClause = sql`"contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}'`;
+      whereClause = sql`"sourceUrl" IS NOT NULL AND "sourceUrl" != '' AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`;
     }
     
     // Get the total number of opportunities to process
@@ -953,7 +953,15 @@ async function processOpportunity(opportunity: any, isDryRun: boolean): Promise<
   opportunity: any
 }> {
   try {
-    console.log(`Processing opportunity: ${opportunity.title} (${opportunity.sourceUrl})`);
+    console.log(`Processing opportunity ID: ${opportunity?.id}`);
+    
+    // Validate the opportunity has required fields
+    if (!opportunity || !opportunity.sourceUrl) {
+      console.log('Missing required fields in opportunity. Skipping.');
+      return { success: false, opportunity };
+    }
+    
+    console.log(`Processing opportunity: ${opportunity.title || 'Untitled'} (${opportunity.sourceUrl})`);
     
     // Extract domain for processing
     const domain = extractDomain(opportunity.sourceUrl);
@@ -1156,37 +1164,4 @@ async function processOpportunity(opportunity: any, isDryRun: boolean): Promise<
   }
 }
 
-// Run the script directly if called from command line
-if (require.main === module) {
-  // Parse command line arguments
-  const args = process.argv.slice(2);
-  const isDryRun = args.includes('--dry-run');
-  const premiumOnly = args.includes('--premium-only');
-  
-  // Parse batch size if provided
-  let batchSize = BATCH_SIZE;
-  const batchSizeArg = args.find(arg => arg.startsWith('--batch-size='));
-  if (batchSizeArg) {
-    const batchSizeValue = parseInt(batchSizeArg.split('=')[1], 10);
-    if (!isNaN(batchSizeValue) && batchSizeValue > 0) {
-      batchSize = batchSizeValue;
-    }
-  }
-  
-  // Parse limit if provided
-  let limit = Infinity;
-  const limitArg = args.find(arg => arg.startsWith('--limit='));
-  if (limitArg) {
-    const limitValue = parseInt(limitArg.split('=')[1], 10);
-    if (!isNaN(limitValue) && limitValue > 0) {
-      limit = limitValue;
-    }
-  }
-  
-  runAdvancedContactExtraction({
-    isDryRun,
-    premiumOnly,
-    batchSize,
-    limit
-  }).catch(console.error);
-}
+// This file is used as a module, so we don't auto-execute it
