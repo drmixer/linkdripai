@@ -700,49 +700,94 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
  */
 async function processOpportunity(opportunity: any, isPremium: boolean, isDryRun = false) {
   try {
+    // Validate required fields
+    if (!opportunity || !opportunity.url) {
+      console.error(`Invalid opportunity: missing URL`);
+      return false;
+    }
+    
     console.log(`Processing opportunity #${opportunity.id}: ${opportunity.url} (${isPremium ? 'Premium' : 'Regular'})`);
     
     // Clean the URL
-    const cleanUrl = cleanupUrl(opportunity.url);
+    let cleanUrl;
+    try {
+      cleanUrl = cleanupUrl(opportunity.url);
+    } catch (error) {
+      console.error(`Failed to clean URL ${opportunity.url}: ${error.message}`);
+      return false;
+    }
+    
+    // Skip if the opportunity already has contact information
+    if (opportunity.contactInfo && typeof opportunity.contactInfo === 'object') {
+      const hasEmails = opportunity.contactInfo.emails && Array.isArray(opportunity.contactInfo.emails) && opportunity.contactInfo.emails.length > 0;
+      const hasForm = !!opportunity.contactInfo.form;
+      const hasSocial = opportunity.contactInfo.socialProfiles && Array.isArray(opportunity.contactInfo.socialProfiles) && opportunity.contactInfo.socialProfiles.length > 0;
+      
+      if (hasEmails || hasForm || hasSocial) {
+        console.log(`Opportunity #${opportunity.id} already has contact info`);
+        return true;
+      }
+    }
     
     // Extract emails from the main page
     console.log(`Extracting emails from ${cleanUrl}...`);
-    let emails = await extractEmailsFromPage(cleanUrl);
+    let emails = [];
+    try {
+      emails = await extractEmailsFromPage(cleanUrl);
+    } catch (error) {
+      console.error(`Error extracting emails from ${cleanUrl}: ${error.message}`);
+      // Continue with empty emails array
+    }
     
     // Extract contact form
     console.log(`Finding contact form for ${cleanUrl}...`);
-    const contactForm = await findContactFormUrl(cleanUrl);
+    let contactForm = null;
+    try {
+      contactForm = await findContactFormUrl(cleanUrl);
+    } catch (error) {
+      console.error(`Error finding contact form for ${cleanUrl}: ${error.message}`);
+      // Continue with null contactForm
+    }
     
     // Extract social profiles
     console.log(`Extracting social profiles from ${cleanUrl}...`);
-    const socialProfiles = await extractSocialProfiles(cleanUrl);
+    let socialProfiles = [];
+    try {
+      socialProfiles = await extractSocialProfiles(cleanUrl);
+    } catch (error) {
+      console.error(`Error extracting social profiles from ${cleanUrl}: ${error.message}`);
+      // Continue with empty socialProfiles array
+    }
     
     // If we didn't find emails on the main page, try contact pages
     if (emails.length === 0) {
-      const contactPages = await findContactPages(cleanUrl);
-      
-      console.log(`Found ${contactPages.length} potential contact pages`);
+      let contactPages = [];
+      try {
+        contactPages = await findContactPages(cleanUrl);
+        console.log(`Found ${contactPages.length} potential contact pages`);
+      } catch (error) {
+        console.error(`Error finding contact pages for ${cleanUrl}: ${error.message}`);
+        contactPages = []; // Ensure it's an empty array if there was an error
+      }
       
       for (const contactPage of contactPages) {
-        console.log(`Extracting emails from contact page: ${contactPage}...`);
-        const contactPageEmails = await extractEmailsFromPage(contactPage);
-        
-        if (contactPageEmails.length > 0) {
-          emails = [...emails, ...contactPageEmails];
-          break; // Stop once we find emails
+        try {
+          console.log(`Extracting emails from contact page: ${contactPage}...`);
+          const contactPageEmails = await extractEmailsFromPage(contactPage);
+          
+          if (contactPageEmails.length > 0) {
+            emails = [...emails, ...contactPageEmails];
+            break; // Stop once we find emails
+          }
+        } catch (error) {
+          console.error(`Error extracting emails from contact page ${contactPage}: ${error.message}`);
+          // Continue to next contact page
         }
         
         // Rate limiting between pages
         await setTimeout(2000);
       }
     }
-    
-    // Prepare contact information
-    const contactInfo = {
-      emails: emails,
-      contactForm: contactForm,
-      socialProfiles: socialProfiles
-    };
     
     // Only update if we found any contact information
     if (emails.length > 0 || contactForm || socialProfiles.length > 0) {
@@ -752,16 +797,28 @@ async function processOpportunity(opportunity: any, isPremium: boolean, isDryRun
         socialProfiles: socialProfiles.length > 0 ? `${socialProfiles.length} profiles found` : 'None'
       });
       
+      // Prepare the contact info object properly
+      const contactInfo = {
+        emails: emails || [],
+        form: contactForm || null,
+        social: socialProfiles || []
+      };
+      
       // Update the opportunity in the database with contact info if not in dry run mode
       if (!isDryRun) {
-        await db.update(discoveredOpportunities)
-          .set({
-            contactInfo: contactInfo
-          })
-          .where(eq(discoveredOpportunities.id, opportunity.id));
-        
-        console.log(`Successfully updated opportunity #${opportunity.id} with contact information`);
-        return true;
+        try {
+          await db.update(discoveredOpportunities)
+            .set({
+              contactInfo: contactInfo
+            })
+            .where(eq(discoveredOpportunities.id, opportunity.id));
+          
+          console.log(`Successfully updated opportunity #${opportunity.id} with contact information`);
+          return true;
+        } catch (dbError) {
+          console.error(`Database error updating opportunity #${opportunity.id}:`, dbError.message);
+          return false;
+        }
       } else {
         console.log(`[DRY RUN] Would update opportunity #${opportunity.id} with contact information`);
         return true;
@@ -771,7 +828,10 @@ async function processOpportunity(opportunity: any, isPremium: boolean, isDryRun
       return false;
     }
   } catch (error) {
-    console.error(`Error processing opportunity #${opportunity.id}:`, error);
+    console.error(`Error processing opportunity #${opportunity.id}:`, error.message);
+    if (error.stack) {
+      console.error(`Stack trace: ${error.stack.split('\n').slice(0, 3).join('\n')}`);
+    }
     return false;
   }
 }
