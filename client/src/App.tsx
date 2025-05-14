@@ -12,6 +12,7 @@ import DripsSimplePage from "@/pages/drips-simple";
 import RedirectWrapper from "@/pages/redirect-wrapper";
 import SavedProspects from "@/pages/saved-prospects";
 import EmailOutreach from "@/pages/email-outreach";
+import EmailOutreachDemo from "@/pages/email-outreach-demo";
 import Analytics from "@/pages/analytics";
 import LandingPage from "@/pages/landing-page";
 import PricingPage from "@/pages/pricing-page";
@@ -35,6 +36,7 @@ function Router() {
       />
       <ProtectedRoute path="/saved-prospects" component={SavedProspects} />
       <ProtectedRoute path="/email-outreach" component={EmailOutreach} />
+      <ProtectedRoute path="/email-outreach-demo" component={EmailOutreachDemo} />
       <ProtectedRoute path="/analytics" component={Analytics} />
       <ProtectedRoute path="/onboarding" component={Onboarding} skipOnboardingCheck={true} />
       <ProtectedRoute path="/onboarding/improved" component={Onboarding} skipOnboardingCheck={true} />
