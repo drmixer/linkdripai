@@ -6,14 +6,14 @@
  */
 
 import { Request, Response, Router } from 'express';
+import { getLemonSqueezyService } from '../services/lemon-squeezy-service';
 import { 
-  getLemonSqueezyService, 
   SubscriptionPlan, 
   SplashPackage,
   PLAN_DETAILS,
   SPLASH_DETAILS,
-  PLAN_VARIANT_IDS
-} from '../services/lemon-squeezy-service';
+} from '../../client/src/lib/subscription-plans';
+import { SUBSCRIPTION_PLAN_VARIANTS as PLAN_VARIANT_IDS } from '../config/lemon-squeezy-config';
 import { getSubscriptionService } from '../services/subscription-service';
 import { storage } from '../storage';
 import { db } from '../db';
@@ -98,9 +98,11 @@ paymentRouter.post('/checkout/subscription', async (req, res) => {
     
     const checkoutUrl = await lemonSqueezy.createCheckoutUrl(
       planId as SubscriptionPlan,
-      user.email,
-      `${user.firstName} ${user.lastName}` || user.username,
-      { userId: user.id }
+      {
+        name: `${user.firstName} ${user.lastName}`.trim() || user.username,
+        email: user.email,
+        userId: user.id.toString()
+      }
     );
     
     res.json({ checkoutUrl });
@@ -129,9 +131,11 @@ paymentRouter.post('/checkout/splash', async (req, res) => {
     
     const checkoutUrl = await lemonSqueezy.createSplashCheckoutUrl(
       packageId as SplashPackage,
-      user.email,
-      `${user.firstName} ${user.lastName}` || user.username,
-      { userId: user.id }
+      {
+        name: `${user.firstName} ${user.lastName}`.trim() || user.username,
+        email: user.email,
+        userId: user.id.toString()
+      }
     );
     
     res.json({ checkoutUrl });

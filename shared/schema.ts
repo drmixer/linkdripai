@@ -82,7 +82,7 @@ const baseInsertUserSchema = createInsertSchema(users).omit({
   subscription: true,
   subscriptionId: true,
   subscriptionStatus: true,
-  planVaraintId: true,
+  planVariantId: true,
   customerId: true,
   subscriptionRenewsAt: true,
   subscriptionEndsAt: true,

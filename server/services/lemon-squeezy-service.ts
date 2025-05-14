@@ -4,313 +4,278 @@
  * Handles integration with Lemon Squeezy for payment processing and subscription management
  * for the LinkDripAI platform.
  */
-
 import axios from 'axios';
-import { 
-  SUBSCRIPTION_VARIANT_IDS, 
-  SPLASH_PACKAGE_VARIANT_IDS,
-  PLAN_FEATURES 
-} from '../config/lemon-squeezy-config';
-
-// Subscription plan IDs - these should match your actual product IDs in Lemon Squeezy
-export enum SubscriptionPlan {
-  STARTER = 'starter',   // $9/mo - 1 website, 5 drips/day/site, 1 splash/month
-  GROW = 'grow',         // $19/mo - 2 websites, 10 drips/day/site, 3 splashes/month
-  PRO = 'pro'            // $39/mo - 5 websites, 15 drips/day/site, 7 splashes/month
-}
-
-// Splash package options
-export enum SplashPackage {
-  SINGLE = 'single',     // $7 - 1 splash
-  TRIPLE = 'triple',     // $18 - 3 splashes
-  SEVEN = 'seven'        // $35 - 7 splashes
-}
-
-// Plan details for reference
-export const PLAN_DETAILS = {
-  [SubscriptionPlan.STARTER]: {
-    name: 'Starter',
-    price: 9,
-    websites: PLAN_FEATURES.Starter.websitesLimit,
-    dripsPerDay: PLAN_FEATURES.Starter.dailyDripsPerSite,
-    splashesPerMonth: PLAN_FEATURES.Starter.splashesPerMonth,
-    description: 'Perfect for individuals getting started with link building',
-  },
-  [SubscriptionPlan.GROW]: {
-    name: 'Grow',
-    price: 19,
-    websites: PLAN_FEATURES.Grow.websitesLimit,
-    dripsPerDay: PLAN_FEATURES.Grow.dailyDripsPerSite,
-    splashesPerMonth: PLAN_FEATURES.Grow.splashesPerMonth,
-    description: 'Ideal for small businesses looking to scale their outreach',
-  },
-  [SubscriptionPlan.PRO]: {
-    name: 'Pro',
-    price: 39,
-    websites: PLAN_FEATURES.Pro.websitesLimit,
-    dripsPerDay: PLAN_FEATURES.Pro.dailyDripsPerSite,
-    splashesPerMonth: PLAN_FEATURES.Pro.splashesPerMonth,
-    description: 'For agencies and serious link builders who need maximum results',
-  }
-};
-
-// Splash package details
-export const SPLASH_DETAILS = {
-  [SplashPackage.SINGLE]: {
-    name: 'Single Splash',
-    price: 7,
-    quantity: 1,
-    description: 'One premium opportunity credit',
-  },
-  [SplashPackage.TRIPLE]: {
-    name: 'Triple Splash',
-    price: 18,
-    quantity: 3,
-    description: 'Three premium opportunity credits (save 14%)',
-  },
-  [SplashPackage.SEVEN]: {
-    name: 'Seven Splash',
-    price: 35,
-    quantity: 7,
-    description: 'Seven premium opportunity credits (save 29%)',
-  }
-};
-
-// Map subscription plan IDs to actual Lemon Squeezy variant IDs
-export const PLAN_VARIANT_IDS: Record<SubscriptionPlan, string> = {
-  [SubscriptionPlan.STARTER]: SUBSCRIPTION_VARIANT_IDS.STARTER,
-  [SubscriptionPlan.GROW]: SUBSCRIPTION_VARIANT_IDS.GROW,
-  [SubscriptionPlan.PRO]: SUBSCRIPTION_VARIANT_IDS.PRO
-};
-
-// Map splash package IDs to actual Lemon Squeezy variant IDs
-export const SPLASH_VARIANT_IDS: Record<SplashPackage, string> = {
-  [SplashPackage.SINGLE]: SPLASH_PACKAGE_VARIANT_IDS.SINGLE,
-  [SplashPackage.TRIPLE]: SPLASH_PACKAGE_VARIANT_IDS.TRIPLE,
-  [SplashPackage.SEVEN]: SPLASH_PACKAGE_VARIANT_IDS.SEVEN
-};
+import crypto from 'crypto';
+import { SUBSCRIPTION_PLAN_VARIANTS, SPLASH_PACKAGE_VARIANTS } from '../config/lemon-squeezy-config';
+import { SubscriptionPlan, SplashPackage } from '../../client/src/lib/subscription-plans';
 
 export class LemonSqueezyService {
   private apiKey: string;
   private baseUrl: string = 'https://api.lemonsqueezy.com/v1';
+  private storeId: string;
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || process.env.LEMON_SQUEEZY_API_KEY || '';
+    this.storeId = process.env.LEMON_SQUEEZY_STORE_ID || '';
     
     if (!this.apiKey) {
-      throw new Error('Lemon Squeezy API key is required');
+      console.warn('[LemonSqueezy] Warning: No API key provided');
+    }
+    
+    if (!this.storeId) {
+      console.warn('[LemonSqueezy] Warning: No store ID provided');
     }
   }
-  
+
   /**
    * Make an authenticated request to the Lemon Squeezy API
    */
   private async makeRequest(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE', 
-    endpoint: string, 
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+    path: string,
     data?: any
   ) {
     try {
       const response = await axios({
         method,
-        url: `${this.baseUrl}${endpoint}`,
+        url: `${this.baseUrl}${path}`,
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
           'Accept': 'application/vnd.api+json',
-          'Content-Type': 'application/vnd.api+json'
+          'Content-Type': 'application/vnd.api+json',
+          'Authorization': `Bearer ${this.apiKey}`
         },
         data
       });
       
       return response.data;
-    } catch (error: any) {
-      console.error(`[LemonSqueezy] API error:`, error.response?.data || error.message);
+    } catch (error) {
+      console.error('[LemonSqueezy] API Error:', error);
       throw error;
     }
   }
-  
+
   /**
    * Get store details
    */
   async getStores() {
     return this.makeRequest('GET', '/stores');
   }
-  
+
   /**
    * Get products in the store
    */
   async getProducts() {
     return this.makeRequest('GET', '/products');
   }
-  
+
   /**
    * Get subscription details
    */
   async getSubscription(subscriptionId: string) {
     return this.makeRequest('GET', `/subscriptions/${subscriptionId}`);
   }
-  
+
   /**
    * Check if a subscription is active
    */
   async isSubscriptionActive(subscriptionId: string): Promise<boolean> {
     try {
       const response = await this.getSubscription(subscriptionId);
-      const status = response.data.attributes.status;
-      
-      // Subscription is active if status is active
+      const status = response?.data?.attributes?.status;
       return status === 'active';
     } catch (error) {
-      console.error(`[LemonSqueezy] Error checking subscription ${subscriptionId}:`, error);
+      console.error('[LemonSqueezy] Error checking subscription status:', error);
       return false;
     }
   }
-  
+
   /**
    * Get subscription details including plan information
    */
   async getSubscriptionDetails(subscriptionId: string) {
     try {
       const response = await this.getSubscription(subscriptionId);
+      if (!response.data) {
+        throw new Error('Invalid subscription response');
+      }
       
-      // Extract key details
-      const { 
-        status, 
-        urls,
-        renews_at, 
+      const subscription = response.data;
+      const {
+        status,
+        renews_at,
         ends_at,
+        product_id,
         variant_id,
-        customer_id
-      } = response.data.attributes;
+        customer_id,
+        pause,
+      } = subscription.attributes;
       
-      // Determine the plan based on variant ID
-      let plan: SubscriptionPlan | null = null;
-      
-      for (const [planKey, variantId] of Object.entries(PLAN_VARIANT_IDS)) {
-        if (variantId === variant_id.toString()) {
-          plan = planKey as SubscriptionPlan;
-          break;
+      // Try to get variant details for the price
+      let price = null;
+      try {
+        const variantResponse = await this.makeRequest('GET', `/variants/${variant_id}`);
+        if (variantResponse.data) {
+          price = variantResponse.data.attributes.price;
         }
+      } catch (err) {
+        console.error('[LemonSqueezy] Error getting variant details:', err);
       }
       
       return {
-        subscriptionId,
+        id: subscription.id,
         status,
-        isActive: status === 'active',
         renewsAt: renews_at,
         endsAt: ends_at,
-        customerId: customer_id,
+        productId: product_id,
         variantId: variant_id,
-        plan,
-        planDetails: plan ? PLAN_DETAILS[plan] : null,
-        urls
+        customerId: customer_id,
+        isPaused: !!pause,
+        amount: price,
       };
     } catch (error) {
-      console.error(`[LemonSqueezy] Error getting subscription details ${subscriptionId}:`, error);
+      console.error('[LemonSqueezy] Error getting subscription details:', error);
       throw error;
     }
   }
-  
+
+  /**
+   * Cancel a subscription
+   */
+  async cancelSubscription(subscriptionId: string) {
+    return this.makeRequest('DELETE', `/subscriptions/${subscriptionId}`);
+  }
+
+  /**
+   * Resume a subscription
+   */
+  async resumeSubscription(subscriptionId: string) {
+    return this.makeRequest('PATCH', `/subscriptions/${subscriptionId}/resume`);
+  }
+
   /**
    * Create a checkout URL for a subscription plan
    */
   async createCheckoutUrl(
     plan: SubscriptionPlan,
-    customerEmail?: string,
-    customerName?: string,
-    customData?: any
-  ) {
-    const variantId = PLAN_VARIANT_IDS[plan];
-    
-    if (!variantId) {
-      throw new Error(`Invalid plan variant ID for plan: ${plan}`);
-    }
-    
-    const checkoutData = {
-      data: {
-        type: 'checkouts',
-        attributes: {
-          checkout_data: {
-            email: customerEmail,
-            name: customerName,
-            custom_data: customData || {},
-          },
-          product_options: {
-            redirect_url: `${process.env.APP_URL || 'https://linkdripai.com'}/dashboard`,
-            receipt_button_text: 'Return to LinkDripAI',
-            receipt_link_url: `${process.env.APP_URL || 'https://linkdripai.com'}/dashboard`,
-            receipt_thank_you_note: 'Thank you for subscribing to LinkDripAI!'
-          },
-          variant_id: parseInt(variantId, 10)
-        }
-      }
-    };
-    
+    customData: {
+      name: string;
+      email: string;
+      userId: string;
+    },
+    redirectUrl?: string
+  ): Promise<string> {
     try {
-      const response = await this.makeRequest('POST', '/checkouts', checkoutData);
+      // Get the variant ID for the plan
+      const variantId = SUBSCRIPTION_PLAN_VARIANTS[plan];
+      if (!variantId) {
+        throw new Error(`Invalid plan: ${plan}`);
+      }
+      
+      // Create checkout URL
+      const response = await this.makeRequest('POST', '/checkouts', {
+        data: {
+          type: 'checkouts',
+          attributes: {
+            store_id: this.storeId,
+            variant_id: variantId,
+            custom_price: 0, // Use the variant's price
+            product_options: {
+              name: customData.name,
+              email: customData.email,
+              custom_data: {
+                userId: customData.userId
+              },
+              receipt_link_url: redirectUrl || process.env.LEMON_SQUEEZY_REDIRECT_URL || '',
+              receipt_thank_you_note: 'Thank you for subscribing to LinkDripAI!',
+              enable_receipt_email: true,
+            },
+            checkout_options: {
+              embed: false,
+              media: true,
+              button_color: '#4F46E5',
+            }
+          }
+        }
+      });
+      
       return response.data.attributes.url;
     } catch (error) {
-      console.error(`[LemonSqueezy] Error creating checkout for plan ${plan}:`, error);
+      console.error('[LemonSqueezy] Error creating checkout URL:', error);
       throw error;
     }
   }
-  
+
   /**
    * Create a checkout URL for a splash package
    */
   async createSplashCheckoutUrl(
     splashPackage: SplashPackage,
-    customerEmail?: string,
-    customerName?: string,
-    customData?: any
-  ) {
-    const variantId = SPLASH_VARIANT_IDS[splashPackage];
-    
-    if (!variantId) {
-      throw new Error(`Invalid splash variant ID for package: ${splashPackage}`);
-    }
-    
-    const checkoutData = {
-      data: {
-        type: 'checkouts',
-        attributes: {
-          checkout_data: {
-            email: customerEmail,
-            name: customerName,
-            custom_data: customData || {},
-          },
-          product_options: {
-            redirect_url: `${process.env.APP_URL || 'https://linkdripai.com'}/dashboard`,
-            receipt_button_text: 'Return to LinkDripAI',
-            receipt_link_url: `${process.env.APP_URL || 'https://linkdripai.com'}/dashboard`,
-            receipt_thank_you_note: 'Thank you for purchasing premium opportunities!'
-          },
-          variant_id: parseInt(variantId, 10)
-        }
-      }
-    };
-    
+    customData: {
+      name: string;
+      email: string;
+      userId: string;
+    },
+    redirectUrl?: string
+  ): Promise<string> {
     try {
-      const response = await this.makeRequest('POST', '/checkouts', checkoutData);
+      // Get the variant ID for the splash package
+      const variantId = SPLASH_PACKAGE_VARIANTS[splashPackage];
+      if (!variantId) {
+        throw new Error(`Invalid splash package: ${splashPackage}`);
+      }
+      
+      // Create checkout URL
+      const response = await this.makeRequest('POST', '/checkouts', {
+        data: {
+          type: 'checkouts',
+          attributes: {
+            store_id: this.storeId,
+            variant_id: variantId,
+            custom_price: 0, // Use the variant's price
+            product_options: {
+              name: customData.name,
+              email: customData.email,
+              custom_data: {
+                userId: customData.userId
+              },
+              receipt_link_url: redirectUrl || process.env.LEMON_SQUEEZY_REDIRECT_URL || '',
+              receipt_thank_you_note: 'Thank you for purchasing Splash credits!',
+              enable_receipt_email: true,
+            },
+            checkout_options: {
+              embed: false,
+              media: true,
+              button_color: '#4F46E5',
+            }
+          }
+        }
+      });
+      
       return response.data.attributes.url;
     } catch (error) {
-      console.error(`[LemonSqueezy] Error creating checkout for splash package ${splashPackage}:`, error);
+      console.error('[LemonSqueezy] Error creating splash checkout URL:', error);
       throw error;
     }
   }
-  
+
   /**
    * Validate a webhook signature
    */
   validateWebhookSignature(signature: string, payload: string, secret: string): boolean {
     try {
-      const crypto = require('crypto');
-      const hmac = crypto.createHmac('sha256', secret);
-      const calculatedSignature = hmac.update(payload).digest('hex');
+      // Create HMAC-SHA256 signature
+      const computedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(payload)
+        .digest('hex');
       
-      return signature === calculatedSignature;
+      // Compare with the provided signature
+      return crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(computedSignature)
+      );
     } catch (error) {
-      console.error('[LemonSqueezy] Webhook signature validation error:', error);
+      console.error('[LemonSqueezy] Error validating webhook signature:', error);
       return false;
     }
   }
@@ -318,25 +283,24 @@ export class LemonSqueezyService {
   /**
    * Get plan variant IDs
    */
-  getPlanVariantIds(): Record<SubscriptionPlan, string> {
-    return PLAN_VARIANT_IDS;
+  getPlanVariantIds(): Record<string, string> {
+    return SUBSCRIPTION_PLAN_VARIANTS;
   }
   
   /**
    * Get splash variant IDs
    */
-  getSplashVariantIds(): Record<SplashPackage, string> {
-    return SPLASH_VARIANT_IDS;
+  getSplashVariantIds(): Record<string, string> {
+    return SPLASH_PACKAGE_VARIANTS;
   }
 }
 
-// Create a singleton instance
-let lemonSqueezyService: LemonSqueezyService | null = null;
+// Singleton instance to be used throughout the app
+let lemonSqueezyServiceInstance: LemonSqueezyService | null = null;
 
 export function getLemonSqueezyService(): LemonSqueezyService {
-  if (!lemonSqueezyService) {
-    lemonSqueezyService = new LemonSqueezyService();
+  if (!lemonSqueezyServiceInstance) {
+    lemonSqueezyServiceInstance = new LemonSqueezyService();
   }
-  
-  return lemonSqueezyService;
+  return lemonSqueezyServiceInstance;
 }

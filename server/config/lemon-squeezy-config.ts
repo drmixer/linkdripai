@@ -1,58 +1,37 @@
 /**
  * LemonSqueezy Configuration
  * 
- * This file contains the configuration for the LemonSqueezy integration,
+ * This file contains the configuration for LemonSqueezy integration,
  * including variant IDs for subscription plans and splash packages.
- * 
- * These values should be set as environment variables for security and flexibility.
  */
 
-export const SUBSCRIPTION_VARIANT_IDS = {
-  // Subscription plan variant IDs
-  STARTER: process.env.LEMON_SQUEEZY_STARTER_VARIANT_ID || '802543',
-  GROW: process.env.LEMON_SQUEEZY_GROW_VARIANT_ID || '802555',
-  PRO: process.env.LEMON_SQUEEZY_PRO_VARIANT_ID || '802556',
+import { SubscriptionPlan, SplashPackage } from "../../client/src/lib/subscription-plans";
+
+// Variant IDs for subscription plans in LemonSqueezy
+// These need to be set in the environment or updated here with actual values
+export const SUBSCRIPTION_PLAN_VARIANTS = {
+  [SubscriptionPlan.STARTER]: process.env.LEMON_STARTER_VARIANT_ID || "712223",  // Example ID
+  [SubscriptionPlan.GROW]: process.env.LEMON_GROW_VARIANT_ID || "712224",        // Example ID
+  [SubscriptionPlan.PRO]: process.env.LEMON_PRO_VARIANT_ID || "712225",          // Example ID
 };
 
-export const SPLASH_PACKAGE_VARIANT_IDS = {
-  // Splash package variant IDs
-  SINGLE: process.env.LEMON_SQUEEZY_SINGLE_SPLASH_VARIANT_ID || '802558',
-  TRIPLE: process.env.LEMON_SQUEEZY_TRIPLE_SPLASH_VARIANT_ID || '802561',
-  SEVEN: process.env.LEMON_SQUEEZY_SEVEN_SPLASH_VARIANT_ID || '802564',
+// Variant IDs for splash packages in LemonSqueezy
+export const SPLASH_PACKAGE_VARIANTS = {
+  [SplashPackage.SINGLE]: process.env.LEMON_SINGLE_SPLASH_VARIANT_ID || "712226",  // Example ID
+  [SplashPackage.TRIPLE]: process.env.LEMON_TRIPLE_SPLASH_VARIANT_ID || "712227",  // Example ID
+  [SplashPackage.SEVEN]: process.env.LEMON_SEVEN_SPLASH_VARIANT_ID || "712228",    // Example ID
 };
 
-// Map subscription variant IDs to plan names
+// Mapping from variant IDs to plan names for webhook processing
 export const SUBSCRIPTION_PLAN_MAPPING: Record<string, string> = {
-  [SUBSCRIPTION_VARIANT_IDS.STARTER]: 'Starter',
-  [SUBSCRIPTION_VARIANT_IDS.GROW]: 'Grow',
-  [SUBSCRIPTION_VARIANT_IDS.PRO]: 'Pro',
+  [SUBSCRIPTION_PLAN_VARIANTS[SubscriptionPlan.STARTER]]: SubscriptionPlan.STARTER,
+  [SUBSCRIPTION_PLAN_VARIANTS[SubscriptionPlan.GROW]]: SubscriptionPlan.GROW,
+  [SUBSCRIPTION_PLAN_VARIANTS[SubscriptionPlan.PRO]]: SubscriptionPlan.PRO,
 };
 
-// Map plan names to features
-export const PLAN_FEATURES = {
-  Starter: {
-    websitesLimit: 1,
-    dailyDripsPerSite: 5,
-    splashesPerMonth: 1,
-    advancedFilters: false,
-  },
-  Grow: {
-    websitesLimit: 2,
-    dailyDripsPerSite: 10,
-    splashesPerMonth: 3,
-    advancedFilters: true,
-  },
-  Pro: {
-    websitesLimit: 5,
-    dailyDripsPerSite: 15,
-    splashesPerMonth: 7,
-    advancedFilters: true,
-  },
-};
-
-// Map splash package variant IDs to number of splashes
+// Mapping from variant IDs to splash counts for webhook processing
 export const SPLASH_PACKAGE_MAPPING: Record<string, number> = {
-  [SPLASH_PACKAGE_VARIANT_IDS.SINGLE]: 1,
-  [SPLASH_PACKAGE_VARIANT_IDS.TRIPLE]: 3,
-  [SPLASH_PACKAGE_VARIANT_IDS.SEVEN]: 7,
+  [SPLASH_PACKAGE_VARIANTS[SplashPackage.SINGLE]]: 1,
+  [SPLASH_PACKAGE_VARIANTS[SplashPackage.TRIPLE]]: 3,
+  [SPLASH_PACKAGE_VARIANTS[SplashPackage.SEVEN]]: 7,
 };

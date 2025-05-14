@@ -23,6 +23,17 @@ interface UserStats {
   websites: any[];
 }
 
+interface SubscriptionResponse {
+  subscription?: {
+    isActive: boolean;
+    plan: string;
+    renewsAt?: string;
+    status?: string;
+    variant?: string;
+    cancelUrl?: string;
+  };
+}
+
 const AccountSummary = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -50,7 +61,7 @@ const AccountSummary = () => {
   };
 
   // Get subscription details
-  const { data: subscription } = useQuery({
+  const { data: subscription } = useQuery<SubscriptionResponse>({
     queryKey: ['/api/subscription/subscription'],
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -59,7 +70,8 @@ const AccountSummary = () => {
   // If user has no subscription, it will be undefined or { isActive: false }
   const isSubscribed = subscription?.subscription?.isActive || false;
   const plan = subscription?.subscription?.plan || 'Free Trial';
-  const renewsAt = subscription?.subscription?.renewsAt ? new Date(subscription.subscription.renewsAt) : null;
+  const renewsAt = subscription?.subscription?.renewsAt ? 
+    new Date(subscription.subscription.renewsAt) : null;
   
   return (
     <div className="space-y-6">

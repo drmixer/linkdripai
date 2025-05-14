@@ -6,7 +6,8 @@
 import { db } from "../db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
-import { getLemonSqueezyService, SubscriptionPlan, SplashPackage } from "./lemon-squeezy-service";
+import { getLemonSqueezyService } from "./lemon-squeezy-service";
+import { SubscriptionPlan, SplashPackage } from '../../client/src/lib/subscription-plans';
 
 export class SubscriptionService {
   private lemonSqueezyService;
