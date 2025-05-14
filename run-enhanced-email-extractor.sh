@@ -2,17 +2,10 @@
 
 echo "======================================================="
 echo "  Running Enhanced Email Extractor"
-echo "  Using multiple free techniques to improve email discovery"
+echo "  Improving email contact coverage using free techniques"
 echo "======================================================="
 
-# Process regular opportunities first
-echo "Processing regular opportunities..."
-npx tsx scripts/enhanced-email-extractor.ts --skip-premium --limit=20
+# Execute the script with Node
+npx tsx scripts/enhanced-email-extractor.ts
 
-# If the first run completes successfully, run again for premium opportunities
-if [ $? -eq 0 ]; then
-  echo "Processing premium opportunities..."
-  npx tsx scripts/enhanced-email-extractor.ts --only-premium
-fi
-
-echo "Enhanced email extraction completed!"
+echo "Email extraction completed!"

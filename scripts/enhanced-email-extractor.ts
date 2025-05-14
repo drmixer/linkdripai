@@ -1,35 +1,36 @@
 /**
- * Enhanced Email Extractor - combines multiple free techniques for better email discovery
+ * Enhanced Email Extractor for LinkDripAI
  * 
- * Techniques used:
+ * This script combines multiple free techniques to significantly improve email discovery:
  * 1. Email pattern permutation with SMTP verification
  * 2. Enhanced WHOIS data mining
  * 3. Improved crawler for obfuscated emails
- * 4. GitHub repository mining
+ * 4. GitHub repository mining for contact information
  */
 
-import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { eq, sql, and, isNotNull } from 'drizzle-orm';
-import * as schema from '../shared/schema';
-import ws from 'ws';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import * as dns from 'dns';
-import * as net from 'net';
-import { URL } from 'url';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { eq, and, sql, desc, isNull, not } from 'drizzle-orm';
+import * as schema from '../shared/schema';
+import whoisJson from 'whois-json';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import dns from 'dns';
+import ws from 'ws';
+import net from 'net';
 
-// Constants
-const MAX_RETRIES = 3;
-const THROTTLE_DELAY = 3000; // 3 seconds between requests to same domain
-const REQUEST_TIMEOUT = 10000; // 10 seconds
+// Configure neon to use the WebSocket constructor
+neonConfig.webSocketConstructor = ws;
+
+// Constants for rate limiting and throttling
+const MAX_RETRIES = 4;
+const THROTTLE_DELAY = 5000; // ms
 const BATCH_SIZE = 5;
-const BATCH_DELAY = 8000; // 8 seconds between batches
-const SMTP_CHECK_TIMEOUT = 5000; // 5 seconds for SMTP verification
+const MAX_OPPORTUNITIES_TO_PROCESS = 10; // Reduced for testing
 
-// Database connection
+// Connect to the database
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error('DATABASE_URL environment variable is not set');
@@ -38,62 +39,57 @@ if (!connectionString) {
 const pool = new Pool({ connectionString });
 const db = drizzle(pool, { schema });
 
-// Set timeout globally for axios
-axios.defaults.timeout = REQUEST_TIMEOUT;
-
-// Domain request tracking for throttling
+// Domain request timestamp map for throttling
 const domainLastRequestTime: Record<string, number> = {};
 
-// User agents for rotation
+// Common name patterns for email generation
+const COMMON_FIRST_NAMES = ['john', 'jane', 'michael', 'david', 'sarah', 'james', 'robert', 'mary', 'linda', 'william', 'richard', 'susan', 'joseph', 'thomas', 'jennifer', 'charles', 'daniel', 'matthew', 'anthony', 'mark', 'donald', 'steven'];
+
+// Common email patterns for businesses
+const EMAIL_PATTERNS = [
+  'info',
+  'contact',
+  'hello',
+  'support',
+  'admin',
+  'webmaster',
+  'sales',
+  'marketing',
+  'media',
+  'press',
+  'help',
+  'team',
+  'editor',
+  'editorial',
+  'partners',
+  'business',
+  'careers',
+  'jobs',
+  'feedback',
+  'inquiries',
+  'office'
+];
+
+// User agents for rotating
 const USER_AGENTS = [
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15',
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/112.0',
-  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1'
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/122.0.6261.89 Mobile/15E148 Safari/604.1',
+  'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
 ];
 
-// Email formats to try
-const EMAIL_FORMATS = [
-  '{firstName}@{domain}',
-  '{lastName}@{domain}',
-  '{firstName}.{lastName}@{domain}',
-  '{firstInitial}{lastName}@{domain}',
-  '{firstInitial}.{lastName}@{domain}',
-  '{firstName}{lastInitial}@{domain}',
-  '{firstName}_{lastName}@{domain}',
-  'contact@{domain}',
-  'hello@{domain}',
-  'info@{domain}',
-  'support@{domain}',
-  'admin@{domain}',
-  'sales@{domain}',
-  'marketing@{domain}',
-  'pr@{domain}',
-  'media@{domain}',
-  'help@{domain}',
-  'team@{domain}',
-  'webmaster@{domain}',
-  'editor@{domain}',
-  'careers@{domain}'
-];
-
-// Interface for contact information
+// Interface for tracking extracted contact information
 interface ContactInfo {
   emails: string[];
   socialProfiles: Array<{
     platform: string;
     url: string;
     username: string;
-    displayName?: string;
   }>;
   contactForms: string[];
-  phoneNumbers?: string[];
-  contactPerson?: {
-    name?: string;
-    title?: string;
-    department?: string;
-  };
   extractionDetails: {
     normalized: boolean;
     source: string;
@@ -110,17 +106,42 @@ function getRandomUserAgent(): string {
 }
 
 /**
- * Check if we should throttle requests to a domain to avoid rate limiting
- * @param domain The domain to check
+ * Calculate exponential backoff with jitter for smarter retries
+ */
+function calculateBackoff(retry: number): number {
+  const base = 1000; // 1 second
+  const max = 30000; // 30 seconds
+  const calculated = Math.min(max, base * Math.pow(2, retry) * (0.5 + Math.random() / 2));
+  return calculated;
+}
+
+/**
+ * Extract root domain from a domain name
+ */
+function extractRootDomain(domain: string): string {
+  const parts = domain.split('.');
+  if (parts.length > 2) {
+    // Handle domains like sub.example.co.uk
+    const tld = parts[parts.length - 1];
+    const sld = parts[parts.length - 2];
+    if (tld === 'uk' && sld === 'co' || sld === 'org' || sld === 'gov' || sld === 'ac') {
+      return parts.slice(-3).join('.');
+    }
+    return parts.slice(-2).join('.');
+  }
+  return domain;
+}
+
+/**
+ * Check if we should throttle requests to avoid rate limiting
  */
 function shouldThrottleDomain(domain: string): boolean {
-  const now = Date.now();
   const rootDomain = extractRootDomain(domain);
+  const now = Date.now();
+  const lastRequest = domainLastRequestTime[rootDomain] || 0;
   
-  if (domainLastRequestTime[rootDomain]) {
-    if (now - domainLastRequestTime[rootDomain] < THROTTLE_DELAY) {
-      return true;
-    }
+  if (now - lastRequest < THROTTLE_DELAY) {
+    return true;
   }
   
   domainLastRequestTime[rootDomain] = now;
@@ -128,959 +149,702 @@ function shouldThrottleDomain(domain: string): boolean {
 }
 
 /**
- * Extract root domain from a domain name
- * This helps prevent different subdomains of the same site from bypassing throttling
- */
-function extractRootDomain(domain: string): string {
-  // Remove any subdomains, keeping just the main domain and TLD
-  const parts = domain.split('.');
-  if (parts.length <= 2) return domain;
-  
-  // Handle cases like co.uk, com.au
-  const tld = parts[parts.length - 1];
-  const sld = parts[parts.length - 2];
-  if ((sld === 'co' || sld === 'com' || sld === 'org' || sld === 'net' || sld === 'edu' || sld === 'gov') &&
-      parts.length > 2) {
-    return parts.slice(-3).join('.');
-  }
-  
-  return parts.slice(-2).join('.');
-}
-
-/**
- * Clean up a URL to ensure it's in a standard format
- */
-function cleanupUrl(url: string): string {
-  // Make sure URL has a scheme
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    url = 'https://' + url;
-  }
-  
-  try {
-    const parsedUrl = new URL(url);
-    return parsedUrl.toString();
-  } catch (error) {
-    return url;
-  }
-}
-
-/**
  * Extract domain from URL
  */
 function extractDomain(url: string): string {
   try {
-    const parsedUrl = new URL(url);
-    return parsedUrl.hostname;
+    const urlObj = new URL(url);
+    return urlObj.hostname;
   } catch (error) {
-    // If the URL is invalid, try to extract the domain directly
-    url = url.trim().toLowerCase();
+    // For malformed URLs, try to salvage domain
+    const match = url.match(/^(?:https?:\/\/)?([^\/]+)/i);
+    return match ? match[1] : '';
+  }
+}
+
+/**
+ * Clean URL for consistent format
+ */
+function cleanupUrl(url: string): string {
+  try {
+    // Ensure URL has protocol
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
     
-    // Remove protocol
-    url = url.replace(/^(https?:\/\/)?(www\.)?/, '');
-    
-    // Remove path and query parameters
-    url = url.split('/')[0].split('?')[0].split('#')[0];
-    
+    const urlObj = new URL(url);
+    // Normalize to remove trailing slashes and fragments
+    return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}`
+      .replace(/\/$/, '');
+  } catch (error) {
     return url;
   }
 }
 
 /**
- * Fetch HTML content from a URL with advanced retrying and rate limiting
- * @param url The URL to fetch
- * @param maxRetries Maximum number of retry attempts
+ * Fetch HTML content with retries
  */
 async function fetchHtml(url: string, maxRetries = MAX_RETRIES): Promise<string | null> {
-  url = cleanupUrl(url);
   const domain = extractDomain(url);
-  
-  // Check if we need to throttle this domain
   if (shouldThrottleDomain(domain)) {
-    console.log(`Throttling request to ${domain}, waiting ${THROTTLE_DELAY}ms`);
     await new Promise(resolve => setTimeout(resolve, THROTTLE_DELAY));
   }
   
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
+  let retries = 0;
+  
+  while (retries <= maxRetries) {
     try {
-      // Rotate user agents to avoid detection
-      const randomUserAgent = getRandomUserAgent();
-      
       const response = await axios.get(url, {
         headers: {
-          'User-Agent': randomUserAgent,
+          'User-Agent': getRandomUserAgent(),
           'Accept': 'text/html,application/xhtml+xml,application/xml',
           'Accept-Language': 'en-US,en;q=0.9',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+          'Referer': 'https://www.google.com/'
         },
-        timeout: REQUEST_TIMEOUT
+        timeout: 15000,
+        maxRedirects: 5
       });
       
       if (response.status === 200) {
         return response.data;
       }
-    } catch (error: any) {
-      if (attempt < maxRetries - 1) {
-        // Exponential backoff with jitter
-        const backoffTime = Math.min(1000 * (2 ** attempt) * (0.5 + Math.random()), 10000);
-        console.log(`Retry ${attempt + 1}/${maxRetries} for ${url} after ${backoffTime}ms`);
-        await new Promise(resolve => setTimeout(resolve, backoffTime));
-      } else {
-        console.log(`Failed to fetch ${url} after ${maxRetries} attempts: ${error.message}`);
+    } catch (error) {
+      if (retries === maxRetries) {
+        console.log(`Failed to fetch ${url} after ${maxRetries} retries: ${error.message}`);
+        return null;
       }
+      
+      // Exponential backoff with jitter
+      const backoffTime = calculateBackoff(retries);
+      await new Promise(resolve => setTimeout(resolve, backoffTime));
     }
+    
+    retries++;
   }
   
   return null;
 }
 
 /**
- * Extract emails with enhanced pattern recognition including obfuscated emails
- * @param html The HTML content to search for emails
+ * Extract emails from text with advanced pattern recognition
  */
-function extractEmailsFromHtml(html: string): string[] {
-  const emails: Set<string> = new Set();
+function extractEmailsFromText(text: string): string[] {
+  // Regular expression for standard emails
+  const standardEmailPattern = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
   
-  // Regular email regex - basic pattern
-  const basicEmailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
+  // Regular expression for obfuscated emails (e.g., "name at domain dot com")
+  const obfuscatedPattern = /([a-zA-Z0-9._-]+)\s+(?:at|AT|@|＠)\s+([a-zA-Z0-9._-]+)\s+(?:dot|DOT|\.)\s+([a-zA-Z]{2,})/gi;
   
-  // Match emails in the HTML
-  const basicMatches = html.match(basicEmailRegex) || [];
-  basicMatches.forEach(email => emails.add(email.toLowerCase()));
+  const emails = new Set<string>();
   
-  // Look for obfuscated emails with [at] and [dot]
-  const obfuscatedRegex = /\b[A-Za-z0-9._%+-]+(?:\s*\[\s*at\s*\]|\s*\(\s*at\s*\)|\s*@\s*|\s+at\s+)\s*[A-Za-z0-9.-]+(?:\s*\[\s*dot\s*\]|\s*\(\s*dot\s*\)|\s*\.\s*|\s+dot\s+)\s*[A-Za-z]{2,}\b/gi;
-  const obfuscatedMatches = html.match(obfuscatedRegex) || [];
+  // Extract standard emails
+  const standardMatches = text.match(standardEmailPattern) || [];
+  standardMatches.forEach(email => emails.add(email.toLowerCase()));
   
-  // Clean up obfuscated emails
-  obfuscatedMatches.forEach(match => {
-    const cleaned = match
-      .replace(/\s+/g, '')
-      .replace(/\[\s*at\s*\]|\(\s*at\s*\)|\s+at\s+/gi, '@')
-      .replace(/\[\s*dot\s*\]|\(\s*dot\s*\)|\s+dot\s+/gi, '.')
-      .toLowerCase();
-    
-    // Verify it matches a proper email pattern now
-    if (basicEmailRegex.test(cleaned)) {
-      emails.add(cleaned);
-    }
-  });
-  
-  // Look for JS obfuscated emails (common patterns)
-  // Example: var email = 'user' + '@' + 'domain.com';
-  const jsObfuscatedRegex = /'([^']+)'\s*\+\s*'@'\s*\+\s*'([^']+)'/g;
-  const jsMatches = html.match(jsObfuscatedRegex) || [];
-  
-  jsMatches.forEach(match => {
-    try {
-      // Extract the parts and combine them
-      const parts = match.match(/'([^']+)'/g) || [];
-      if (parts.length >= 3) {
-        const emailParts = parts.map(p => p.replace(/'/g, ''));
-        const email = emailParts.join('').replace(/\+@\+/, '@').toLowerCase();
-        
-        // Verify it matches a proper email pattern
-        if (basicEmailRegex.test(email)) {
-          emails.add(email);
-        }
-      }
-    } catch (e) {
-      // Skip this match if it can't be processed
-    }
-  });
-  
-  // Look for HTML entity encoded emails
-  // Find potential encoded parts
-  const encodedRegex = /&#[0-9]+;/g;
-  if (encodedRegex.test(html)) {
-    // If we find encoded characters, decode the entire HTML and look for emails again
-    try {
-      const decoded = html.replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
-      const decodedMatches = decoded.match(basicEmailRegex) || [];
-      decodedMatches.forEach(email => emails.add(email.toLowerCase()));
-    } catch (e) {
-      // Skip if decoding fails
+  // Extract obfuscated emails
+  let obfuscatedMatch;
+  while ((obfuscatedMatch = obfuscatedPattern.exec(text)) !== null) {
+    if (obfuscatedMatch.length >= 4) {
+      const email = `${obfuscatedMatch[1]}@${obfuscatedMatch[2]}.${obfuscatedMatch[3]}`.toLowerCase();
+      emails.add(email);
     }
   }
   
-  // Exclude common false positives
-  const excludePatterns = [
-    /example\.com$/,
-    /domain\.com$/,
-    /yourdomain\.com$/,
-    /test\.com$/,
-    /email\.com$/,
-  ];
-  
-  return Array.from(emails).filter(email => 
-    !excludePatterns.some(pattern => pattern.test(email)) &&
-    // Make sure we have both an @ and a dot after it
-    email.includes('@') && email.indexOf('.', email.indexOf('@')) > -1
-  );
+  // Filter out invalid or common false positives
+  return Array.from(emails).filter(email => {
+    // Filter common false positives and validation
+    return (
+      email.includes('@') &&
+      email.includes('.') &&
+      !email.includes('example.com') &&
+      !email.includes('@example.') &&
+      !email.includes('yourdomain') &&
+      !email.includes('domain.com') &&
+      !email.includes('email@') &&
+      !email.includes('@email') &&
+      email.length > 5 &&
+      email.length < 100
+    );
+  });
 }
 
 /**
- * Find all potential pages that might contain contact info
+ * Look for email obfuscation using JavaScript
  */
-async function findContactPages(baseUrl: string): Promise<string[]> {
-  const contactUrls: Set<string> = new Set();
+function lookForObfuscatedEmails(html: string): string[] {
+  const emails = new Set<string>();
   
-  try {
-    // Clean up base URL
-    baseUrl = cleanupUrl(baseUrl);
-    const domain = extractDomain(baseUrl);
+  // Find JavaScript string concatenation patterns for email creation
+  const jsPattern = /(?:var|let|const)?\s*\w+\s*=\s*(['"])([^'"]+)\1\s*\+\s*(['"])([^'"]+)\3/g;
+  let jsMatch;
+  while ((jsMatch = jsPattern.exec(html)) !== null) {
+    const combined = jsMatch[2] + jsMatch[4];
+    if (combined.includes('@') && combined.includes('.')) {
+      emails.add(combined.toLowerCase());
+    }
+  }
+  
+  // Find Unicode encoded email addresses
+  const unicodePattern = /&#(\d+);/g;
+  let unicodeMatches = html.match(unicodePattern);
+  if (unicodeMatches) {
+    const decoded = html.replace(unicodePattern, (_, code) => {
+      return String.fromCharCode(parseInt(code, 10));
+    });
+    const decodedEmails = extractEmailsFromText(decoded);
+    decodedEmails.forEach(email => emails.add(email));
+  }
+  
+  // Check for reversed text
+  if (html.includes('reverseText') || html.includes('split("").reverse().join("")')) {
+    const reversePattern = /"([^"]+)"\s*\.split\(""\)\.reverse\(\)\.join\(""\)/g;
+    let reverseMatch;
+    while ((reverseMatch = reversePattern.exec(html)) !== null) {
+      const reversed = reverseMatch[1].split('').reverse().join('');
+      if (reversed.includes('@') && reversed.includes('.')) {
+        emails.add(reversed.toLowerCase());
+      }
+    }
+  }
+  
+  return Array.from(emails);
+}
+
+/**
+ * Look for emails in HTML attributes
+ */
+function extractEmailsFromAttributes($: cheerio.CheerioAPI): string[] {
+  const emails = new Set<string>();
+  
+  // Look for data attributes that might contain email information
+  $('[data-email], [data-mail], [data-contact]').each((_, el) => {
+    const dataEmail = $(el).attr('data-email') || '';
+    const dataMail = $(el).attr('data-mail') || '';
+    const dataContact = $(el).attr('data-contact') || '';
     
-    // Get the base site HTML
-    const html = await fetchHtml(baseUrl);
-    if (!html) return Array.from(contactUrls);
-    
-    const $ = cheerio.load(html);
-    
-    // Look for contact page links with common patterns
-    const contactKeywords = [
-      'contact', 'about', 'team', 'staff', 'people', 'meet', 
-      'connect', 'reach', 'get in touch', 'talk to', 'email us',
-      'support', 'help', 'kontakt', 'contacto', 'about-us', 'about us'
-    ];
-    
-    // Helper to check if href is a valid URL
-    const isValidUrl = (href: string): boolean => {
-      if (!href) return false;
-      // Skip anchors and javascript links
-      if (href.startsWith('#') || href.startsWith('javascript:')) return false;
-      // Skip phone links and mailto links
-      if (href.startsWith('tel:') || href.startsWith('mailto:')) return false;
-      return true;
-    };
-    
-    // Find all anchor links that might be contact pages
-    $('a').each((_, element) => {
-      const link = $(element);
-      const href = link.attr('href');
-      const text = link.text().toLowerCase().trim();
-      
-      if (!isValidUrl(href!)) return;
-      
-      // Check if the link text contains contact keywords
-      if (contactKeywords.some(keyword => text.includes(keyword))) {
+    [dataEmail, dataMail, dataContact].forEach(attr => {
+      // Check for base64 encoded email
+      if (/^[A-Za-z0-9+/=]+$/.test(attr) && attr.length % 4 === 0) {
         try {
-          let fullUrl = href;
-          // If it's a relative URL, make it absolute
-          if (!href!.startsWith('http')) {
-            const parsedBaseUrl = new URL(baseUrl);
-            fullUrl = href!.startsWith('/') 
-              ? `${parsedBaseUrl.protocol}//${parsedBaseUrl.host}${href}`
-              : `${parsedBaseUrl.protocol}//${parsedBaseUrl.host}/${href}`;
+          const decoded = Buffer.from(attr, 'base64').toString();
+          if (decoded.includes('@') && decoded.includes('.')) {
+            emails.add(decoded.toLowerCase());
           }
-          
-          // Skip if it's not the same domain
-          const linkDomain = extractDomain(fullUrl!);
-          if (!linkDomain.includes(domain) && !domain.includes(linkDomain)) return;
-          
-          contactUrls.add(fullUrl!);
-        } catch (e) {
-          // Skip malformed URLs
+        } catch (_) {
+          // Invalid base64, skip
         }
       }
+      
+      const foundEmails = extractEmailsFromText(attr);
+      foundEmails.forEach(email => emails.add(email));
     });
+  });
+  
+  // Look in mailto links
+  $('a[href^="mailto:"]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const email = href.replace('mailto:', '').split('?')[0].trim();
+    if (email.includes('@') && email.includes('.')) {
+      emails.add(email.toLowerCase());
+    }
+  });
+  
+  return Array.from(emails);
+}
+
+/**
+ * Extract emails from a webpage with enhanced detection
+ */
+async function extractEmailsFromPage(url: string, domain: string): Promise<string[]> {
+  const html = await fetchHtml(url);
+  if (!html) return [];
+  
+  const emails = new Set<string>();
+  
+  // Standard email pattern extraction from HTML
+  const extractedEmails = extractEmailsFromText(html);
+  extractedEmails.forEach(email => emails.add(email));
+  
+  // Look for obfuscated emails in JavaScript
+  const obfuscatedEmails = lookForObfuscatedEmails(html);
+  obfuscatedEmails.forEach(email => emails.add(email));
+  
+  // Load HTML into Cheerio for DOM manipulation
+  const $ = cheerio.load(html);
+  
+  // Extract emails from HTML attributes
+  const attributeEmails = extractEmailsFromAttributes($);
+  attributeEmails.forEach(email => emails.add(email));
+  
+  // Filter results to this domain only
+  return Array.from(emails).filter(email => {
+    const emailDomain = email.split('@')[1];
+    return emailDomain && extractRootDomain(emailDomain) === extractRootDomain(domain);
+  });
+}
+
+/**
+ * Find all contact pages for a website, checking many possible locations
+ */
+async function findAllContactPages(baseUrl: string): Promise<string[]> {
+  const domain = extractDomain(baseUrl);
+  const foundUrls = new Set<string>();
+  const protocol = baseUrl.startsWith('https') ? 'https' : 'http';
+  
+  // Common paths for contact pages
+  const contactPaths = [
+    '/contact', 
+    '/contact-us',
+    '/about',
+    '/about-us',
+    '/team',
+    '/our-team',
+    '/meet-the-team',
+    '/about/team',
+    '/company',
+    '/company/team',
+    '/support',
+    '/help',
+    '/write-for-us',
+    '/contribute',
+    '/contributors',
+    '/advertising',
+    '/reach-us',
+    '/get-in-touch'
+  ];
+  
+  // Alternate domain patterns
+  const alternateBaseUrls = [
+    `${protocol}://${domain}`,
+    `${protocol}://www.${domain.replace(/^www\./, '')}`
+  ];
+  
+  for (const url of alternateBaseUrls) {
+    // Standardize base URL
+    const cleanUrl = cleanupUrl(url);
+    if (cleanUrl) {
+      foundUrls.add(cleanUrl);
+    }
     
-    // Also check some common contact page paths
-    const commonPaths = [
-      '/contact', '/contact-us', '/about', '/about-us', '/team', 
-      '/our-team', '/people', '/staff', '/company', '/support'
-    ];
-    
-    for (const path of commonPaths) {
+    // Try all contact paths
+    for (const path of contactPaths) {
+      const contactUrl = cleanupUrl(`${url}${path}`);
+      
+      // Check if page exists via HEAD request
       try {
-        const parsedBaseUrl = new URL(baseUrl);
-        const fullUrl = `${parsedBaseUrl.protocol}//${parsedBaseUrl.host}${path}`;
-        
-        // Don't add if we already have it
-        if (Array.from(contactUrls).some(url => url.includes(path))) continue;
-        
-        // Check if the page exists
-        const response = await axios.head(fullUrl, { 
-          validateStatus: status => status < 400,
-          timeout: 5000 
+        const response = await axios.head(contactUrl, {
+          headers: { 'User-Agent': getRandomUserAgent() },
+          timeout: 5000,
+          validateStatus: status => status < 400 // Accept all non-error status codes
         });
         
         if (response.status < 400) {
-          contactUrls.add(fullUrl);
+          foundUrls.add(contactUrl);
         }
-      } catch (e) {
-        // Skip failed URLs
+      } catch (error) {
+        // Ignore failed requests
       }
     }
-  } catch (error) {
-    console.error(`Error finding contact pages for ${baseUrl}:`, error);
   }
   
-  return Array.from(contactUrls);
+  return Array.from(foundUrls);
 }
 
 /**
- * Extract employee names and potential titles from about/team pages
+ * Extract WHOIS information with thorough email checking
  */
-async function extractTeamMembers(url: string): Promise<{ 
-  name: string, 
-  title?: string,
-  department?: string
-}[]> {
-  const teamMembers: { name: string, title?: string, department?: string }[] = [];
-  
+async function extractWhoisData(domain: string): Promise<string[]> {
   try {
-    const html = await fetchHtml(url);
-    if (!html) return teamMembers;
+    // Remove 'www' if present
+    const cleanDomain = domain.replace(/^www\./, '');
     
-    const $ = cheerio.load(html);
+    const whoisData = await whoisJson(cleanDomain);
     
-    // Look for team member sections - these often have certain patterns
-    // Common class and ID patterns for team sections
-    const teamSelectors = [
-      '.team', '.team-members', '.team-member', '.staff', '.people', 
-      '.crew', '.employee', '.employees', '.our-team', '.about-team',
-      '#team', '#our-team', '#staff', '#people', '[data-team]',
-      '.leadership', '.executive', '.executives'
-    ];
-    
-    // Find all potential team member containers
-    let teamContainers = $(teamSelectors.join(', '));
-    
-    // If no specific team containers, look for common person patterns
-    if (teamContainers.length === 0) {
-      const personSelectors = [
-        '.person', '.member', '.profile', '.bio', '.card',
-        '.profile-card', '.team-card', '.member-card', '.profile-box'
-      ];
-      teamContainers = $(personSelectors.join(', '));
+    if (!whoisData) {
+      return [];
     }
     
-    // If still no containers, use the whole page but look for structured patterns
-    if (teamContainers.length === 0) {
-      // Look for name-looking structures
-      $('h2, h3, h4, h5, strong, b').each((_, element) => {
-        const $el = $(element);
-        const name = $el.text().trim();
-        
-        // Skip short or long names, or elements with lots of content
-        if (name.length < 5 || name.length > 50) return;
-        if (name.includes('\n')) return;
-        
-        // Skip elements with HTML tags inside (likely not a simple name)
-        if ($el.html()!.includes('<')) return;
-        
-        // Look for a nearby position or title
-        let title = '';
-        let nextElement = $el.next();
-        
-        // Check the next couple of elements for a potential title
-        for (let i = 0; i < 3; i++) {
-          if (!nextElement.length) break;
-          
-          // Skip elements with HTML tags inside (complex structure)
-          if (nextElement.html()!.includes('<')) {
-            nextElement = nextElement.next();
-            continue;
-          }
-          
-          const text = nextElement.text().trim();
-          
-          // Title is usually shorter text, not too many symbols
-          if (text && text.length > 0 && text.length < 100 && !/[\\/$%#@!)(&+=]/.test(text)) {
-            title = text;
-            break;
-          }
-          
-          nextElement = nextElement.next();
+    // Check all WHOIS fields for email addresses
+    const allEmails = new Set<string>();
+    const allValues = Object.values(whoisData).filter(val => typeof val === 'string');
+    
+    for (const value of allValues) {
+      const emails = extractEmailsFromText(value as string);
+      emails.forEach(email => {
+        // Filter out privacy protection emails
+        if (!email.includes('privacy') && 
+            !email.includes('protect') && 
+            !email.includes('whois') && 
+            !email.includes('domains') &&
+            !email.includes('domaincontrol')) {
+          allEmails.add(email.toLowerCase());
         }
-        
-        // Extract potential department from the title
-        let department: string | undefined;
-        const departmentKeywords = ['marketing', 'sales', 'engineering', 'product', 'design', 'hr', 
-                                    'finance', 'operations', 'support', 'development', 'content'];
-                                    
-        for (const keyword of departmentKeywords) {
-          if (title.toLowerCase().includes(keyword)) {
-            department = keyword;
-            break;
-          }
-        }
-        
-        teamMembers.push({ name, title, department });
       });
-    } else {
-      // Process each team container to extract members
-      teamContainers.each((_, container) => {
-        const $container = $(container);
-        
-        // Look for name elements within the container
-        const nameElements = $container.find('h2, h3, h4, h5, .name, .member-name, strong');
-        
-        nameElements.each((_, nameEl) => {
-          const $nameEl = $(nameEl);
-          const name = $nameEl.text().trim();
+    }
+    
+    return Array.from(allEmails);
+  } catch (error) {
+    console.log(`Error extracting WHOIS data for ${domain}: ${error.message}`);
+    return [];
+  }
+}
+
+/**
+ * Generate common email patterns for a domain
+ */
+async function generateEmailPatterns(domain: string): Promise<string[]> {
+  const emails = new Set<string>();
+  const cleanDomain = domain.replace(/^www\./, '');
+  
+  // Add patterns for common business emails
+  for (const pattern of EMAIL_PATTERNS) {
+    emails.add(`${pattern}@${cleanDomain}`);
+  }
+  
+  // Try to extract names from website to generate more personalized emails
+  try {
+    const baseUrl = `https://${cleanDomain}`;
+    const aboutPages = await findAllContactPages(baseUrl);
+    const foundNames = new Set<string>();
+    
+    for (const page of aboutPages.slice(0, 3)) { // Limit to first 3 pages
+      const html = await fetchHtml(page);
+      if (!html) continue;
+      
+      const $ = cheerio.load(html);
+      
+      // Extract potential names from team pages and author sections
+      $('.team, .staff, .about-us, .employees, .our-team, .author, .bio, .profile')
+        .find('h1, h2, h3, h4, h5, strong, b, .name, [itemprop="name"]')
+        .each((_, el) => {
+          const text = $(el).text().trim();
           
-          // Skip if too short or too long
-          if (name.length < 5 || name.length > 50) return;
-          
-          // Look for a title or position near the name
-          let title: string | undefined;
-          
-          // Check elements with common title classes
-          const $titleEl = $container.find('.title, .position, .job-title, .role');
-          if ($titleEl.length > 0) {
-            title = $titleEl.text().trim();
+          // Look for names (First Last format)
+          const nameMatch = text.match(/^([A-Z][a-z]+)\s+([A-Z][a-z]+)$/);
+          if (nameMatch) {
+            const [_, firstName, lastName] = nameMatch;
+            foundNames.add(`${firstName.toLowerCase()} ${lastName.toLowerCase()}`);
           }
-          
-          // If no specific title class, check siblings or nearby elements
-          if (!title) {
-            const siblings = $nameEl.siblings('p, div, span').slice(0, 2);
-            siblings.each((_, sibling) => {
-              const siblingText = $(sibling).text().trim();
-              if (siblingText && siblingText.length > 0 && siblingText.length < 100) {
-                title = siblingText;
-                return false; // break the each loop
-              }
-            });
-          }
-          
-          // Extract potential department from the title
-          let department: string | undefined;
-          if (title) {
-            const departmentKeywords = ['marketing', 'sales', 'engineering', 'product', 'design', 'hr', 
-                                        'finance', 'operations', 'support', 'development', 'content'];
-                                        
-            for (const keyword of departmentKeywords) {
-              if (title.toLowerCase().includes(keyword)) {
-                department = keyword;
-                break;
-              }
-            }
-          }
-          
-          teamMembers.push({ name, title, department });
         });
-      });
     }
     
-  } catch (error) {
-    console.error(`Error extracting team members from ${url}:`, error);
-  }
-  
-  return teamMembers;
-}
-
-/**
- * Enhanced extraction of WHOIS data from domain
- */
-async function extractWhoisEmails(domain: string): Promise<string[]> {
-  const emails: Set<string> = new Set();
-  
-  try {
-    // Use the whois command line utility to get all data
-    const execPromise = promisify(exec);
-    const { stdout } = await execPromise(`whois ${domain}`);
-    
-    // Extract emails from the output with a comprehensive regex
-    const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
-    const matches = stdout.match(emailRegex) || [];
-    
-    // Filter out privacy protection emails
-    matches.forEach(email => {
-      const lowerEmail = email.toLowerCase();
+    // Generate email patterns from found names
+    for (const name of foundNames) {
+      const [firstName, lastName] = name.split(' ');
       
-      // Skip privacy protection service emails
-      if (
-        lowerEmail.includes('privacy') || 
-        lowerEmail.includes('protect') || 
-        lowerEmail.includes('redact') ||
-        lowerEmail.includes('gdpr') ||
-        lowerEmail.includes('proxy') ||
-        lowerEmail.includes('private')
-      ) {
-        return;
+      if (firstName && lastName) {
+        emails.add(`${firstName}@${cleanDomain}`);
+        emails.add(`${lastName}@${cleanDomain}`);
+        emails.add(`${firstName}.${lastName}@${cleanDomain}`);
+        emails.add(`${firstName}_${lastName}@${cleanDomain}`);
+        emails.add(`${firstName[0]}${lastName}@${cleanDomain}`);
+        emails.add(`${firstName[0]}.${lastName}@${cleanDomain}`);
+        emails.add(`${firstName[0]}_${lastName}@${cleanDomain}`);
+        emails.add(`${lastName}${firstName[0]}@${cleanDomain}`);
+        emails.add(`${lastName}.${firstName[0]}@${cleanDomain}`);
+        emails.add(`${lastName}_${firstName[0]}@${cleanDomain}`);
       }
-      
-      emails.add(lowerEmail);
-    });
+    }
+    
+    // If no names found, add common patterns
+    if (foundNames.size === 0) {
+      for (const firstName of COMMON_FIRST_NAMES.slice(0, 5)) { // Limit to first 5 names
+        emails.add(`${firstName}@${cleanDomain}`);
+      }
+    }
   } catch (error) {
-    console.error(`Error extracting WHOIS data for ${domain}:`, error);
+    console.log(`Error generating email patterns for ${domain}: ${error.message}`);
   }
   
   return Array.from(emails);
 }
 
 /**
- * Generate email permutations for team members
+ * Verify email exists using simple SMTP check
  */
-function generateEmailPermutations(domain: string, teamMembers: { name: string, title?: string }[]): string[] {
-  const permutations: Set<string> = new Set();
-  
-  for (const member of teamMembers) {
-    // Skip if name is not valid
-    if (!member.name || member.name.trim().length < 3) continue;
-    
-    // Split name into parts
-    const nameParts = member.name.split(' ').filter(part => part.trim().length > 0);
-    if (nameParts.length < 1) continue;
-    
-    const firstName = nameParts[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-    const lastName = nameParts.length > 1 ? 
-      nameParts[nameParts.length - 1].toLowerCase().replace(/[^a-z0-9]/g, '') : '';
-    const firstInitial = firstName.charAt(0);
-    const lastInitial = lastName.charAt(0);
-    
-    // Skip if name parts are too short after cleaning
-    if (firstName.length < 2) continue;
-    
-    // Generate permutations based on the templates
-    for (const format of EMAIL_FORMATS) {
-      let email = format
-        .replace('{firstName}', firstName)
-        .replace('{lastName}', lastName)
-        .replace('{firstInitial}', firstInitial)
-        .replace('{lastInitial}', lastInitial)
-        .replace('{domain}', domain);
-      
-      // Skip incomplete templates (e.g. if lastName is empty but template requires it)
-      if (email.includes('{') || email.includes('}')) continue;
-      
-      permutations.add(email);
-    }
-  }
-  
-  // Generate generic emails if we have no team members
-  if (teamMembers.length === 0) {
-    for (const format of EMAIL_FORMATS) {
-      // Skip formats that require name parts
-      if (format.includes('{firstName}') || 
-          format.includes('{lastName}') || 
-          format.includes('{firstInitial}') || 
-          format.includes('{lastInitial}')) {
-        continue;
-      }
-      
-      const email = format.replace('{domain}', domain);
-      permutations.add(email);
-    }
-  }
-  
-  return Array.from(permutations);
-}
-
-/**
- * Basic SMTP verification to check if an email exists
- * This checks if the domain has MX records and if the email is accepted
- */
-async function verifyEmailWithSmtp(email: string): Promise<boolean> {
-  return new Promise(resolve => {
-    try {
-      const domain = email.split('@')[1];
-      if (!domain) {
-        resolve(false);
-        return;
-      }
-      
-      // First, check if domain has MX records
-      dns.resolveMx(domain, (err, addresses) => {
-        if (err || !addresses || addresses.length === 0) {
-          resolve(false);
-          return;
-        }
-        
-        // Sort MX records by priority (lowest first)
-        addresses.sort((a, b) => a.priority - b.priority);
-        const mxRecord = addresses[0].exchange;
-        
-        // Try to connect to the mail server
-        const socket = new net.Socket();
-        let responseBuffer = '';
-        let connected = false;
-        
-        // Set a timeout to prevent hanging
-        socket.setTimeout(SMTP_CHECK_TIMEOUT);
-        
-        socket.on('timeout', () => {
-          socket.destroy();
-          resolve(false);
-        });
-        
-        socket.on('error', () => {
-          socket.destroy();
-          resolve(false);
-        });
-        
-        socket.on('data', (data) => {
-          responseBuffer += data.toString();
-          
-          // Check the response code
-          if (responseBuffer.includes('220') && !connected) {
-            // Send HELO
-            socket.write(`HELO example.com\r\n`);
-            connected = true;
-            responseBuffer = '';
-          } else if (responseBuffer.includes('250') && connected) {
-            // HELO was successful, now check RCPT TO
-            socket.write(`MAIL FROM: <verify@example.com>\r\n`);
-            responseBuffer = '';
-          } else if (responseBuffer.includes('250') && responseBuffer.includes('MAIL')) {
-            // MAIL FROM was successful, try RCPT TO
-            socket.write(`RCPT TO: <${email}>\r\n`);
-            responseBuffer = '';
-          } else if (responseBuffer.includes('250') && responseBuffer.includes('RCPT')) {
-            // Email exists
-            socket.destroy();
-            resolve(true);
-          } else if (responseBuffer.includes('550') || responseBuffer.includes('553') || responseBuffer.includes('554')) {
-            // Email doesn't exist
-            socket.destroy();
-            resolve(false);
-          }
-        });
-        
-        socket.connect(25, mxRecord);
-      });
-    } catch (error) {
-      resolve(false);
-    }
-  });
-}
-
-/**
- * Check GitHub for potential contact information
- */
-async function checkGitHubForEmails(domain: string): Promise<string[]> {
-  const emails: Set<string> = new Set();
+async function verifyEmail(email: string): Promise<boolean> {
+  const domain = email.split('@')[1];
+  if (!domain) return false;
   
   try {
-    // Simplify the domain name for GitHub search
-    const simpleDomain = domain.replace(/^www\./, '').split('.')[0];
+    // First check MX records to ensure domain can receive email
+    const mxRecords = await promisify(dns.resolveMx)(domain).catch(() => []);
+    if (!mxRecords.length) return false;
     
-    // Search for organization or user repositories
-    const searchUrl = `https://api.github.com/search/repositories?q=org:${simpleDomain}+fork:true`;
+    // Simple SMTP verification - just check if mail server responds to connection
+    // but don't perform full SMTP verification to avoid landing on spam lists
+    const smtpServer = mxRecords[0].exchange;
+    
+    // Connect to SMTP server
+    const socket = new net.Socket();
+    let valid = false;
+    
+    return new Promise((resolve) => {
+      // Set timeout
+      const timeout = setTimeout(() => {
+        socket.destroy();
+        resolve(false);
+      }, 5000);
+      
+      socket.connect(25, smtpServer, () => {
+        clearTimeout(timeout);
+        valid = true;
+        socket.end();
+        resolve(true);
+      });
+      
+      socket.on('error', () => {
+        clearTimeout(timeout);
+        socket.destroy();
+        resolve(false);
+      });
+    });
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Check GitHub for public repositories associated with domain
+ */
+async function checkGitHubForEmails(domain: string): Promise<string[]> {
+  const emails = new Set<string>();
+  
+  try {
+    // Search GitHub for repositories matching the domain
+    const cleanDomain = domain.replace(/^www\./, '');
+    const searchUrl = `https://api.github.com/search/repositories?q=${cleanDomain}`;
     
     const response = await axios.get(searchUrl, {
       headers: {
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': getRandomUserAgent()
+        'User-Agent': getRandomUserAgent(),
+        'Accept': 'application/vnd.github.v3+json'
       }
     });
     
-    if (response.data && response.data.items && response.data.items.length > 0) {
-      // Take the top 3 repositories
-      const repos = response.data.items.slice(0, 3);
+    if (!response.data || !response.data.items) {
+      return [];
+    }
+    
+    // Check the top 3 repositories
+    const repos = response.data.items.slice(0, 3);
+    
+    for (const repo of repos) {
+      if (!repo.html_url) continue;
       
-      for (const repo of repos) {
-        // Check the repository README for contact information
-        const readmeUrl = `https://api.github.com/repos/${repo.full_name}/readme`;
-        
-        try {
-          const readmeResponse = await axios.get(readmeUrl, {
-            headers: {
-              'Accept': 'application/vnd.github.v3+json',
-              'User-Agent': getRandomUserAgent()
-            }
-          });
-          
-          if (readmeResponse.data && readmeResponse.data.content) {
-            // Decode the Base64 encoded content
-            const content = Buffer.from(readmeResponse.data.content, 'base64').toString('utf8');
-            
-            // Extract emails from the README
-            const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
-            const matches = content.match(emailRegex) || [];
-            
-            matches.forEach(email => emails.add(email.toLowerCase()));
-          }
-        } catch (error) {
-          // Skip errors for individual repos
+      // Get repository information including README
+      const readmeUrl = `https://api.github.com/repos/${repo.full_name}/readme`;
+      const readmeResponse = await axios.get(readmeUrl, {
+        headers: {
+          'User-Agent': getRandomUserAgent(),
+          'Accept': 'application/vnd.github.v3.raw'
         }
+      }).catch(() => null);
+      
+      if (readmeResponse && readmeResponse.data) {
+        // Extract emails from README content
+        const readmeEmails = extractEmailsFromText(readmeResponse.data);
+        readmeEmails.forEach(email => {
+          // Only include emails from this domain
+          if (email.endsWith(`@${cleanDomain}`)) {
+            emails.add(email);
+          }
+        });
       }
     }
   } catch (error) {
-    console.error(`Error checking GitHub for ${domain}:`, error);
+    console.log(`Error checking GitHub for ${domain}: ${error.message}`);
   }
   
   return Array.from(emails);
 }
 
 /**
- * Main function to run the enhanced email extraction process
+ * Process a single opportunity to extract contact information
  */
-export async function runEnhancedEmailExtraction(options: {
-  skipPremium?: boolean;
-  onlyPremium?: boolean;
-  limit?: number;
-  dryRun?: boolean;
-} = {}) {
-  console.log('🌐 Starting enhanced email extraction...');
-  console.log('Using multiple techniques:');
-  console.log('1. Email pattern permutation with SMTP verification');
-  console.log('2. Enhanced WHOIS data mining');
-  console.log('3. Improved crawler for obfuscated emails');
-  console.log('4. GitHub repository mining');
+async function processOpportunity(opportunity: any, isPremium: boolean): Promise<boolean> {
+  console.log(`Processing opportunity #${opportunity.id}: ${opportunity.url} (premium: ${isPremium})`);
+  
+  const domain = extractDomain(opportunity.url);
+  if (!domain) {
+    console.log(`  No domain found for opportunity #${opportunity.id}`);
+    return false;
+  }
+  
+  // Parse existing contact info if available
+  let existingContactInfo: ContactInfo = {
+    emails: [],
+    socialProfiles: [],
+    contactForms: [],
+    extractionDetails: {
+      normalized: true,
+      source: 'enhanced-email-extractor',
+      version: '1.0.0',
+      lastUpdated: new Date().toISOString()
+    }
+  };
   
   try {
-    // Build the query for opportunities
-    let query = db.select()
+    if (opportunity.contactInfo) {
+      const parsed = JSON.parse(opportunity.contactInfo);
+      existingContactInfo = {
+        ...parsed,
+        extractionDetails: {
+          normalized: true,
+          source: 'enhanced-email-extractor',
+          version: '1.0.0',
+          lastUpdated: new Date().toISOString()
+        }
+      };
+    }
+  } catch (error) {
+    console.log(`  Error parsing existing contact info for #${opportunity.id}: ${error.message}`);
+  }
+  
+  const previousEmailCount = existingContactInfo.emails.length;
+  const allEmails = new Set<string>(existingContactInfo.emails);
+  
+  // Method 1: Extract emails from contact pages
+  const contactPages = await findAllContactPages(`https://${domain}`);
+  for (const page of contactPages) {
+    const emails = await extractEmailsFromPage(page, domain);
+    emails.forEach(email => allEmails.add(email));
+  }
+  
+  // Method 2: Extract emails from WHOIS data
+  const whoisEmails = await extractWhoisData(domain);
+  whoisEmails.forEach(email => allEmails.add(email));
+  
+  // Method 3: Generate common patterns and verify (only if premium or no emails found yet)
+  if (isPremium || allEmails.size === 0) {
+    const patternEmails = await generateEmailPatterns(domain);
+    
+    // Verify top 10 patterns only to avoid excessive SMTP checks
+    for (const email of patternEmails.slice(0, 10)) {
+      const isValid = await verifyEmail(email);
+      if (isValid) {
+        allEmails.add(email);
+      }
+    }
+  }
+  
+  // Method 4: Check GitHub for public repositories (premium only)
+  if (isPremium) {
+    const githubEmails = await checkGitHubForEmails(domain);
+    githubEmails.forEach(email => allEmails.add(email));
+  }
+  
+  // Update opportunity with new emails
+  existingContactInfo.emails = Array.from(allEmails);
+  
+  // Only update if we found new emails
+  if (existingContactInfo.emails.length > previousEmailCount) {
+    try {
+      await db.update(schema.discoveredOpportunities)
+        .set({
+          contactInfo: JSON.stringify(existingContactInfo)
+        })
+        .where(eq(schema.discoveredOpportunities.id, opportunity.id));
+      
+      console.log(`  Updated opportunity #${opportunity.id}, found ${existingContactInfo.emails.length} emails (previously ${previousEmailCount})`);
+      return true;
+    } catch (error) {
+      console.log(`  Error updating opportunity #${opportunity.id}: ${error.message}`);
+      return false;
+    }
+  } else {
+    console.log(`  No new emails found for opportunity #${opportunity.id}`);
+    return false;
+  }
+}
+
+/**
+ * Main function to extract email contact information
+ */
+async function enhancedEmailExtraction() {
+  console.log('Starting enhanced email extraction...');
+  
+  try {
+    // Get premium opportunities with no emails first
+    const premiumOpportunities = await db.select()
       .from(schema.discoveredOpportunities)
       .where(
         and(
-          // Only select opportunities with contact info but no emails
-          isNotNull(schema.discoveredOpportunities.contactInfo),
-          sql`(("contactInfo"::jsonb->'emails' IS NULL OR jsonb_array_length("contactInfo"::jsonb->'emails') = 0))`
+          not(isNull(schema.discoveredOpportunities.domainAuthority)),
+          sql`cast(${schema.discoveredOpportunities.domainAuthority} as decimal) >= 40`,
+          sql`cast(${schema.discoveredOpportunities.relevanceScore} as decimal) >= 80`
         )
-      );
+      )
+      .orderBy(desc(schema.discoveredOpportunities.domainAuthority))
+      .limit(MAX_OPPORTUNITIES_TO_PROCESS);
     
-    // Add premium filter if specified
-    if (options.skipPremium) {
-      query = query.where(eq(schema.discoveredOpportunities.isPremium, false));
-    }
+    console.log(`Found ${premiumOpportunities.length} premium opportunities to process`);
     
-    if (options.onlyPremium) {
-      query = query.where(eq(schema.discoveredOpportunities.isPremium, true));
-    }
+    let processedPremium = 0;
+    let updatedPremium = 0;
     
-    // Add limit if specified
-    if (options.limit) {
-      query = query.limit(options.limit);
-    } else {
-      query = query.limit(50); // Default limit
-    }
-    
-    // Execute the query
-    const opportunities = await query;
-    
-    console.log(`Found ${opportunities.length} opportunities to enhance with email information`);
-    
-    if (opportunities.length === 0) {
-      console.log('No opportunities need email enhancement');
-      return;
-    }
-    
-    // Process in batches
-    const batchSize = BATCH_SIZE;
-    let successCount = 0;
-    let totalEmailsFound = 0;
-    
-    for (let i = 0; i < opportunities.length; i += batchSize) {
-      const batch = opportunities.slice(i, i + batchSize);
-      console.log(`Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(opportunities.length/batchSize)}`);
+    // Process premium opportunities in batches
+    for (let i = 0; i < premiumOpportunities.length; i += BATCH_SIZE) {
+      const batch = premiumOpportunities.slice(i, i + BATCH_SIZE);
       
+      // Process each opportunity in the batch sequentially to avoid rate limiting
       for (const opportunity of batch) {
-        try {
-          console.log(`\nProcessing opportunity: ${opportunity.domain} (ID: ${opportunity.id})`);
-          
-          // Extract and clean domain
-          const domain = opportunity.domain.replace(/^www\./, '');
-          
-          // Parse existing contact info
-          let contactInfo: ContactInfo;
-          
-          try {
-            if (typeof opportunity.contactInfo === 'string') {
-              // Handle doubly-escaped JSON
-              if (opportunity.contactInfo.startsWith('"') && opportunity.contactInfo.endsWith('"')) {
-                const unquoted = opportunity.contactInfo.slice(1, -1);
-                const unescaped = unquoted.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-                contactInfo = JSON.parse(unescaped);
-              } else {
-                contactInfo = JSON.parse(opportunity.contactInfo);
-              }
-            } else {
-              contactInfo = opportunity.contactInfo as ContactInfo;
-            }
-          } catch (e) {
-            // Initialize new contact info if parsing fails
-            contactInfo = {
-              emails: [],
-              socialProfiles: [],
-              contactForms: [],
-              extractionDetails: {
-                normalized: true,
-                source: 'enhanced-email-extractor',
-                version: '1.0',
-                lastUpdated: new Date().toISOString()
-              }
-            };
-          }
-          
-          // Make sure all arrays exist
-          contactInfo.emails = contactInfo.emails || [];
-          contactInfo.socialProfiles = contactInfo.socialProfiles || [];
-          contactInfo.contactForms = contactInfo.contactForms || [];
-          
-          // Initialize or update extraction details
-          contactInfo.extractionDetails = {
-            normalized: true,
-            source: 'enhanced-email-extractor',
-            version: '1.0',
-            lastUpdated: new Date().toISOString()
-          };
-          
-          // Set for storing unique emails
-          const emailsFound: Set<string> = new Set();
-          
-          // 1. Technique: Crawl the website and scrape for emails
-          console.log('Crawling website for emails...');
-          
-          // Get the base URL
-          let baseUrl = opportunity.url;
-          if (!baseUrl) {
-            baseUrl = `https://${domain}`;
-          }
-          
-          // Crawl the main page
-          const mainHtml = await fetchHtml(baseUrl);
-          if (mainHtml) {
-            const mainEmails = extractEmailsFromHtml(mainHtml);
-            mainEmails.forEach(email => emailsFound.add(email));
-          }
-          
-          // Find and crawl contact pages
-          const contactPages = await findContactPages(baseUrl);
-          console.log(`Found ${contactPages.length} potential contact pages`);
-          
-          for (const contactUrl of contactPages) {
-            console.log(`Checking ${contactUrl}`);
-            const contactHtml = await fetchHtml(contactUrl);
-            if (contactHtml) {
-              const contactEmails = extractEmailsFromHtml(contactHtml);
-              contactEmails.forEach(email => emailsFound.add(email));
-              
-              // Extract team members for email permutation
-              if (emailsFound.size === 0) {
-                console.log('No emails found yet, extracting team members...');
-                const teamMembers = await extractTeamMembers(contactUrl);
-                console.log(`Found ${teamMembers.length} team members`);
-                
-                if (teamMembers.length > 0) {
-                  // Store the first team member as the contact person
-                  contactInfo.contactPerson = {
-                    name: teamMembers[0].name,
-                    title: teamMembers[0].title,
-                    department: teamMembers[0].department
-                  };
-                }
-              }
-            }
-          }
-          
-          // 2. Technique: Extract WHOIS emails
-          if (emailsFound.size === 0) {
-            console.log('Checking WHOIS data...');
-            const whoisEmails = await extractWhoisEmails(domain);
-            whoisEmails.forEach(email => emailsFound.add(email));
-          }
-          
-          // 3. Technique: Check GitHub repositories
-          if (emailsFound.size === 0) {
-            console.log('Checking GitHub repositories...');
-            const githubEmails = await checkGitHubForEmails(domain);
-            githubEmails.forEach(email => emailsFound.add(email));
-          }
-          
-          // 4. Technique: Generate email permutations
-          if (emailsFound.size === 0) {
-            console.log('Generating email permutations...');
-            // Extract team members if not done already
-            let teamMembers: { name: string, title?: string }[] = [];
-            
-            if (contactInfo.contactPerson?.name) {
-              teamMembers.push({
-                name: contactInfo.contactPerson.name,
-                title: contactInfo.contactPerson.title
-              });
-            } else {
-              // Try to extract team members from about/team page
-              for (const contactUrl of contactPages) {
-                if (contactUrl.includes('about') || contactUrl.includes('team') || contactUrl.includes('people')) {
-                  teamMembers = await extractTeamMembers(contactUrl);
-                  if (teamMembers.length > 0) break;
-                }
-              }
-            }
-            
-            const permutations = generateEmailPermutations(domain, teamMembers);
-            console.log(`Generated ${permutations.length} email permutations`);
-            
-            // Verify each permutation with SMTP (limit to first 10 to avoid too many checks)
-            const verificationLimit = Math.min(permutations.length, 10);
-            for (let i = 0; i < verificationLimit; i++) {
-              const email = permutations[i];
-              console.log(`Verifying email: ${email}`);
-              
-              const isValid = await verifyEmailWithSmtp(email);
-              if (isValid) {
-                console.log(`Verified valid email: ${email}`);
-                emailsFound.add(email);
-              }
-            }
-          }
-          
-          // Update contact info with found emails
-          const newEmails = Array.from(emailsFound);
-          if (newEmails.length > 0) {
-            console.log(`Found ${newEmails.length} emails for ${domain}`);
-            contactInfo.emails = [...newEmails];
-            totalEmailsFound += newEmails.length;
-            
-            // Update the opportunity if not a dry run
-            if (!options.dryRun) {
-              await db.update(schema.discoveredOpportunities)
-                .set({
-                  contactInfo: contactInfo
-                })
-                .where(eq(schema.discoveredOpportunities.id, opportunity.id));
-            }
-            
-            successCount++;
-          } else {
-            console.log(`No emails found for ${domain}`);
-          }
-        } catch (error) {
-          console.error(`Error processing opportunity ${opportunity.id}:`, error);
-        }
+        processedPremium++;
+        const updated = await processOpportunity(opportunity, true);
+        if (updated) updatedPremium++;
         
-        // Wait between opportunities to avoid rate limiting
+        // Short delay between opportunities
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
       
-      // Wait between batches
-      console.log(`Waiting ${BATCH_DELAY/1000} seconds before next batch...`);
-      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+      console.log(`Processed ${processedPremium}/${premiumOpportunities.length} premium opportunities, updated ${updatedPremium}`);
+      
+      // Longer delay between batches
+      await new Promise(resolve => setTimeout(resolve, 10000));
     }
     
-    console.log(`\n🎉 Enhanced email extraction complete!`);
-    console.log(`Updated ${successCount}/${opportunities.length} opportunities`);
-    console.log(`Found ${totalEmailsFound} total emails`);
+    // Then process regular opportunities if there's capacity left
+    const remainingToProcess = MAX_OPPORTUNITIES_TO_PROCESS - premiumOpportunities.length;
     
+    if (remainingToProcess > 0) {
+      const regularOpportunities = await db.select()
+        .from(schema.discoveredOpportunities)
+        .orderBy(sql`random()`)
+        .limit(remainingToProcess);
+      
+      console.log(`Found ${regularOpportunities.length} regular opportunities to process`);
+      
+      let processedRegular = 0;
+      let updatedRegular = 0;
+      
+      // Process regular opportunities in batches
+      for (let i = 0; i < regularOpportunities.length; i += BATCH_SIZE) {
+        const batch = regularOpportunities.slice(i, i + BATCH_SIZE);
+        
+        // Process each opportunity in the batch sequentially
+        for (const opportunity of batch) {
+          processedRegular++;
+          const updated = await processOpportunity(opportunity, false);
+          if (updated) updatedRegular++;
+          
+          // Short delay between opportunities
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+        console.log(`Processed ${processedRegular}/${regularOpportunities.length} regular opportunities, updated ${updatedRegular}`);
+        
+        // Longer delay between batches
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      }
+    }
+    
+    console.log('Enhanced email extraction completed!');
   } catch (error) {
-    console.error('❌ Error during enhanced email extraction:', error);
+    console.error('Error during enhanced email extraction:', error);
   } finally {
     await pool.end();
   }
 }
 
-// Run the extraction process if executed directly
-if (require.main === module) {
-  // Parse command line arguments
-  const args = process.argv.slice(2);
-  const options: {
-    skipPremium?: boolean;
-    onlyPremium?: boolean;
-    limit?: number;
-    dryRun?: boolean;
-  } = {};
-  
-  // Process arguments
-  args.forEach(arg => {
-    if (arg === '--skip-premium') options.skipPremium = true;
-    if (arg === '--only-premium') options.onlyPremium = true;
-    if (arg === '--dry-run') options.dryRun = true;
-    if (arg.startsWith('--limit=')) options.limit = parseInt(arg.split('=')[1], 10);
-  });
-  
-  // Run with the specified options
-  runEnhancedEmailExtraction(options);
-}
+// Start the extraction process
+enhancedEmailExtraction();

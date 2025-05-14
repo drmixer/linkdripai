@@ -3,11 +3,14 @@
  * This helps diagnose server downtime issues
  */
 
-import { Pool } from '@neondatabase/serverless';
+import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { eq, desc, sql } from 'drizzle-orm';
 import * as schema from '../shared/schema';
 import ws from 'ws';
+
+// Configure neon to use the WebSocket constructor
+neonConfig.webSocketConstructor = ws;
 
 // Database connection
 const connectionString = process.env.DATABASE_URL;
@@ -191,9 +194,8 @@ async function runResourceCheck() {
   }
 }
 
-// Run the check if executed directly
-if (require.main === module) {
-  runResourceCheck();
-}
+// Run the check when imported as a module
+// For ESM compatibility
+runResourceCheck();
 
 export { runResourceCheck };
