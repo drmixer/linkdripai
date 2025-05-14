@@ -492,12 +492,12 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
     console.log('Raw DB result:', JSON.stringify(statsResult));
     
     // Make sure we handle the result correctly
-    if (!statsResult || !statsResult.length || !statsResult[0]) {
+    if (!statsResult || !statsResult.rows || !statsResult.rows.length) {
       console.error('Failed to get current stats');
       return;
     }
     
-    const currentStats = statsResult[0];
+    const currentStats = statsResult.rows[0];
     
     // Convert string numbers to actual numbers if needed
     const total = parseInt(currentStats.total as any) || 0;
@@ -514,8 +514,19 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
     // Target coverage thresholds
     const targetPremiumCoverage = 0.9; // 90% target for premium opportunities
     
-    // Get all opportunities
-    const allOpportunities = await db.select().from(discoveredOpportunities).orderBy(desc(discoveredOpportunities.relevanceScore), desc(discoveredOpportunities.domainAuthority));
+    // Get all opportunities - using SQL query instead of Drizzle's orderBy
+    const opportunitiesQuery = await db.execute(sql`
+      SELECT *
+      FROM "discoveredOpportunities"
+      ORDER BY "relevanceScore" DESC, "domainAuthority" DESC
+    `);
+    
+    if (!opportunitiesQuery || !opportunitiesQuery.rows || !opportunitiesQuery.rows.length) {
+      console.error('Failed to get opportunities');
+      return;
+    }
+    
+    const allOpportunities = opportunitiesQuery.rows;
     
     // First, process premium opportunities if needed
     if (!premiumOnly) {
@@ -655,12 +666,12 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
     console.log('Raw final DB result:', JSON.stringify(finalStatsResult));
     
     // Make sure we handle the result correctly
-    if (!finalStatsResult || !finalStatsResult.length || !finalStatsResult[0]) {
+    if (!finalStatsResult || !finalStatsResult.rows || !finalStatsResult.rows.length) {
       console.error('Failed to get final stats');
       return;
     }
     
-    const finalStats = finalStatsResult[0];
+    const finalStats = finalStatsResult.rows[0];
     
     // Convert string numbers to actual numbers if needed
     const finalTotal = parseInt(finalStats.total as any) || 0;
