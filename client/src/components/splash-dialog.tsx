@@ -22,12 +22,12 @@ import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Package, Zap, CheckIcon, Loader2 } from 'lucide-react';
 
-interface BuySplashesDialogProps {
+interface SplashDialogProps {
   open: boolean;
   onOpenChange: (purchased: boolean) => void;
 }
 
-export default function BuySplashesDialog({ open, onOpenChange }: BuySplashesDialogProps) {
+export default function SplashDialog({ open, onOpenChange }: SplashDialogProps) {
   const { toast } = useToast();
   const [selectedPackage, setSelectedPackage] = useState<SplashPackage | null>(null);
   
