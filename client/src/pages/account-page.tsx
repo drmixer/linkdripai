@@ -1,266 +1,266 @@
-import { useEffect, useState } from "react";
-import Layout from "@/components/layout";
-import { SubscriptionCard } from "@/components/subscription-card";
-import { BuySplashesDialog } from "@/components/buy-splashes-dialog";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { User, CreditCard, Bell, Info, Sparkles, UsersRound, HardDrive } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Helmet } from 'react-helmet';
+import { useAuth } from '@/hooks/use-auth';
+import { useQuery } from '@tanstack/react-query';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { SubscriptionCard } from '@/components/subscription-card';
+import { BuySplashesDialog } from '@/components/buy-splashes-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, CreditCard, LucideIcon, Package, RefreshCw, Settings, User } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { format } from 'date-fns';
 
-export default function AccountPage() {
+interface UserStats {
+  remainingSplashes: number;
+  maxSplashesPerMonth: number;
+  hasActiveSubscription: boolean;
+  maxWebsites: number;
+  websites: any[];
+}
+
+const AccountSummary = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("subscription");
-  const [showBuySplashesDialog, setShowBuySplashesDialog] = useState(false);
+  const [isOpenSplashDialog, setIsOpenSplashDialog] = useState(false);
 
-  // Fetch user stats
-  const { data: userStats } = useQuery({
-    queryKey: ["/api/user-stats"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/user-stats");
-      return await response.json();
-    },
+  const { data: stats, isLoading, refetch } = useQuery<UserStats>({
+    queryKey: ['/api/subscription/user-stats'],
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const remainingSplashes = userStats?.remainingSplashes || 0;
-  const websiteCount = userStats?.websites?.length || 0;
-  const maxWebsites = userStats?.maxWebsites || 1;
+  const handleAddSplashes = () => {
+    setIsOpenSplashDialog(true);
+  };
+
+  const handleDialogClose = (purchased: boolean) => {
+    setIsOpenSplashDialog(false);
+    if (purchased) {
+      toast({
+        title: 'Purchase Successful',
+        description: 'Your Splash credits have been added to your account.',
+      });
+      refetch();
+    }
+  };
+
+  // Get subscription details
+  const { data: subscription } = useQuery({
+    queryKey: ['/api/subscription/subscription'],
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // If user has no subscription, it will be undefined or { isActive: false }
+  const isSubscribed = subscription?.subscription?.isActive || false;
+  const plan = subscription?.subscription?.plan || 'Free Trial';
+  const renewsAt = subscription?.subscription?.renewsAt ? new Date(subscription.subscription.renewsAt) : null;
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-20 w-20">
+            <AvatarFallback className="text-xl bg-primary/10 text-primary-800">
+              {user?.firstName?.[0]}{user?.lastName?.[0]}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h2 className="text-2xl font-bold">{user?.firstName} {user?.lastName}</h2>
+            <p className="text-muted-foreground">{user?.email}</p>
+          </div>
+        </div>
+        <Badge 
+          variant={isSubscribed ? "default" : "outline"}
+          className={isSubscribed ? "bg-green-600 hover:bg-green-700" : ""}
+        >
+          {isSubscribed ? `${plan} Plan` : 'Free Trial'}
+        </Badge>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Subscription</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{plan}</div>
+            {renewsAt && (
+              <p className="text-xs text-muted-foreground">
+                Renews on {format(renewsAt, 'MMMM dd, yyyy')}
+              </p>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" size="sm" className="w-full">
+              <CreditCard className="mr-2 h-4 w-4" />
+              Manage Subscription
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Splash Credits</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : stats?.remainingSplashes || 0} 
+              <span className="text-sm text-muted-foreground font-normal">
+                / {isLoading ? "..." : stats?.maxSplashesPerMonth || 0} per month
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Reset on the 1st of each month
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" size="sm" className="w-full" onClick={handleAddSplashes}>
+              <Package className="mr-2 h-4 w-4" />
+              Buy More Splashes
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Websites</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : stats?.websites?.length || 0}
+              <span className="text-sm text-muted-foreground font-normal">
+                / {isLoading ? "..." : stats?.maxWebsites || 1} allowed
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isLoading ? "Loading..." : stats?.websites?.map(w => w.domain).join(", ")}
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" size="sm" className="w-full" asChild>
+              <a href="/websites">
+                <Settings className="mr-2 h-4 w-4" />
+                Manage Websites
+              </a>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+
+      <BuySplashesDialog 
+        open={isOpenSplashDialog} 
+        onOpenChange={handleDialogClose} 
+      />
+    </div>
+  );
+};
+
+const SubscriptionTab = () => {
+  return (
+    <div className="max-w-4xl mx-auto">
+      <SubscriptionCard />
+    </div>
+  );
+};
+
+interface AccountTabProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}
+
+const AccountTab = ({ icon: Icon, title, description }: AccountTabProps) => {
+  return (
+    <div className="flex items-center gap-4">
+      <div className="p-2 rounded-full bg-primary/10">
+        <Icon className="h-5 w-5 text-primary" />
+      </div>
+      <div className="flex-1">
+        <h3 className="font-medium">{title}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+    </div>
+  );
+};
+
+export default function AccountPage() {
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   return (
-    <Layout title="Account" subtitle="Manage your subscription and account settings">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-3 lg:grid-cols-5 h-auto gap-2">
-          <TabsTrigger value="subscription" className="flex items-center gap-2 py-2">
-            <CreditCard className="h-4 w-4" />
-            <span className="hidden sm:inline">Subscription</span>
-          </TabsTrigger>
-          <TabsTrigger value="profile" className="flex items-center gap-2 py-2">
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Profile</span>
-          </TabsTrigger>
-          <TabsTrigger value="websites" className="flex items-center gap-2 py-2">
-            <HardDrive className="h-4 w-4" />
-            <span className="hidden sm:inline">Websites</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2 py-2">
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="about" className="flex items-center gap-2 py-2">
-            <Info className="h-4 w-4" />
-            <span className="hidden sm:inline">About</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Subscription Tab */}
-        <TabsContent value="subscription" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2">
-              <SubscriptionCard />
-            </div>
-            
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    Splash Credits
-                  </CardTitle>
-                  <CardDescription>
-                    Get high-quality backlink opportunities with DA 40+ instantly
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-lg">
-                    <div className="text-4xl font-bold text-primary">{remainingSplashes}</div>
-                    <div className="text-sm text-muted-foreground">Splashes Remaining</div>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => setShowBuySplashesDialog(true)}
-                    variant="premium"
-                    className="w-full gap-2"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Buy Splashes
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <UsersRound className="h-5 w-5 text-primary" />
-                    Website Usage
-                  </CardTitle>
-                  <CardDescription>
-                    Manage your website allocation
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-lg">
-                    <div className="text-2xl font-bold">
-                      {websiteCount} / {maxWebsites}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Websites Used</div>
-                  </div>
-                  
-                  {websiteCount >= maxWebsites && (
-                    <div className="text-sm text-muted-foreground text-center">
-                      To add more websites, upgrade your subscription plan.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Profile Tab */}
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Manage your personal information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">Full Name</h3>
-                    <p className="mt-1">{user?.firstName} {user?.lastName}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">Email</h3>
-                    <p className="mt-1">{user?.email}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">Username</h3>
-                    <p className="mt-1">{user?.username}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">Account Created</h3>
-                    <p className="mt-1">
-                      {user?.createdAt 
-                        ? new Date(user.createdAt).toLocaleDateString() 
-                        : "Not available"}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="pt-4">
-                  <Button variant="outline">Edit Profile</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Websites Tab */}
-        <TabsContent value="websites">
-          <Card>
-            <CardHeader>
-              <CardTitle>Website Management</CardTitle>
-              <CardDescription>
-                Manage your tracked websites
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {userStats?.websites && userStats.websites.length > 0 ? (
-                <div className="space-y-4">
-                  {userStats.websites.map((site: any) => (
-                    <div key={site.id} className="flex items-center justify-between border-b pb-4">
-                      <div>
-                        <h3 className="font-medium">{site.name}</h3>
-                        <p className="text-sm text-muted-foreground">{site.url}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">Edit</Button>
-                        <Button variant="outline" size="sm" className="text-destructive">Delete</Button>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {websiteCount < maxWebsites && (
-                    <Button className="mt-4">Add Website</Button>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <h3 className="font-medium mb-2">No websites added yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Add your first website to start receiving backlink opportunities
-                  </p>
-                  <Button>Add Website</Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notifications Tab */}
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>
-                Manage how you receive notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center py-8 text-muted-foreground">
-                Notification settings coming soon
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* About Tab */}
-        <TabsContent value="about">
-          <Card>
-            <CardHeader>
-              <CardTitle>About LinkDripAI</CardTitle>
-              <CardDescription>
-                Learn about the platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-medium">Version</h3>
-                <p className="text-sm text-muted-foreground">1.0.0</p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium">Description</h3>
-                <p className="text-sm text-muted-foreground">
-                  LinkDripAI is an AI-powered backlink prospecting tool that automatically finds relevant 
-                  link opportunities for your website. Our platform analyzes thousands of potential 
-                  backlink sources and matches them to your site using advanced AI algorithms.
-                </p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium">Contact</h3>
-                <p className="text-sm text-muted-foreground">
-                  For support or questions, please email: support@linkdripai.com
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+    <>
+      <Helmet>
+        <title>Account | LinkDripAI</title>
+        <meta name="description" content="Manage your LinkDripAI account, subscription, and Splash credits" />
+      </Helmet>
       
-      {/* Buy Splashes Dialog */}
-      <BuySplashesDialog
-        open={showBuySplashesDialog}
-        onOpenChange={setShowBuySplashesDialog}
-      />
-    </Layout>
+      <div className="container py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Account</h1>
+          <p className="text-muted-foreground">
+            Manage your account settings, subscription, and Splash credits
+          </p>
+        </div>
+
+        <Tabs defaultValue="summary" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="subscription">Subscription</TabsTrigger>
+            <TabsTrigger value="settings">Account Settings</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="summary">
+            <AccountSummary />
+          </TabsContent>
+          
+          <TabsContent value="subscription">
+            <SubscriptionTab />
+          </TabsContent>
+          
+          <TabsContent value="settings">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium">Account Settings</h3>
+                <p className="text-sm text-muted-foreground">Update your account information and preferences.</p>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-4">
+                <AccountTab 
+                  icon={User}
+                  title="Personal Information"
+                  description="Update your name, email, and other personal details"
+                />
+                
+                <AccountTab 
+                  icon={CreditCard}
+                  title="Billing Information"
+                  description="Update your payment methods and billing address"
+                />
+                
+                <AccountTab 
+                  icon={RefreshCw}
+                  title="Usage History"
+                  description="View your usage history and past invoices"
+                />
+                
+                <AccountTab 
+                  icon={Calendar}
+                  title="Subscription History"
+                  description="View your subscription plans and payment history"
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
   );
 }

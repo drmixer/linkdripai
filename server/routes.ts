@@ -17,6 +17,7 @@ import { EmailService, createEmailServiceForUser } from "./services/email-servic
 import emailWebhookRoutes from "./routes/email-webhook";
 import emailIntegrationRoutes from "./routes/email-integration-routes";
 import paymentRoutes from "./routes/payment-routes";
+import subscriptionRoutes from "./routes/subscription-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -27,6 +28,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register payment routes
   app.use('/api/payments', paymentRoutes);
+  
+  // Register subscription routes
+  app.use('/api/subscription', subscriptionRoutes);
   
   // Start the discovery scheduler to continuously find opportunities
   const discoveryScheduler = getDiscoveryScheduler();
