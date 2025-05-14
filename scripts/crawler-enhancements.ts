@@ -8,9 +8,9 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import dotenv from 'dotenv';
 import ws from 'ws';
 import axios from 'axios';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import { URL } from 'url';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import * as schema from '../shared/schema';
 
@@ -555,12 +555,13 @@ export async function enhanceCrawlerContactCollection() {
   console.log('🌐 Starting crawler contact enhancement...');
   
   try {
-    // Query opportunities without contact info or with minimal contact info
+    // Query opportunities with any of these statuses for processing
     const opportunities = await db.select()
       .from(schema.discoveredOpportunities)
       .where(
-        // Select opportunities without contact info or with empty contact info
-        eq(schema.discoveredOpportunities.status, 'discovered')
+        // Select opportunities that are in one of these statuses
+        // We'll check for email presence in the batch processing logic
+        schema.discoveredOpportunities.status.in(['discovered', 'analyzed', 'validated'])
       )
       .limit(100); // Process in batches
     
@@ -594,12 +595,11 @@ export async function enhanceCrawlerContactCollection() {
   }
 }
 
-// Run the enhancement if executed directly
-if (require.main === module) {
-  enhanceCrawlerContactCollection()
-    .then(() => console.log('Crawler contact enhancement script completed'))
-    .catch(err => {
-      console.error('Error running crawler contact enhancement:', err);
-      process.exit(1);
-    });
-}
+// Run the enhancement if imported directly
+// For ESM modules, we execute the main function directly
+enhanceCrawlerContactCollection()
+  .then(() => console.log('Crawler contact enhancement script completed'))
+  .catch(err => {
+    console.error('Error running crawler contact enhancement:', err);
+    process.exit(1);
+  });
