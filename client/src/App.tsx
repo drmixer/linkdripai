@@ -20,6 +20,7 @@ import WebsitesPage from "@/pages/websites";
 import BillingPage from "@/pages/billing";
 import HelpPage from "@/pages/help";
 import SettingsPage from "@/pages/settings";
+import AccountPage from "@/pages/account-page";
 
 function Router() {
   return (
