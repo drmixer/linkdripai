@@ -31,9 +31,9 @@ async function runQuickTest() {
     console.log(`- Premium opportunities: ${premiumStats[0].total}`);
     console.log(`- Premium with contact info: ${premiumStats[0].with_contact} (${((premiumStats[0].with_contact / premiumStats[0].total) * 100).toFixed(1)}%)`);
     
-    // First let's check that we have opportunities with sourceUrl field
+    // First let's check that we have opportunities with url field
     const opportunitiesWithUrls = await db.select({
-      count: sql`COUNT(*) FILTER (WHERE "sourceUrl" IS NOT NULL)`
+      count: sql`COUNT(*) FILTER (WHERE "url" IS NOT NULL)`
     }).from(discoveredOpportunities);
     
     console.log(`\nOpportunities with URLs: ${opportunitiesWithUrls[0].count}`);

@@ -210,13 +210,41 @@ function cleanupUrl(url: string): string {
  * Extract domain from URL
  */
 function extractDomain(url: string): string {
+  if (!url || typeof url !== 'string') {
+    console.warn(`Invalid URL: ${url}`);
+    return '';
+  }
+  
   try {
-    const parsedUrl = new URL(cleanupUrl(url));
-    return parsedUrl.hostname;
+    // First attempt with URL constructor
+    try {
+      // Make sure URL has protocol
+      let urlWithProtocol = url;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        urlWithProtocol = 'https://' + url;
+      }
+      
+      const parsedUrl = new URL(urlWithProtocol);
+      return parsedUrl.hostname.replace(/^www\./, '');
+    } catch (parseError) {
+      // If URL parsing fails, try basic extraction with regex
+      const match = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n\?\#]+)/im);
+      
+      if (match && match[1]) {
+        // Additional validation - must have at least one dot to be a domain
+        const domain = match[1];
+        if (domain.includes('.')) {
+          return domain;
+        }
+      }
+      
+      // If nothing worked, log warning and return empty string
+      console.warn(`Failed to extract domain from URL: ${url}`);
+      return '';
+    }
   } catch (error) {
-    // If URL parsing fails, try basic extraction
-    const match = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n]+)/im);
-    return match ? match[1] : '';
+    console.error(`Error extracting domain from URL: ${url} - ${error}`);
+    return '';
   }
 }
 
@@ -850,12 +878,12 @@ export async function runAdvancedContactExtraction(options: {
     console.log(`- Premium opportunities: ${premiumStats[0].total}`);
     console.log(`- Premium with contact info: ${premiumStats[0].with_contact} (${((premiumStats[0].with_contact / premiumStats[0].total) * 100).toFixed(1)}%)`);
     
-    // Determine which opportunities to process - make sure we only get ones with valid sourceUrl
+    // Determine which opportunities to process - make sure we only get ones with valid URLs
     let whereClause;
     if (premiumOnly) {
-      whereClause = sql`"isPremium" = true AND "sourceUrl" IS NOT NULL AND "sourceUrl" != '' AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`;
+      whereClause = sql`"isPremium" = true AND "url" IS NOT NULL AND "url" != '' AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`;
     } else {
-      whereClause = sql`"sourceUrl" IS NOT NULL AND "sourceUrl" != '' AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`;
+      whereClause = sql`"url" IS NOT NULL AND "url" != '' AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`;
     }
     
     // Get the total number of opportunities to process
@@ -956,15 +984,15 @@ async function processOpportunity(opportunity: any, isDryRun: boolean): Promise<
     console.log(`Processing opportunity ID: ${opportunity?.id}`);
     
     // Validate the opportunity has required fields
-    if (!opportunity || !opportunity.sourceUrl) {
+    if (!opportunity || !opportunity.url) {
       console.log('Missing required fields in opportunity. Skipping.');
       return { success: false, opportunity };
     }
     
-    console.log(`Processing opportunity: ${opportunity.title || 'Untitled'} (${opportunity.sourceUrl})`);
+    console.log(`Processing opportunity: ${opportunity.pageTitle || 'Untitled'} (${opportunity.url})`);
     
     // Extract domain for processing
-    const domain = extractDomain(opportunity.sourceUrl);
+    const domain = extractDomain(opportunity.url);
     console.log(`Domain: ${domain}`);
     
     // Skip if no valid domain could be extracted
@@ -990,21 +1018,21 @@ async function processOpportunity(opportunity: any, isDryRun: boolean): Promise<
       console.log('Extracting from source URL...');
       
       // Extract emails
-      const emails = await extractEmailsFromPage(opportunity.sourceUrl);
+      const emails = await extractEmailsFromPage(opportunity.url);
       if (emails.length > 0) {
         console.log(`Found ${emails.length} emails: ${emails.join(', ')}`);
         contactInfo.emails = [...new Set([...contactInfo.emails || [], ...emails])];
       }
       
       // Extract contact form
-      const contactForm = await findContactFormUrl(opportunity.sourceUrl);
+      const contactForm = await findContactFormUrl(opportunity.url);
       if (contactForm && (!contactInfo.contactForm || contactInfo.contactForm === '')) {
         console.log(`Found contact form: ${contactForm}`);
         contactInfo.contactForm = contactForm;
       }
       
       // Extract social profiles
-      const socialProfiles = await extractSocialProfiles(opportunity.sourceUrl);
+      const socialProfiles = await extractSocialProfiles(opportunity.url);
       if (socialProfiles.length > 0) {
         console.log(`Found ${socialProfiles.length} social profiles`);
         
@@ -1019,14 +1047,14 @@ async function processOpportunity(opportunity: any, isDryRun: boolean): Promise<
       }
       
       // Extract phone numbers
-      const phoneNumbers = await extractPhoneNumbers(opportunity.sourceUrl);
+      const phoneNumbers = await extractPhoneNumbers(opportunity.url);
       if (phoneNumbers.length > 0) {
         console.log(`Found ${phoneNumbers.length} phone numbers: ${phoneNumbers.join(', ')}`);
         contactInfo.phoneNumbers = [...new Set([...contactInfo.phoneNumbers || [], ...phoneNumbers])];
       }
       
       // Extract physical address
-      const address = await extractAddress(opportunity.sourceUrl);
+      const address = await extractAddress(opportunity.url);
       if (address && (!contactInfo.address || contactInfo.address === '')) {
         console.log(`Found address: ${address}`);
         contactInfo.address = address;
@@ -1039,7 +1067,7 @@ async function processOpportunity(opportunity: any, isDryRun: boolean): Promise<
     if (!contactInfo.emails.length || !contactInfo.contactForm || !contactInfo.socialProfiles.length) {
       try {
         console.log('Looking for additional contact pages...');
-        const contactPages = await findContactPages(opportunity.sourceUrl);
+        const contactPages = await findContactPages(opportunity.url);
         
         if (contactPages.length > 1) { // Skip the first one which is the source URL
           console.log(`Found ${contactPages.length - 1} additional contact pages`);
