@@ -57,6 +57,7 @@ export default function EmailOpportunityForm({
   const [fromName, setFromName] = useState('');
   const [fromEmail, setFromEmail] = useState('');
   const [showFallback, setShowFallback] = useState(false);
+  const [selectedContactMethod, setSelectedContactMethod] = useState<string>('email');
   
   // Get email settings to check if user has email configured
   const { data: emailSettings, isLoading: isLoadingSettings } = useQuery({
@@ -205,7 +206,37 @@ export default function EmailOpportunityForm({
   // Check if email is configured
   const isEmailConfigured = emailSettings?.configured && emailSettings?.verified;
   
-  if (!isEmailConfigured) {
+  // Check if we have contact information
+  const hasEmails = opportunityData?.contactInfo?.emails?.length > 0;
+  const hasSocialProfiles = opportunityData?.contactInfo?.socialProfiles?.length > 0;
+  const hasContactForms = opportunityData?.contactInfo?.contactForms?.length > 0;
+  
+  // If no contact information available at all
+  if (!hasEmails && !hasSocialProfiles && !hasContactForms && !defaultEmail && !isLoading) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Contact Opportunity</CardTitle>
+          <CardDescription>No contact information available</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>No Contact Information</AlertTitle>
+            <AlertDescription>
+              We couldn't find any contact information for this opportunity.
+              Try using our SuperEmailExtractor to find contact details.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+        <CardFooter>
+          <Button onClick={handleCancel}>Close</Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+  
+  if (!isEmailConfigured && selectedContactMethod === 'email') {
     return (
       <Card className="w-full">
         <CardHeader>
@@ -221,6 +252,42 @@ export default function EmailOpportunityForm({
               Please go to your account settings to set up email integration.
             </AlertDescription>
           </Alert>
+          
+          {(hasSocialProfiles || hasContactForms) && (
+            <div className="mt-4">
+              <Alert variant="default">
+                <AlertTitle>Alternative Contact Methods Available</AlertTitle>
+                <AlertDescription>
+                  This opportunity has alternative contact methods available.
+                  You can use one of these instead of email.
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex space-x-2 mt-4">
+                {hasSocialProfiles && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSelectedContactMethod('social')}
+                    className="flex items-center gap-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    View Social Profiles
+                  </Button>
+                )}
+                
+                {hasContactForms && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSelectedContactMethod('form')}
+                    className="flex items-center gap-2"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Use Contact Forms
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
         <CardFooter>
           <Button onClick={handleCancel}>Close</Button>
@@ -232,126 +299,253 @@ export default function EmailOpportunityForm({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Send Email</CardTitle>
-        <CardDescription>Send an email to this opportunity</CardDescription>
+        <CardTitle>Contact Opportunity</CardTitle>
+        <CardDescription>Reach out to this opportunity</CardDescription>
       </CardHeader>
+      
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="toEmail">To</Label>
-            <Input
-              id="toEmail"
-              placeholder="recipient@example.com"
-              value={toEmail}
-              onChange={(e) => setToEmail(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="websiteSelect">From Website</Label>
-            <Select 
-              value={selectedWebsite?.toString()} 
-              onValueChange={(value) => setSelectedWebsite(parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a website" />
-              </SelectTrigger>
-              <SelectContent>
-                {websitesData?.websites.map((website) => (
-                  <SelectItem key={website.id} value={website.id.toString()}>
-                    {website.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="templateSelect">Email Template</Label>
-          <Select onValueChange={handleTemplateChange} value={selectedTemplate || undefined}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a template" />
-            </SelectTrigger>
-            <SelectContent>
-              {templateData?.templates.map((template) => (
-                <SelectItem key={template.name} value={template.name}>
-                  {template.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="subject">Subject</Label>
-          <Input
-            id="subject"
-            placeholder="Email subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="body">Message</Label>
-          <Textarea
-            id="body"
-            placeholder="Your email message..."
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            className="min-h-[200px]"
-          />
-        </div>
-        
-        <Collapsible
-          open={showAdvancedOptions}
-          onOpenChange={setShowAdvancedOptions}
-          className="border rounded-md p-3"
+        {/* Contact Method Tabs */}
+        <Tabs 
+          value={selectedContactMethod} 
+          onValueChange={setSelectedContactMethod}
+          className="w-full"
         >
-          <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm font-medium">Advanced Options</span>
-              {showAdvancedOptions ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-3 space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="fromName">Custom From Name (Optional)</Label>
-                <Input
-                  id="fromName"
-                  placeholder="Your Name"
-                  value={fromName}
-                  onChange={(e) => setFromName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="fromEmail">Custom From Email (Optional)</Label>
-                <Input
-                  id="fromEmail"
-                  placeholder="your@email.com"
-                  value={fromEmail}
-                  onChange={(e) => setFromEmail(e.target.value)}
-                />
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger 
+              value="email" 
+              disabled={!hasEmails && !defaultEmail}
+              className="flex items-center gap-1"
+            >
+              <Mail className="h-4 w-4" />
+              Email
+              {!hasEmails && !defaultEmail && " (Unavailable)"}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="social" 
+              disabled={!hasSocialProfiles}
+              className="flex items-center gap-1"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Social
+              {!hasSocialProfiles && " (Unavailable)"}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="form" 
+              disabled={!hasContactForms}
+              className="flex items-center gap-1"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Contact Form
+              {!hasContactForms && " (Unavailable)"}
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Email Tab Content */}
+          <TabsContent value="email" className="pt-4 space-y-4">
+            {!isEmailConfigured ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Email Not Configured</AlertTitle>
+                <AlertDescription>
+                  You need to configure your email settings before sending emails.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="toEmail">To</Label>
+                    <Input
+                      id="toEmail"
+                      placeholder="recipient@example.com"
+                      value={toEmail}
+                      onChange={(e) => setToEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="websiteSelect">From Website</Label>
+                    <Select 
+                      value={selectedWebsite?.toString()} 
+                      onValueChange={(value) => setSelectedWebsite(parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a website" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {websitesData?.websites.map((website) => (
+                          <SelectItem key={website.id} value={website.id.toString()}>
+                            {website.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="templateSelect">Email Template</Label>
+                  <Select onValueChange={handleTemplateChange} value={selectedTemplate || undefined}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templateData?.templates.map((template) => (
+                        <SelectItem key={template.name} value={template.name}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input
+                    id="subject"
+                    placeholder="Email subject"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="body">Message</Label>
+                  <Textarea
+                    id="body"
+                    placeholder="Your email message..."
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    className="min-h-[200px]"
+                  />
+                </div>
+                
+                <Collapsible
+                  open={showAdvancedOptions}
+                  onOpenChange={setShowAdvancedOptions}
+                  className="border rounded-md p-3"
+                >
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between cursor-pointer">
+                      <span className="text-sm font-medium">Advanced Options</span>
+                      {showAdvancedOptions ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-3 space-y-3">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fromName">Custom From Name (Optional)</Label>
+                        <Input
+                          id="fromName"
+                          placeholder="Your Name"
+                          value={fromName}
+                          onChange={(e) => setFromName(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fromEmail">Custom From Email (Optional)</Label>
+                        <Input
+                          id="fromEmail"
+                          placeholder="your@email.com"
+                          value={fromEmail}
+                          onChange={(e) => setFromEmail(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </>
+            )}
+          </TabsContent>
+          
+          {/* Social Profiles Tab Content */}
+          <TabsContent value="social" className="pt-4 space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Contact via Social Profiles</AlertTitle>
+              <AlertDescription>
+                Reach out through one of the available social media platforms below.
+              </AlertDescription>
+            </Alert>
+            
+            <ScrollArea className="h-[300px] rounded-md border p-4">
+              {opportunityData?.contactInfo?.socialProfiles?.map((profile, index) => (
+                <div key={index} className="mb-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium capitalize">{profile.platform}</h4>
+                    <a 
+                      href={profile.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    >
+                      Open <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Username: {profile.username}
+                  </p>
+                  
+                  <Separator className="my-2" />
+                </div>
+              ))}
+            </ScrollArea>
+          </TabsContent>
+          
+          {/* Contact Forms Tab Content */}
+          <TabsContent value="form" className="pt-4 space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Contact via Form</AlertTitle>
+              <AlertDescription>
+                Use one of the available contact forms below to reach out.
+              </AlertDescription>
+            </Alert>
+            
+            <ScrollArea className="h-[300px] rounded-md border p-4">
+              {opportunityData?.contactInfo?.contactForms?.map((formUrl, index) => (
+                <div key={index} className="mb-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Contact Form {index + 1}</h4>
+                    <a 
+                      href={formUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    >
+                      Open Form <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    {formUrl}
+                  </p>
+                  
+                  <Separator className="my-2" />
+                </div>
+              ))}
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </CardContent>
+      
       <CardFooter className="flex justify-between">
         <Button variant="outline" onClick={handleCancel}>
           Cancel
         </Button>
-        <Button 
-          onClick={handleSendEmail}
-          disabled={sendEmailMutation.isPending}
-        >
-          {sendEmailMutation.isPending ? 'Sending...' : 'Send Email'}
-        </Button>
+        
+        {selectedContactMethod === 'email' && isEmailConfigured && (
+          <Button 
+            onClick={handleSendEmail}
+            disabled={sendEmailMutation.isPending}
+          >
+            {sendEmailMutation.isPending ? 'Sending...' : 'Send Email'}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
