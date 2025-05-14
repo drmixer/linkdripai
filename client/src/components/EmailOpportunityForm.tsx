@@ -53,6 +53,7 @@ export default function EmailOpportunityForm({
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [fromName, setFromName] = useState('');
   const [fromEmail, setFromEmail] = useState('');
+  const [showFallback, setShowFallback] = useState(false);
   
   // Get email settings to check if user has email configured
   const { data: emailSettings, isLoading: isLoadingSettings } = useQuery({

@@ -33,12 +33,16 @@ async function updateOpportunitiesWithoutEmail() {
   
   try {
     // Get all opportunities with contact info but no emails
-    const opportunitiesWithoutEmail = await db.execute(sql`
+    const query = `
       SELECT * FROM "discoveredOpportunities" 
       WHERE "contactInfo" IS NOT NULL 
       AND ("contactInfo"::jsonb->'emails' IS NULL 
            OR jsonb_array_length("contactInfo"::jsonb->'emails') = 0)
-    `);
+    `;
+    
+    const opportunitiesWithoutEmail = await db.query.discoveredOpportunities.findMany({
+      where: sql`"contactInfo" IS NOT NULL AND ("contactInfo"::jsonb->'emails' IS NULL OR jsonb_array_length("contactInfo"::jsonb->'emails') = 0)`
+    });
     
     console.log(`Found ${opportunitiesWithoutEmail.length} opportunities with contact info but no emails`);
     
