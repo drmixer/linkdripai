@@ -10,8 +10,8 @@
  * - 90-95% coverage for premium opportunities
  */
 
-import { db } from "@/db";
-import { discoveredOpportunities } from "@shared/schema";
+import { db } from "../server/db";
+import { discoveredOpportunities } from "../shared/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import * as cheerio from 'cheerio';
 import axios from 'axios';
@@ -480,7 +480,7 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
     console.log('Starting contact information coverage improvement process...');
     
     // First, get stats on current coverage
-    const [currentStats] = await db.execute(sql`
+    const statsResult = await db.execute(sql`
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN "contactInfo" IS NOT NULL AND "contactInfo" != '[]' AND "contactInfo" != '{}' THEN 1 ELSE 0 END) as with_contact,
@@ -489,11 +489,27 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
       FROM "discoveredOpportunities"
     `);
     
+    console.log('Raw DB result:', JSON.stringify(statsResult));
+    
+    // Make sure we handle the result correctly
+    if (!statsResult || !statsResult.length || !statsResult[0]) {
+      console.error('Failed to get current stats');
+      return;
+    }
+    
+    const currentStats = statsResult[0];
+    
+    // Convert string numbers to actual numbers if needed
+    const total = parseInt(currentStats.total as any) || 0;
+    const withContact = parseInt(currentStats.with_contact as any) || 0;
+    const premiumTotal = parseInt(currentStats.premium_total as any) || 0;
+    const premiumWithContact = parseInt(currentStats.premium_with_contact as any) || 0;
+    
     console.log('Current contact information coverage:');
-    console.log(`- Total opportunities: ${currentStats.total}`);
-    console.log(`- With contact info: ${currentStats.with_contact} (${((currentStats.with_contact / currentStats.total) * 100).toFixed(1)}%)`);
-    console.log(`- Premium opportunities: ${currentStats.premium_total}`);
-    console.log(`- Premium with contact info: ${currentStats.premium_with_contact} (${((currentStats.premium_with_contact / currentStats.premium_total) * 100).toFixed(1)}%)`);
+    console.log(`- Total opportunities: ${total}`);
+    console.log(`- With contact info: ${withContact} (${((withContact / total) * 100).toFixed(1)}%)`);
+    console.log(`- Premium opportunities: ${premiumTotal}`);
+    console.log(`- Premium with contact info: ${premiumWithContact} (${((premiumWithContact / premiumTotal) * 100).toFixed(1)}%)`);
     
     // Target coverage thresholds
     const targetPremiumCoverage = 0.9; // 90% target for premium opportunities
@@ -627,7 +643,7 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
     }
     
     // Get final stats
-    const [finalStats] = await db.execute(sql`
+    const finalStatsResult = await db.execute(sql`
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN "contactInfo" IS NOT NULL AND "contactInfo" != '[]' AND "contactInfo" != '{}' THEN 1 ELSE 0 END) as with_contact,
@@ -636,11 +652,27 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
       FROM "discoveredOpportunities"
     `);
     
+    console.log('Raw final DB result:', JSON.stringify(finalStatsResult));
+    
+    // Make sure we handle the result correctly
+    if (!finalStatsResult || !finalStatsResult.length || !finalStatsResult[0]) {
+      console.error('Failed to get final stats');
+      return;
+    }
+    
+    const finalStats = finalStatsResult[0];
+    
+    // Convert string numbers to actual numbers if needed
+    const finalTotal = parseInt(finalStats.total as any) || 0;
+    const finalWithContact = parseInt(finalStats.with_contact as any) || 0;
+    const finalPremiumTotal = parseInt(finalStats.premium_total as any) || 0;
+    const finalPremiumWithContact = parseInt(finalStats.premium_with_contact as any) || 0;
+    
     console.log('\nFinal contact information coverage:');
-    console.log(`- Total opportunities: ${finalStats.total}`);
-    console.log(`- With contact info: ${finalStats.with_contact} (${((finalStats.with_contact / finalStats.total) * 100).toFixed(1)}%)`);
-    console.log(`- Premium opportunities: ${finalStats.premium_total}`);
-    console.log(`- Premium with contact info: ${finalStats.premium_with_contact} (${((finalStats.premium_with_contact / finalStats.premium_total) * 100).toFixed(1)}%)`);
+    console.log(`- Total opportunities: ${finalTotal}`);
+    console.log(`- With contact info: ${finalWithContact} (${((finalWithContact / finalTotal) * 100).toFixed(1)}%)`);
+    console.log(`- Premium opportunities: ${finalPremiumTotal}`);
+    console.log(`- Premium with contact info: ${finalPremiumWithContact} (${((finalPremiumWithContact / finalPremiumTotal) * 100).toFixed(1)}%)`);
     
     console.log('Contact information coverage improvement process completed!');
   } catch (error) {
