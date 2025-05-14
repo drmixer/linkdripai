@@ -13,9 +13,10 @@ import axios from 'axios';
 
 // Configuration constants
 const MAX_RETRIES = 3;
-const THROTTLE_DELAY = 3000; // Default throttle delay between requests to the same domain (ms)
-const CONTACT_PAGE_DELAY = 1500; // Delay between checking contact pages (ms)
-const REQUEST_TIMEOUT = 15000; // Timeout for HTTP requests (ms)
+const THROTTLE_DELAY = 1500; // Default throttle delay between requests to the same domain (ms)
+const CONTACT_PAGE_DELAY = 1000; // Delay between checking contact pages (ms)
+const REQUEST_TIMEOUT = 10000; // Timeout for HTTP requests (ms)
+const MAX_EXECUTION_TIME = 180000; // Maximum execution time (ms) - 3 minutes
 
 // Map to track domain request times to prevent rate limiting
 const domainRequestTimes: Map<string, number> = new Map();
@@ -175,46 +176,74 @@ async function fetchHtml(url: string, maxRetries = MAX_RETRIES): Promise<string 
   const rootDomain = extractRootDomain(domain);
   domainRequestTimes.set(rootDomain, Date.now());
   
-  for (let retry = 0; retry <= maxRetries; retry++) {
-    try {
-      const response = await axios.get(url, {
-        headers: {
-          'User-Agent': getRandomUserAgent(),
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-          'Cache-Control': 'max-age=0'
-        },
-        timeout: REQUEST_TIMEOUT,
-        maxRedirects: 5
-      });
-      
-      if (response.status === 200) {
-        return response.data;
-      }
-    } catch (error) {
-      if (retry === maxRetries) {
-        console.error(`Failed to fetch ${url} after ${maxRetries} retries:`, error.message);
-        return null;
-      }
-      
-      // Handle specific error types differently
-      if (error.code === 'ECONNABORTED' || (error.response && error.response.status === 429)) {
-        // For timeouts and rate limiting, use longer delays
-        const extendedDelay = calculateBackoff(retry) * 1.5;
-        console.log(`Rate limiting or timeout detected for ${url} (attempt ${retry + 1}/${maxRetries}). Using extended backoff of ${Math.round(extendedDelay / 1000)}s...`);
-        await setTimeout(extendedDelay);
-      } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-        // For connection refused or host not found, might be a permanent issue
-        console.error(`Connection refused or host not found for ${url}: ${error.message}`);
-        return null; // Stop retrying immediately for these errors
-      } else {
-        // For all other errors, use standard backoff
-        const backoffTime = calculateBackoff(retry);
-        console.log(`Retry ${retry + 1}/${maxRetries} for ${url} due to ${error.message}. Waiting ${Math.round(backoffTime / 1000)}s...`);
-        await setTimeout(backoffTime);
+  // Try to handle 404 errors - check if it's a URL with query parameters
+  // and try the base URL instead
+  let urlsToTry = [url];
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.search) {
+      // Add the base URL without query parameters as a fallback
+      urlsToTry.push(`${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}`);
+    }
+  } catch (e) {
+    // Invalid URL, just use the original
+  }
+  
+  // Try all URL variations
+  for (const currentUrl of urlsToTry) {
+    for (let retry = 0; retry <= maxRetries; retry++) {
+      try {
+        const response = await axios.get(currentUrl, {
+          headers: {
+            'User-Agent': getRandomUserAgent(),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Cache-Control': 'max-age=0'
+          },
+          timeout: REQUEST_TIMEOUT,
+          maxRedirects: 5
+        });
+        
+        if (response.status === 200) {
+          return response.data;
+        }
+      } catch (error) {
+        if (retry === maxRetries) {
+          console.error(`Failed to fetch ${currentUrl} after ${maxRetries} retries:`, error.message);
+          
+          // If this is the last URL to try, we'll return null after the loop
+          if (currentUrl === urlsToTry[urlsToTry.length - 1]) {
+            break;
+          } else {
+            // If there are more URLs to try, break out of the retry loop for this URL
+            break;
+          }
+        }
+        
+        // Handle specific error types differently
+        if (error.response && error.response.status === 404) {
+          // For 404 errors, stop retrying this specific URL variation immediately
+          console.log(`URL returned 404 not found: ${currentUrl}, trying next fallback if available`);
+          break;
+        } else if (error.code === 'ECONNABORTED' || (error.response && error.response.status === 429)) {
+          // For timeouts and rate limiting, use longer delays
+          const extendedDelay = calculateBackoff(retry) * 1.5;
+          console.log(`Rate limiting or timeout detected for ${currentUrl} (attempt ${retry + 1}/${maxRetries}). Using extended backoff of ${Math.round(extendedDelay / 1000)}s...`);
+          await setTimeout(extendedDelay);
+        } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+          // For connection refused or host not found, might be a permanent issue
+          console.error(`Connection refused or host not found for ${currentUrl}: ${error.message}`);
+          // Try the next URL variation if available
+          break;
+        } else {
+          // For all other errors, use standard backoff
+          const backoffTime = calculateBackoff(retry);
+          console.log(`Retry ${retry + 1}/${maxRetries} for ${currentUrl} due to ${error.message}. Waiting ${Math.round(backoffTime / 1000)}s...`);
+          await setTimeout(backoffTime);
+        }
       }
     }
   }
@@ -285,8 +314,14 @@ async function extractEmailsFromPage(url: string): Promise<string[]> {
 /**
  * Find all contact pages by checking common paths
  */
-async function findContactPages(baseUrl: string): Promise<string[]> {
+async function findContactPages(baseUrl: string, startTime = Date.now()): Promise<string[]> {
   let url = baseUrl;
+  
+  // Check if we've exceeded the max execution time
+  if (Date.now() - startTime > MAX_EXECUTION_TIME) {
+    console.log('Maximum execution time reached in findContactPages, returning partial results');
+    return [];
+  }
   
   // Ensure baseUrl has a protocol
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -299,19 +334,16 @@ async function findContactPages(baseUrl: string): Promise<string[]> {
     const protocol = urlObj.protocol;
     const domain = urlObj.hostname;
     
-    // Common paths to check
+    // Common paths to check - prioritize the most important ones first
     const contactPaths = [
       '/contact', 
       '/contact-us',
       '/about/contact',
-      '/about-us/contact',
       '/reach-us',
       '/connect',
       '/get-in-touch',
       '/about', 
-      '/about-us',
-      '/team',
-      '/our-team'
+      '/about-us'
     ];
     
     const contactPages: string[] = [];
@@ -322,6 +354,9 @@ async function findContactPages(baseUrl: string): Promise<string[]> {
       try {
         const $ = cheerio.load(mainHtml);
         $('a').each((_, element) => {
+          // Check again for execution time to prevent long-running loops
+          if (Date.now() - startTime > MAX_EXECUTION_TIME) return;
+          
           const href = $(element).attr('href');
           const text = $(element).text().toLowerCase();
           
@@ -354,8 +389,22 @@ async function findContactPages(baseUrl: string): Promise<string[]> {
       }
     }
     
-    // Then check common paths
-    for (const path of contactPaths) {
+    // Check if we've already found contact pages from the main page links
+    if (contactPages.length >= 2) {
+      console.log(`Found ${contactPages.length} contact pages from main page links, skipping common paths check`);
+      return contactPages;
+    }
+    
+    // Then check common paths (limited to save time)
+    const pathsToCheck = contactPages.length === 0 ? contactPaths : contactPaths.slice(0, 3);
+    
+    for (const path of pathsToCheck) {
+      // Check if we've exceeded the max execution time
+      if (Date.now() - startTime > MAX_EXECUTION_TIME) {
+        console.log('Maximum execution time reached when checking contact paths, returning partial results');
+        return contactPages;
+      }
+      
       const contactUrl = `${protocol}//${domain}${path}`;
       if (!contactPages.includes(contactUrl)) {
         const html = await fetchHtml(contactUrl);
@@ -515,11 +564,13 @@ async function extractSocialProfiles(url: string): Promise<Array<{platform: stri
  */
 async function testContactExtraction() {
   try {
-    // Get a premium opportunity without contact info
-    const premiumOpportunity = await db.query.discoveredOpportunities.findFirst({
-      where: (opportunity, { eq, and, isNull, ne }) => (
+    // Get premium opportunities without contact info
+    // Also make sure the URL doesn't contain query parameters which often create issues
+    const premiumOpportunities = await db.query.discoveredOpportunities.findMany({
+      where: (opportunity, { eq, and, isNull, ne, not, like }) => (
         and(
           eq(opportunity.isPremium, true),
+          not(like(opportunity.url, '%?%')), // Avoid URLs with query parameters
           or(
             isNull(opportunity.contactInfo),
             eq(opportunity.contactInfo as any, '{}'),
@@ -527,80 +578,135 @@ async function testContactExtraction() {
           )
         )
       ),
-      orderBy: (opportunity, { desc }) => [desc(opportunity.domainAuthority)]
+      orderBy: (opportunity, { desc }) => [desc(opportunity.domainAuthority)],
+      limit: 3 // Get top 3 so we have fallbacks
     });
     
-    if (!premiumOpportunity) {
-      console.log('No premium opportunity without contact info found');
+    if (!premiumOpportunities.length) {
+      console.log('No premium opportunities without contact info found');
       return;
     }
     
-    console.log(`Testing contact extraction for: ${premiumOpportunity.title} (${premiumOpportunity.url})`);
+    // Try each opportunity in sequence until one is successful
+    let success = false;
     
-    const startTime = Date.now();
-    
-    // Start with the main domain URL
-    const url = premiumOpportunity.url;
-    
-    // Extract emails from main page
-    console.log(`Extracting emails from main page: ${url}`);
-    const emails = await extractEmailsFromPage(url);
-    console.log(`Found ${emails.length} emails on main page`);
-    
-    // Find and check contact pages
-    console.log(`Finding contact pages for ${url}`);
-    const contactPages = await findContactPages(url);
-    console.log(`Found ${contactPages.length} potential contact pages`);
-    
-    // Extract emails from contact pages
-    for (const contactPage of contactPages) {
+    for (const opportunity of premiumOpportunities) {
+      if (success) break;
+      
+      console.log(`\n=== Testing contact extraction for: ${opportunity.title} (${opportunity.url}) ===\n`);
+      
       try {
-        console.log(`Extracting emails from contact page: ${contactPage}`);
-        const pageEmails = await extractEmailsFromPage(contactPage);
-        console.log(`Found ${pageEmails.length} emails on contact page`);
+        const startTime = Date.now();
         
-        // Add unique emails
-        for (const email of pageEmails) {
-          if (!emails.includes(email)) {
-            emails.push(email);
+        // Start with the main domain URL
+        const url = opportunity.url;
+        const domain = extractDomain(url);
+        
+        // Try a simple HEAD request first to verify the site is responding
+        try {
+          console.log(`Checking if ${domain} is accessible...`);
+          await axios.head(url, { 
+            timeout: 5000,
+            headers: {
+              'User-Agent': getRandomUserAgent()
+            }
+          });
+          console.log(`${domain} is accessible, proceeding with extraction...`);
+        } catch (headError) {
+          console.log(`${domain} appears to be inaccessible: ${headError.message}`);
+          console.log(`Trying next opportunity...\n`);
+          continue; // Try the next opportunity
+        }
+        
+        // Extract emails from main page
+        console.log(`Extracting emails from main page: ${url}`);
+        const emails = await extractEmailsFromPage(url);
+        console.log(`Found ${emails.length} emails on main page`);
+        
+        // Find and check contact pages
+        console.log(`Finding contact pages for ${url}`);
+        const contactPages = await findContactPages(url);
+        console.log(`Found ${contactPages.length} potential contact pages`);
+        
+        // Extract emails from contact pages
+        for (const contactPage of contactPages) {
+          try {
+            console.log(`Extracting emails from contact page: ${contactPage}`);
+            const pageEmails = await extractEmailsFromPage(contactPage);
+            console.log(`Found ${pageEmails.length} emails on contact page`);
+            
+            // Add unique emails
+            for (const email of pageEmails) {
+              if (!emails.includes(email)) {
+                emails.push(email);
+              }
+            }
+            
+            // Rate limiting between pages
+            await setTimeout(CONTACT_PAGE_DELAY);
+          } catch (error) {
+            console.error(`Error extracting emails from contact page ${contactPage}: ${error.message}`);
           }
         }
         
-        // Rate limiting between pages
-        await setTimeout(CONTACT_PAGE_DELAY);
+        // Look for contact form
+        console.log(`Searching for contact form on ${url}`);
+        const contactForm = await findContactFormUrl(url);
+        console.log(`Contact form found: ${contactForm ? 'Yes' : 'No'}`);
+        
+        // Extract social profiles
+        console.log(`Extracting social profiles from ${url}`);
+        const socialProfiles = await extractSocialProfiles(url);
+        console.log(`Found ${socialProfiles.length} social profiles`);
+        
+        // Prepare contact information
+        const contactInfo = {
+          emails: emails,
+          contactForm: contactForm,
+          socialProfiles: socialProfiles
+        };
+        
+        console.log('\nExtracted contact information:');
+        console.log(JSON.stringify(contactInfo, null, 2));
+        
+        // Calculate execution time
+        const executionTime = (Date.now() - startTime) / 1000;
+        console.log(`\nExecution completed in ${executionTime.toFixed(2)} seconds`);
+        
+        // Mark as successful to avoid trying more opportunities
+        success = true;
       } catch (error) {
-        console.error(`Error extracting emails from contact page ${contactPage}: ${error.message}`);
+        console.error(`Error processing opportunity ${opportunity.url}:`, error.message);
+        console.log('Trying next opportunity...\n');
       }
     }
     
-    // Look for contact form
-    console.log(`Searching for contact form on ${url}`);
-    const contactForm = await findContactFormUrl(url);
-    console.log(`Contact form found: ${contactForm ? 'Yes' : 'No'}`);
-    
-    // Extract social profiles
-    console.log(`Extracting social profiles from ${url}`);
-    const socialProfiles = await extractSocialProfiles(url);
-    console.log(`Found ${socialProfiles.length} social profiles`);
-    
-    // Prepare contact information
-    const contactInfo = {
-      emails: emails,
-      contactForm: contactForm,
-      socialProfiles: socialProfiles
-    };
-    
-    console.log('\nExtracted contact information:');
-    console.log(JSON.stringify(contactInfo, null, 2));
-    
-    // Calculate execution time
-    const executionTime = (Date.now() - startTime) / 1000;
-    console.log(`\nExecution completed in ${executionTime.toFixed(2)} seconds`);
+    if (!success) {
+      console.log('Failed to extract contact information from any of the tested opportunities');
+    }
     
   } catch (error) {
     console.error('Error in test contact extraction:', error);
   }
 }
 
+// Run the test with a timeout
+console.log(`Running test with a maximum execution time of ${MAX_EXECUTION_TIME / 1000} seconds`);
+
+// Set a timeout to prevent the script from hanging indefinitely
+const timeoutId = setTimeout(() => {
+  console.log(`\nTest script reached maximum execution time of ${MAX_EXECUTION_TIME / 1000} seconds.`);
+  console.log('Terminating the script. You may want to try with a different opportunity.');
+  process.exit(1);
+}, MAX_EXECUTION_TIME + 10000); // Add 10 seconds buffer for clean shutdown
+
+// Make the timeout unref so it doesn't keep the process alive
+timeoutId.unref();
+
 // Run the test
-testContactExtraction().catch(console.error);
+testContactExtraction()
+  .catch(console.error)
+  .finally(() => {
+    // Clear the timeout when the test completes
+    clearTimeout(timeoutId);
+  });
