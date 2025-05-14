@@ -41,7 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { BuySplashesDialog } from "@/components/buy-splashes-dialog";
+import SplashDialog from "@/components/splash-dialog";
 import { 
   CreditCard, 
   Package2, 
@@ -667,10 +667,14 @@ export default function BillingPage() {
       </Dialog>
 
       {/* Buy Splashes Dialog */}
-      <BuySplashesDialog 
+      <SplashDialog 
         open={isSplashesDialogOpen}
-        onOpenChange={setIsSplashesDialogOpen}
-        onClose={() => setIsSplashesDialogOpen(false)}
+        onOpenChange={(purchased) => {
+          setIsSplashesDialogOpen(false);
+          if (purchased) {
+            queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+          }
+        }}
       />
     </Layout>
   );

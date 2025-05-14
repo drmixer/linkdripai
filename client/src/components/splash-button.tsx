@@ -15,7 +15,7 @@ import { Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import BuySplashesDialog from "@/components/buy-splashes-dialog";
+import SplashDialog from "@/components/splash-dialog";
 
 interface SplashButtonProps {
   remainingSplashes: number;
@@ -129,7 +129,7 @@ export function SplashButton({
       </AlertDialog>
       
       {/* Buy Splashes Dialog */}
-      <BuySplashesDialog 
+      <SplashDialog 
         open={showBuySplashesDialog} 
         onOpenChange={setShowBuySplashesDialog}
       />

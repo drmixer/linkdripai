@@ -11,7 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Logo from "@/components/logo";
-import { BuySplashesDialog } from "./buy-splashes-dialog";
+import SplashDialog from "@/components/splash-dialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -219,10 +219,11 @@ export default function Header() {
       </div>
 
       {/* Splashes Dialog */}
-      <BuySplashesDialog 
+      <SplashDialog 
         open={showSplashDialog}
-        onOpenChange={setShowSplashDialog}
-        onClose={() => setShowSplashDialog(false)}
+        onOpenChange={(purchased) => {
+          setShowSplashDialog(false);
+        }}
       />
     </header>
   );
