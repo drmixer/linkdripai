@@ -787,28 +787,28 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
           const opportunitiesToProcess = regularOpportunities.slice(0, toProcess);
           
           // Process in batches
-        const totalRegularBatches = Math.ceil(opportunitiesToProcess.length / batchSize);
-        
-        for (let batchIndex = 0; batchIndex < totalRegularBatches; batchIndex++) {
-          const start = batchIndex * batchSize;
-          const end = Math.min(start + batchSize, opportunitiesToProcess.length);
-          const batch = opportunitiesToProcess.slice(start, end);
+          const totalRegularBatches = Math.ceil(opportunitiesToProcess.length / batchSize);
           
-          console.log(`Processing regular batch ${batchIndex + 1} of ${totalRegularBatches} (${start + 1} to ${end} of ${opportunitiesToProcess.length})`);
-          
-          // Process opportunities in sequence
-          for (const opportunity of batch) {
-            await processOpportunity(opportunity, false, isDryRun); // false = regular opportunity
+          for (let batchIndex = 0; batchIndex < totalRegularBatches; batchIndex++) {
+            const start = batchIndex * batchSize;
+            const end = Math.min(start + batchSize, opportunitiesToProcess.length);
+            const batch = opportunitiesToProcess.slice(start, end);
             
-            // Add a small delay between opportunities
-            await setTimeout(1000);
-          }
+            console.log(`Processing regular batch ${batchIndex + 1} of ${totalRegularBatches} (${start + 1} to ${end} of ${opportunitiesToProcess.length})`);
           
-          // Add a delay between batches
-          if (batchIndex < totalRegularBatches - 1) {
-            console.log('Waiting between regular batches...');
-            await setTimeout(5000);
-          }
+            // Process opportunities in sequence
+            for (const opportunity of batch) {
+              await processOpportunity(opportunity, false, isDryRun); // false = regular opportunity
+              
+              // Add a small delay between opportunities
+              await setTimeout(1000);
+            }
+            
+            // Add a delay between batches
+            if (batchIndex < totalRegularBatches - 1) {
+              console.log('Waiting between regular batches...');
+              await setTimeout(5000);
+            }
         }
       }
     } else {
