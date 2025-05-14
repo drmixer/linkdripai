@@ -7,36 +7,27 @@
 
 import { db } from "../server/db";
 import { discoveredOpportunities } from "../shared/schema";
-import { eq, not, isNull } from "drizzle-orm";
+import { eq, not, isNull, sql } from "drizzle-orm";
 
 async function checkContactCoverage() {
   console.log("🔍 Checking current contact information coverage...");
 
   try {
     // Count total opportunities
-    const totalOpportunities = await db.select({ count: db.fn.count() }).from(discoveredOpportunities);
-    const totalCount = Number(totalOpportunities[0]?.count || 0);
+    const [totalResult] = await db.execute(sql`SELECT COUNT(*) as total FROM "discoveredOpportunities"`);
+    const totalCount = Number(totalResult?.total || 0);
     
     // Count opportunities with contact info (non-null contactInfo)
-    const opportunitiesWithContact = await db.select({ count: db.fn.count() })
-      .from(discoveredOpportunities)
-      .where(not(isNull(discoveredOpportunities.contactInfo)));
-    const contactCount = Number(opportunitiesWithContact[0]?.count || 0);
+    const [contactResult] = await db.execute(sql`SELECT COUNT(*) as contact_count FROM "discoveredOpportunities" WHERE "contactInfo" IS NOT NULL`);
+    const contactCount = Number(contactResult?.contact_count || 0);
     
     // Count premium opportunities
-    const premiumOpportunities = await db.select({ count: db.fn.count() })
-      .from(discoveredOpportunities)
-      .where(eq(discoveredOpportunities.isPremium, true));
-    const premiumCount = Number(premiumOpportunities[0]?.count || 0);
+    const [premiumResult] = await db.execute(sql`SELECT COUNT(*) as premium_count FROM "discoveredOpportunities" WHERE "isPremium" = true`);
+    const premiumCount = Number(premiumResult?.premium_count || 0);
     
     // Count premium opportunities with contact info
-    const premiumWithContact = await db.select({ count: db.fn.count() })
-      .from(discoveredOpportunities)
-      .where(
-        eq(discoveredOpportunities.isPremium, true),
-        not(isNull(discoveredOpportunities.contactInfo))
-      );
-    const premiumContactCount = Number(premiumWithContact[0]?.count || 0);
+    const [premiumContactResult] = await db.execute(sql`SELECT COUNT(*) as premium_contact_count FROM "discoveredOpportunities" WHERE "isPremium" = true AND "contactInfo" IS NOT NULL`);
+    const premiumContactCount = Number(premiumContactResult?.premium_contact_count || 0);
     
     // Calculate coverage percentages
     const overallCoverage = totalCount > 0 ? (contactCount / totalCount) * 100 : 0;
