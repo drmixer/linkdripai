@@ -45,7 +45,7 @@ import {
   Droplet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Prospect } from "@shared/schema";
+import { Prospect, DiscoveredOpportunity } from "@shared/schema";
 import { SimpleCheckbox } from "@/components/simple-checkbox";
 
 interface SiteSettings {
@@ -560,22 +560,37 @@ export default function Dashboard() {
           ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           : "flex flex-col space-y-3"
         }>
-          {filteredOpportunities.map((prospect: Prospect) => (
-            <OpportunityCard 
-              key={prospect.id} 
-              prospect={prospect}
-              onEmail={() => handleEmailClick(prospect)}
-              onHide={() => {
-                // Remove this prospect from the filtered list after hiding
-                queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
-              }}
-              isNew={prospect.isNew ?? true}
-              selectable={true}
-              selected={selectedItems.includes(prospect.id)}
-              onSelectChange={(selected) => handleItemSelect(prospect.id, selected)}
-              view={viewMode}
-            />
-          ))}
+          {filteredOpportunities.map((prospect: Prospect) => {
+            // Map Prospect to DiscoveredOpportunity
+            const opportunity: DiscoveredOpportunity = {
+              id: prospect.id,
+              siteName: prospect.siteName || '',
+              siteType: prospect.siteType || '',
+              domain: prospect.domain || '',
+              url: prospect.url || '',
+              domainAuthority: prospect.domainAuthority || '0',
+              pageAuthority: prospect.pageAuthority || '0',
+              spamScore: prospect.spamScore || '0',
+              description: prospect.description || '',
+              category: prospect.category || '',
+              relevanceScore: prospect.relevanceScore || 0,
+              isPremium: prospect.isPremium || false,
+              matchExplanation: prospect.matchExplanation || {},
+              websiteId: prospect.websiteId || 1,
+              niche: prospect.niche || '',
+              createdAt: prospect.createdAt || null,
+              contactInfo: prospect.contactInfo || null
+            };
+            
+            return (
+              <OpportunityCard 
+                key={prospect.id} 
+                opportunity={opportunity}
+                websiteId={prospect.websiteId || 1}
+                onContactClick={() => handleEmailClick(prospect)}
+              />
+            );
+          })}
         </div>
       ) : (
         <Card className="p-8 text-center">
