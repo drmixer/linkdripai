@@ -65,11 +65,51 @@ function calculateBackoff(retry: number, baseDelay = 1000, maxDelay = 30000): nu
  * @param minTimeBetweenRequests Minimum time between requests to the same domain in ms
  */
 function shouldThrottleDomain(domain: string, minTimeBetweenRequests = THROTTLE_DELAY): boolean {
-  const lastRequestTime = domainRequestTimes.get(domain);
+  // Extract the root domain to avoid subdomains bypassing throttling
+  const rootDomain = extractRootDomain(domain);
+  
+  const lastRequestTime = domainRequestTimes.get(rootDomain);
   if (!lastRequestTime) return false;
   
   const timeSinceLastRequest = Date.now() - lastRequestTime;
   return timeSinceLastRequest < minTimeBetweenRequests;
+}
+
+/**
+ * Extract root domain from a domain name
+ * This helps prevent different subdomains of the same site from bypassing throttling
+ */
+function extractRootDomain(domain: string): string {
+  try {
+    const parts = domain.split('.');
+    
+    // Special cases for known domains with secondary TLDs
+    if (parts.length > 2) {
+      const lastPart = parts[parts.length - 1];
+      const secondLastPart = parts[parts.length - 2];
+      
+      // Handle cases like .co.uk, .com.au, etc.
+      if ((secondLastPart === 'co' || secondLastPart === 'com' || secondLastPart === 'org' || 
+           secondLastPart === 'net' || secondLastPart === 'gov' || secondLastPart === 'edu') && 
+          lastPart.length <= 3) {
+        // If we have enough parts, return the actual domain
+        if (parts.length > 3) {
+          return `${parts[parts.length - 3]}.${secondLastPart}.${lastPart}`;
+        }
+      }
+    }
+    
+    // Default case: use the last two parts of the domain
+    if (parts.length >= 2) {
+      return parts.slice(-2).join('.');
+    }
+    
+    // Fallback
+    return domain;
+  } catch (error) {
+    console.warn(`Error extracting root domain from ${domain}: ${error.message}`);
+    return domain;
+  }
 }
 
 /**
@@ -132,8 +172,9 @@ async function fetchHtml(url: string, maxRetries = MAX_RETRIES): Promise<string 
     await setTimeout(waitTime);
   }
   
-  // Record this request time
-  domainRequestTimes.set(domain, Date.now());
+  // Record this request time for the root domain to prevent subdomains from bypassing throttling
+  const rootDomain = extractRootDomain(domain);
+  domainRequestTimes.set(rootDomain, Date.now());
   
   for (let retry = 0; retry <= maxRetries; retry++) {
     try {
@@ -156,13 +197,26 @@ async function fetchHtml(url: string, maxRetries = MAX_RETRIES): Promise<string 
       }
     } catch (error) {
       if (retry === maxRetries) {
-        console.error(`Failed to fetch ${url} after ${maxRetries} retries:`, error);
+        console.error(`Failed to fetch ${url} after ${maxRetries} retries:`, error.message);
         return null;
       }
       
-      const backoffTime = calculateBackoff(retry);
-      console.log(`Retry ${retry + 1}/${maxRetries} for ${url} in ${backoffTime}ms`);
-      await setTimeout(backoffTime);
+      // Handle specific error types differently
+      if (error.code === 'ECONNABORTED' || (error.response && error.response.status === 429)) {
+        // For timeouts and rate limiting, use longer delays
+        const extendedDelay = calculateBackoff(retry) * 1.5;
+        console.log(`Rate limiting or timeout detected for ${url} (attempt ${retry + 1}/${maxRetries}). Using extended backoff of ${Math.round(extendedDelay / 1000)}s...`);
+        await setTimeout(extendedDelay);
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        // For connection refused or host not found, might be a permanent issue
+        console.error(`Connection refused or host not found for ${url}: ${error.message}`);
+        return null; // Stop retrying immediately for these errors
+      } else {
+        // For all other errors, use standard backoff
+        const backoffTime = calculateBackoff(retry);
+        console.log(`Retry ${retry + 1}/${maxRetries} for ${url} due to ${error.message}. Waiting ${Math.round(backoffTime / 1000)}s...`);
+        await setTimeout(backoffTime);
+      }
     }
   }
   
@@ -476,7 +530,7 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
   // For backward compatibility, if a boolean is passed, assume it's isDryRun
   const isDryRun = typeof config === 'boolean' ? config : config.isDryRun ?? false;
   const premiumOnly = typeof config === 'boolean' ? false : config.premiumOnly ?? false;
-  const batchSize = typeof config === 'boolean' ? BATCH_SIZE : config.batchSize ?? BATCH_SIZE;
+  const batchSize = typeof config === 'boolean' ? DEFAULT_BATCH_SIZE : config.batchSize ?? DEFAULT_BATCH_SIZE;
   
   try {
     console.log('Starting contact information coverage improvement process...');
