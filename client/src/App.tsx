@@ -40,6 +40,7 @@ function Router() {
       <ProtectedRoute path="/onboarding/improved" component={Onboarding} skipOnboardingCheck={true} />
       <ProtectedRoute path="/websites" component={WebsitesPage} />
       <ProtectedRoute path="/billing" component={BillingPage} />
+      <ProtectedRoute path="/account" component={AccountPage} />
       <ProtectedRoute path="/help" component={HelpPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route path="/auth" component={AuthPage} />

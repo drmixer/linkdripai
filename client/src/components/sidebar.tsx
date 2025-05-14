@@ -13,7 +13,8 @@ import {
   PlusCircleIcon,
   LineChartIcon,
   UnlockIcon,
-  SettingsIcon
+  SettingsIcon,
+  UserIcon
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,11 @@ export default function Sidebar() {
       label: "Billing & Add-ons",
       icon: CreditCardIcon,
       href: "/billing",
+    },
+    {
+      label: "Account",
+      icon: UserIcon,
+      href: "/account",
     },
     {
       label: "Help Center",
