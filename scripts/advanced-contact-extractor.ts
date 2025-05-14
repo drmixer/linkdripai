@@ -15,129 +15,74 @@
  * 7. LinkedIn company page scraping
  */
 
-import { db } from '../server/db';
-import { discoveredOpportunities } from '../shared/schema';
-import { sql } from 'drizzle-orm';
-import axios from 'axios';
-import * as cheerio from 'cheerio';
-import { URL } from 'url';
-import * as fs from 'fs';
-import * as path from 'path';
+import { db } from "../server/db";
+import { eq, and, or, isNull, not } from "drizzle-orm";
+import { discoveredOpportunities } from "../shared/schema";
+import axios from "axios";
+import * as cheerio from "cheerio";
+import { URL } from "url";
+import * as https from "https";
+import * as dns from "dns";
+import * as punycode from "punycode";
 
-// Configuration Constants
-const MAX_RETRIES = 5; // Maximum number of retry attempts per URL
-const THROTTLE_DELAY = 5000; // Minimum time between requests to the same domain (ms)
-const BATCH_SIZE = 15; // Process opportunities in batches to avoid overwhelming API limits
-const TIMEOUT = 20000; // Timeout for HTTP requests (ms)
-const USER_AGENT_LIST = [
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0',
-  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
+// Configuration
+const MAX_RETRIES = 3;
+const THROTTLE_DELAY = 5000; // ms between requests to same domain
+const REQUEST_TIMEOUT = 15000; // 15 second timeout
+const MAX_EXECUTION_TIME = 10000; // 10 seconds per opportunity
+const domainLastAccessTime: Record<string, number> = {};
+const USER_AGENTS = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
 ];
 
-// Domain request trackers for throttling
-const lastRequestByDomain: { [domain: string]: number } = {};
+const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+const OBFUSCATED_EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+\s*(?:\[at\]|\(at\)|@|&#64;|%40)\s*[A-Za-z0-9.-]+\s*(?:\[dot\]|\(dot\)|\.|\.|&#46;|%2E)\s*[A-Z|a-z]{2,}\b/g;
 
-// Cache for URL fetching to avoid redundant requests
-const urlCache: { [url: string]: { html: string, time: number } } = {};
-
-// Common contact page paths to check
-const CONTACT_PAGE_PATHS = [
-  '/contact', '/contact-us', '/about/contact', '/contact/index.html', 
-  '/about/contact-us', '/contactus', '/connect', '/reach-us', '/reach-out',
-  '/get-in-touch', '/about-us/contact', '/contact/contact-us',
-  '/about', '/about-us', '/about/about-us', '/team', '/our-team', 
-  '/meet-the-team', '/about/team', '/about/our-team', '/people',
-  '/company/team', '/company/about', '/company/contact'
+const SOCIAL_PLATFORM_PATTERNS = [
+  { platform: "facebook", regex: /(?:facebook\.com|fb\.com)\/(?!share|sharer)([^/?&]+)/i },
+  { platform: "twitter", regex: /(?:twitter\.com|x\.com)\/([^/?&]+)/i },
+  { platform: "linkedin", regex: /linkedin\.com\/(?:company|in|school)\/([^/?&]+)/i },
+  { platform: "instagram", regex: /instagram\.com\/([^/?&]+)/i },
+  { platform: "youtube", regex: /youtube\.com\/(?:channel\/|user\/|c\/)?([^/?&]+)/i },
+  { platform: "pinterest", regex: /pinterest\.com\/([^/?&]+)/i },
+  { platform: "github", regex: /github\.com\/([^/?&]+)/i },
+  { platform: "medium", regex: /medium\.com\/@?([^/?&]+)/i },
+  { platform: "reddit", regex: /reddit\.com\/(?:r|user)\/([^/?&]+)/i },
 ];
 
-// Regular expression patterns for extracting emails
-// Includes patterns for obfuscated and encoded emails
-const EMAIL_PATTERNS = [
-  /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, // Standard email format
-  /\b[A-Za-z0-9._%+-]+\s*[\[\(]at\[\)\]\s*[A-Za-z0-9.-]+\s*[\[\(]dot[\)\]\s*[A-Z|a-z]{2,}\b/g, // Obfuscated with (at) and (dot)
-  /\b[A-Za-z0-9._%+-]+\s*&#(?:x0*[0-9a-f]{2}|0*\d{3});[A-Za-z0-9.-]+\s*&#(?:x0*[0-9a-f]{2}|0*\d{3});[A-Z|a-z]{2,}\b/g, // HTML entity encoded
-  /data-email="([^"]+)"/g, // Data attribute encoded email
-  /Email:\s*<strong>([^<]+)<\/strong>/g, // Common email label pattern
-  /\b[A-Za-z0-9._%+-]+ at [A-Za-z0-9.-]+ dot [A-Z|a-z]{2,}\b/g, // Text 'at' and 'dot'
-  /\b[A-Za-z0-9._%+-]+\(at\)[A-Za-z0-9.-]+\(dot\)[A-Z|a-z]{2,}\b/g // With (at) and (dot)
+const COMMON_CONTACT_PATHS = [
+  "/contact", "/contact-us", "/contactus", "/get-in-touch", "/reach-us", "/connect", 
+  "/about/contact", "/about-us/contact", "/support", "/help", "/write-for-us", 
+  "/contributors", "/contribute", "/contact.html", "/contact.php", "/reach-out",
+  "/about", "/about-us", "/team", "/our-team", "/meet-the-team", "/people", "/staff"
 ];
 
-// Common social media domains and their extraction patterns
-const SOCIAL_PLATFORMS = [
-  {
-    name: 'LinkedIn',
-    domains: ['linkedin.com', 'lnkd.in'],
-    patterns: [
-      /linkedin\.com\/(?:company|school|in)\/([^\/\s"']+)/i,
-      /lnkd\.in\/([^\/\s"']+)/i,
-      /linkedin\.com\/in\/([^\/\s"']+)/i
-    ],
-    iconUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/linkedin.svg'
+// Axios instance with optimal settings for web scraping
+const axiosInstance = axios.create({
+  timeout: REQUEST_TIMEOUT,
+  maxRedirects: 5,
+  headers: {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Cache-Control': 'max-age=0',
   },
-  {
-    name: 'Twitter',
-    domains: ['twitter.com', 'x.com', 't.co'],
-    patterns: [
-      /twitter\.com\/([^\/\s"']+)/i,
-      /x\.com\/([^\/\s"']+)/i,
-      /t\.co\/([^\/\s"']+)/i
-    ],
-    iconUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/twitter.svg'
-  },
-  {
-    name: 'Facebook',
-    domains: ['facebook.com', 'fb.com', 'fb.me'],
-    patterns: [
-      /facebook\.com\/(?:pages\/)?([^\/\s"'?]+)/i,
-      /fb\.com\/([^\/\s"']+)/i,
-      /fb\.me\/([^\/\s"']+)/i
-    ],
-    iconUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/facebook.svg'
-  },
-  {
-    name: 'Instagram',
-    domains: ['instagram.com', 'instagr.am'],
-    patterns: [
-      /instagram\.com\/([^\/\s"']+)/i,
-      /instagr\.am\/([^\/\s"']+)/i
-    ],
-    iconUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/instagram.svg'
-  },
-  {
-    name: 'YouTube',
-    domains: ['youtube.com', 'youtu.be'],
-    patterns: [
-      /youtube\.com\/(?:channel\/|c\/|user\/)?([^\/\s"']+)/i,
-      /youtu\.be\/([^\/\s"']+)/i
-    ],
-    iconUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/youtube.svg'
-  },
-  {
-    name: 'GitHub',
-    domains: ['github.com'],
-    patterns: [
-      /github\.com\/([^\/\s"']+)/i
-    ],
-    iconUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/github.svg'
-  },
-  {
-    name: 'Medium',
-    domains: ['medium.com'],
-    patterns: [
-      /medium\.com\/(?:@)?([^\/\s"']+)/i
-    ],
-    iconUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v8/icons/medium.svg'
-  }
-];
+  httpsAgent: new https.Agent({
+    rejectUnauthorized: false, // Accept self-signed certificates
+    keepAlive: true,
+  }),
+});
 
 /**
  * Get a random user agent from the list
  */
 function getRandomUserAgent(): string {
-  return USER_AGENT_LIST[Math.floor(Math.random() * USER_AGENT_LIST.length)];
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
 /**
@@ -147,9 +92,9 @@ function getRandomUserAgent(): string {
  * @param maxDelay The maximum delay in milliseconds
  */
 function calculateBackoff(retry: number, baseDelay = 1000, maxDelay = 30000): number {
-  const expBackoff = Math.min(maxDelay, baseDelay * Math.pow(2, retry));
-  // Add jitter to avoid request clustering
-  return expBackoff + Math.random() * 1000;
+  const exponentialDelay = Math.min(maxDelay, baseDelay * Math.pow(2, retry));
+  const jitter = Math.random() * 0.3 * exponentialDelay; // Add up to 30% jitter
+  return exponentialDelay + jitter;
 }
 
 /**
@@ -158,15 +103,46 @@ function calculateBackoff(retry: number, baseDelay = 1000, maxDelay = 30000): nu
  * @param minTimeBetweenRequests Minimum time between requests to the same domain in ms
  */
 function shouldThrottleDomain(domain: string, minTimeBetweenRequests = THROTTLE_DELAY): boolean {
+  const rootDomain = extractRootDomain(domain);
   const now = Date.now();
-  const lastRequest = lastRequestByDomain[domain] || 0;
+  const lastAccess = domainLastAccessTime[rootDomain] || 0;
   
-  if (now - lastRequest < minTimeBetweenRequests) {
+  if (now - lastAccess < minTimeBetweenRequests) {
     return true;
   }
   
-  lastRequestByDomain[domain] = now;
+  domainLastAccessTime[rootDomain] = now;
   return false;
+}
+
+/**
+ * Extract root domain from a domain name
+ * This helps prevent different subdomains of the same site from bypassing throttling
+ */
+function extractRootDomain(domain: string): string {
+  try {
+    // Handle IDN domains (convert to ASCII)
+    const asciiDomain = punycode.toASCII(domain);
+    
+    // Split by dots and get TLD + one level down
+    const parts = asciiDomain.split('.');
+    if (parts.length <= 2) return asciiDomain;
+    
+    // Handle special cases for compound TLDs (.co.uk, .com.au, etc.)
+    const compoundTLDs = ['.co.uk', '.co.nz', '.com.au', '.ac.uk', '.gov.uk', '.org.uk', '.net.au', '.org.au'];
+    const domainStr = '.' + parts.slice(-2).join('.');
+    
+    if (compoundTLDs.some(tld => domainStr.endsWith(tld))) {
+      // For compound TLDs, we need 3 parts
+      return parts.slice(-3).join('.');
+    }
+    
+    // Default: return domain + TLD
+    return parts.slice(-2).join('.');
+  } catch (error) {
+    console.error(`Error extracting root domain from ${domain}:`, error);
+    return domain; // Return original in case of error
+  }
 }
 
 /**
@@ -174,35 +150,17 @@ function shouldThrottleDomain(domain: string, minTimeBetweenRequests = THROTTLE_
  */
 function cleanupUrl(url: string): string {
   try {
-    url = url.trim();
+    const trimmed = url.trim();
     
-    // Add protocol if missing
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url;
+    // Check if the URL has a protocol
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      return 'https://' + trimmed; // Add https by default
     }
     
-    // Parse URL to standardize format and handle encoding
-    const parsedUrl = new URL(url);
-    
-    // Remove common tracking parameters
-    const searchParams = parsedUrl.searchParams;
-    ['utm_source', 'utm_medium', 'utm_campaign', 'ref', 'source', 'fbclid'].forEach(param => {
-      searchParams.delete(param);
-    });
-    
-    // Remove hash fragment (unless it's a SPA route)
-    if (parsedUrl.hash && !parsedUrl.hash.startsWith('#/')) {
-      parsedUrl.hash = '';
-    }
-    
-    // Ensure trailing slash consistency
-    if (parsedUrl.pathname === '') {
-      parsedUrl.pathname = '/';
-    }
-    
-    return parsedUrl.toString();
+    return trimmed;
   } catch (error) {
-    return url; // Return original URL if parsing fails
+    console.error(`Error cleaning URL ${url}:`, error);
+    return url;
   }
 }
 
@@ -210,41 +168,14 @@ function cleanupUrl(url: string): string {
  * Extract domain from URL
  */
 function extractDomain(url: string): string {
-  if (!url || typeof url !== 'string') {
-    console.warn(`Invalid URL: ${url}`);
-    return '';
-  }
-  
   try {
-    // First attempt with URL constructor
-    try {
-      // Make sure URL has protocol
-      let urlWithProtocol = url;
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        urlWithProtocol = 'https://' + url;
-      }
-      
-      const parsedUrl = new URL(urlWithProtocol);
-      return parsedUrl.hostname.replace(/^www\./, '');
-    } catch (parseError) {
-      // If URL parsing fails, try basic extraction with regex
-      const match = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n\?\#]+)/im);
-      
-      if (match && match[1]) {
-        // Additional validation - must have at least one dot to be a domain
-        const domain = match[1];
-        if (domain.includes('.')) {
-          return domain;
-        }
-      }
-      
-      // If nothing worked, log warning and return empty string
-      console.warn(`Failed to extract domain from URL: ${url}`);
-      return '';
-    }
+    const urlObj = new URL(cleanupUrl(url));
+    return urlObj.hostname;
   } catch (error) {
-    console.error(`Error extracting domain from URL: ${url} - ${error}`);
-    return '';
+    console.error(`Error extracting domain from ${url}:`, error);
+    // Fallback for malformed URLs
+    const match = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:/\n?]+)/i);
+    return match ? match[1] : url;
   }
 }
 
@@ -254,170 +185,112 @@ function extractDomain(url: string): string {
  * @param maxRetries Maximum number of retry attempts
  */
 async function fetchHtml(url: string, maxRetries = MAX_RETRIES): Promise<string | null> {
-  let cleanedUrl: string;
-  try {
-    cleanedUrl = cleanupUrl(url);
-  } catch (error) {
-    console.error(`Invalid URL: ${url}`);
-    return null;
-  }
+  const domain = extractDomain(url);
   
-  const domain = extractDomain(cleanedUrl);
-  
-  // Check cache first
-  const cachedData = urlCache[cleanedUrl];
-  if (cachedData && Date.now() - cachedData.time < 86400000) { // 24 hour cache
-    return cachedData.html;
-  }
-  
-  // Apply domain throttling
+  // First check if we should throttle this domain
   if (shouldThrottleDomain(domain)) {
-    const delay = THROTTLE_DELAY;
-    console.log(`Throttling request to ${domain}, waiting ${delay}ms...`);
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await new Promise(resolve => setTimeout(resolve, THROTTLE_DELAY));
   }
   
-  let retries = 0;
-  let html: string | null = null;
+  // Set random user agent for this request
+  axiosInstance.defaults.headers['User-Agent'] = getRandomUserAgent();
   
-  while (retries <= maxRetries) {
+  // Try to fetch with multiple retries and backoff
+  for (let retry = 0; retry <= maxRetries; retry++) {
     try {
-      // Use random user agent to avoid detection
-      const response = await axios.get(cleanedUrl, {
-        timeout: TIMEOUT,
-        headers: {
-          'User-Agent': getRandomUserAgent(),
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'DNT': '1',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-          'Cache-Control': 'max-age=0'
-        },
-        maxRedirects: 5
-      });
+      const cleanUrl = cleanupUrl(url);
       
-      if (response.status === 200 && response.data) {
-        html = response.data;
-        
-        // Cache the result for future use
-        urlCache[cleanedUrl] = {
-          html: html,
-          time: Date.now()
-        };
-        
-        break;
+      // Try to fetch with initial URL
+      try {
+        const response = await axiosInstance.get(cleanUrl);
+        return response.data;
+      } catch (initialError) {
+        // If the URL has query params and failed, try without them
+        if (cleanUrl.includes('?')) {
+          const urlWithoutParams = cleanUrl.split('?')[0];
+          try {
+            const response = await axiosInstance.get(urlWithoutParams);
+            return response.data;
+          } catch (error) {
+            // Both attempts failed, throw the original error
+            throw initialError;
+          }
+        } else {
+          // No query params to strip, just throw the original error
+          throw initialError;
+        }
       }
     } catch (error: any) {
-      retries++;
-      
-      if (retries > maxRetries) {
-        console.error(`Failed to fetch ${cleanedUrl} after ${maxRetries} attempts`);
-        break;
+      if (retry === maxRetries) {
+        // We've exhausted retries
+        const status = error.response?.status;
+        if (status === 404 || status === 403 || status === 410) {
+          // Don't retry on these status codes
+          return null;
+        }
+        console.error(`Failed to fetch ${url} after ${maxRetries} retries:`, error.message);
+        return null;
       }
       
-      const backoffTime = calculateBackoff(retries);
-      console.log(`Retry ${retries}/${maxRetries} for ${cleanedUrl} in ${Math.round(backoffTime)}ms`);
-      await new Promise(resolve => setTimeout(resolve, backoffTime));
+      const backoffDelay = calculateBackoff(retry);
+      await new Promise(resolve => setTimeout(resolve, backoffDelay));
     }
   }
   
-  return html;
+  return null;
 }
 
 /**
  * Extract emails from a webpage with enhanced pattern recognition
  */
 async function extractEmailsFromPage(url: string): Promise<string[]> {
-  try {
-    const html = await fetchHtml(url);
-    if (!html) return [];
+  const html = await fetchHtml(url);
+  if (!html) return [];
+  
+  // Parse HTML
+  const $ = cheerio.load(html);
+  
+  // Remove script and style elements which might contain false positives
+  $('script, style, noscript').remove();
+  
+  // Get text content
+  const text = $.text();
+  
+  // Extract emails using regex
+  const emails: Set<string> = new Set();
+  
+  // Standard email format
+  const standardMatches = text.match(EMAIL_REGEX) || [];
+  standardMatches.forEach(email => emails.add(email.toLowerCase()));
+  
+  // Obfuscated email formats
+  const obfuscatedMatches = text.match(OBFUSCATED_EMAIL_REGEX) || [];
+  obfuscatedMatches.forEach(match => {
+    // Convert to standard format
+    const standardized = match
+      .replace(/\s+/g, '')
+      .replace(/\[at\]|\(at\)|&#64;|%40/gi, '@')
+      .replace(/\[dot\]|\(dot\)|&#46;|%2E/gi, '.')
+      .toLowerCase();
     
-    const $ = cheerio.load(html);
-    const bodyText = $('body').text();
-    const htmlContent = $.html();
-    
-    let emails: string[] = [];
-    
-    // Apply each email pattern to both HTML and text content
-    for (const pattern of EMAIL_PATTERNS) {
-      // Extract from HTML content
-      const htmlMatches = htmlContent.match(pattern) || [];
-      
-      // Extract from text content
-      const textMatches = bodyText.match(pattern) || [];
-      
-      emails = [...emails, ...htmlMatches, ...textMatches];
+    // Validate with standard email regex
+    if (standardized.match(EMAIL_REGEX)) {
+      emails.add(standardized);
     }
-    
-    // Look for email encoding techniques
-    $('script').each((_, element) => {
-      const scriptText = $(element).html() || '';
-      
-      // Check for common JavaScript obfuscation methods
-      if (scriptText.includes('emailto') || 
-          scriptText.includes('decode') || 
-          scriptText.includes('String.fromCharCode')) {
-        
-        // Extract potential encoded strings
-        const encodedMatches = scriptText.match(/String\.fromCharCode\(([^\)]+)\)/g) || [];
-        
-        // Attempt to decode
-        for (const encodedMatch of encodedMatches) {
-          try {
-            const charCodeStr = encodedMatch.replace(/String\.fromCharCode\(|\)/g, '');
-            const charCodes = charCodeStr.split(',').map(c => parseInt(c.trim(), 10));
-            const decodedText = String.fromCharCode(...charCodes);
-            
-            // Check if decoded text contains an email
-            const emailInDecoded = decodedText.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}/g) || [];
-            emails = [...emails, ...emailInDecoded];
-          } catch (e) {
-            // Skip if decoding fails
-          }
-        }
+  });
+  
+  // Check href="mailto:" links
+  $('a[href^="mailto:"]').each((_, element) => {
+    const href = $(element).attr('href');
+    if (href) {
+      const email = href.replace('mailto:', '').split('?')[0].toLowerCase();
+      if (email.match(EMAIL_REGEX)) {
+        emails.add(email);
       }
-    });
-    
-    // Look for "mailto:" links
-    $('a[href^="mailto:"]').each((_, element) => {
-      const mailtoHref = $(element).attr('href') || '';
-      const email = mailtoHref.replace('mailto:', '').split('?')[0].trim();
-      if (email && email.includes('@')) {
-        emails.push(email);
-      }
-    });
-    
-    // Process and clean emails
-    const processedEmails = emails
-      .map(email => {
-        // Clean up obfuscated emails
-        let cleaned = email
-          .replace(/\s*\[\(at\)\]\s*/gi, '@')
-          .replace(/\s*\[\(dot\)\]\s*/gi, '.')
-          .replace(/\s*at\s*/gi, '@')
-          .replace(/\s*dot\s*/gi, '.')
-          .replace(/\(at\)/gi, '@')
-          .replace(/\(dot\)/gi, '.')
-          .trim();
-        
-        // Remove surrounding tags, quotes, etc.
-        cleaned = cleaned.replace(/<[^>]+>|"|'|&quot;|&#34;/g, '');
-        
-        // Verify it's a valid email format
-        if (/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$/.test(cleaned)) {
-          return cleaned;
-        }
-        return null;
-      })
-      .filter((email): email is string => email !== null)
-      .filter((email, index, self) => self.indexOf(email) === index); // Remove duplicates
-    
-    return processedEmails;
-  } catch (error) {
-    console.error(`Error extracting emails from ${url}:`, error);
-    return [];
-  }
+    }
+  });
+  
+  return Array.from(emails);
 }
 
 /**
@@ -425,72 +298,70 @@ async function extractEmailsFromPage(url: string): Promise<string[]> {
  */
 async function findContactPages(baseUrl: string): Promise<string[]> {
   try {
-    const baseUrlClean = cleanupUrl(baseUrl);
-    const parsedUrl = new URL(baseUrlClean);
-    const protocol = parsedUrl.protocol;
-    const domain = parsedUrl.hostname;
+    const url = new URL(cleanupUrl(baseUrl));
+    const domain = url.hostname;
+    const protocol = url.protocol;
     
     const contactPages: string[] = [];
     
-    // Start with the base URL
-    contactPages.push(baseUrlClean);
-    
-    // Check common contact page paths
-    for (const path of CONTACT_PAGE_PATHS) {
-      try {
-        const contactUrl = `${protocol}//${domain}${path}`;
-        const html = await fetchHtml(contactUrl, 1); // Only try once for each path
-        
-        if (html) {
-          contactPages.push(contactUrl);
-        }
-      } catch (error) {
-        // Skip if path doesn't exist
+    // Check if the base URL itself is a contact page
+    const baseHtml = await fetchHtml(baseUrl);
+    if (baseHtml) {
+      const $ = cheerio.load(baseHtml);
+      const title = $('title').text().toLowerCase();
+      const h1 = $('h1').text().toLowerCase();
+      
+      if (title.includes('contact') || h1.includes('contact') || 
+          baseUrl.toLowerCase().includes('contact')) {
+        contactPages.push(baseUrl);
       }
-    }
-    
-    // Try to find more contact pages by scraping the main page for links
-    try {
-      const mainHtml = await fetchHtml(baseUrlClean);
-      if (mainHtml) {
-        const $ = cheerio.load(mainHtml);
-        
-        // Look for links with contact-related text
-        $('a').each((_, element) => {
+      
+      // Look for contact page links in the base page
+      $('a').each((_, element) => {
+        try {
           const href = $(element).attr('href');
           const text = $(element).text().toLowerCase();
           
-          if (href && 
-              (text.includes('contact') || 
-               text.includes('about') || 
-               text.includes('team') || 
-               text.includes('reach out'))) {
-            
-            let contactUrl = href;
-            
-            // Handle relative URLs
-            if (href.startsWith('/')) {
-              contactUrl = `${protocol}//${domain}${href}`;
-            } else if (!href.startsWith('http')) {
-              contactUrl = `${protocol}//${domain}/${href}`;
-            }
-            
-            // Only add if it's from the same domain
-            if (contactUrl.includes(domain)) {
-              contactPages.push(contactUrl);
+          if (href && (text.includes('contact') || 
+                      text.includes('get in touch') || 
+                      text.includes('reach us') ||
+                      text.includes('write for us'))) {
+            try {
+              // Convert relative to absolute URL
+              let fullUrl = new URL(href, baseUrl).href;
+              if (!contactPages.includes(fullUrl)) {
+                contactPages.push(fullUrl);
+              }
+            } catch (error) {
+              // Skip invalid URLs
             }
           }
-        });
-      }
-    } catch (error) {
-      // Continue even if link extraction fails
+        } catch (error) {
+          // Skip problematic elements
+        }
+      });
     }
     
-    // Remove duplicates and return
-    return [...new Set(contactPages)];
+    // Check common contact paths with small delays to avoid overwhelming the server
+    for (const path of COMMON_CONTACT_PATHS) {
+      const pathUrl = `${protocol}//${domain}${path}`;
+      try {
+        const html = await fetchHtml(pathUrl);
+        if (html) {
+          contactPages.push(pathUrl);
+        }
+      } catch (error) {
+        // Skip failed paths
+      }
+      
+      // Small delay between requests
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    return [...new Set(contactPages)]; // Deduplicate
   } catch (error) {
     console.error(`Error finding contact pages for ${baseUrl}:`, error);
-    return [baseUrl]; // Return at least the base URL
+    return [];
   }
 }
 
@@ -499,73 +370,89 @@ async function findContactPages(baseUrl: string): Promise<string[]> {
  */
 async function findContactFormUrl(url: string): Promise<string | null> {
   try {
-    const contactPages = await findContactPages(url);
+    // First check if the main URL is a contact page itself
+    const mainHtml = await fetchHtml(url);
+    if (!mainHtml) return null;
     
-    for (const contactUrl of contactPages) {
-      const html = await fetchHtml(contactUrl);
-      if (!html) continue;
+    const $ = cheerio.load(mainHtml);
+    
+    // Check if this page has a form
+    if ($('form').length > 0) {
+      const title = $('title').text().toLowerCase();
+      const h1 = $('h1').text().toLowerCase();
       
-      const $ = cheerio.load(html);
+      if (title.includes('contact') || h1.includes('contact') || 
+          url.toLowerCase().includes('contact')) {
+        return url;
+      }
+    }
+    
+    // Look for contact links
+    const contactLinks: string[] = [];
+    $('a').each((_, element) => {
+      const href = $(element).attr('href');
+      const text = $(element).text().toLowerCase();
       
-      // Check for forms
-      const formElements = $('form');
-      
-      if (formElements.length > 0) {
-        // Check if any form looks like a contact form
-        for (let i = 0; i < formElements.length; i++) {
-          const form = formElements.eq(i);
-          const formHtml = form.html() || '';
-          const formText = form.text().toLowerCase();
-          
-          // Look for indicators of a contact form
-          if (
-            formHtml.includes('name') && 
-            (formHtml.includes('email') || formHtml.includes('mail')) &&
-            (
-              formText.includes('contact') || 
-              formText.includes('message') || 
-              formText.includes('send') || 
-              formText.includes('submit') ||
-              form.find('textarea').length > 0
-            )
-          ) {
-            return contactUrl;
-          }
+      if (href && (text.includes('contact') || 
+                  text.includes('get in touch') || 
+                  text.includes('reach us'))) {
+        try {
+          // Convert relative to absolute URL
+          let fullUrl = new URL(href, url).href;
+          contactLinks.push(fullUrl);
+        } catch (error) {
+          // Skip invalid URLs
         }
       }
-      
-      // Check for contact form links
-      const contactLinks = $('a').filter((_, element) => {
-        const href = $(element).attr('href') || '';
-        const text = $(element).text().toLowerCase();
-        
-        return (
-          (href.includes('/contact') || href.includes('contact-us') || href.includes('contactus')) ||
-          (text.includes('contact us') || text.includes('get in touch') || text.includes('reach out'))
-        );
-      });
-      
-      if (contactLinks.length > 0) {
-        const contactLink = contactLinks.first().attr('href');
-        if (contactLink) {
-          // Handle relative URLs
-          if (contactLink.startsWith('/')) {
-            const parsedUrl = new URL(contactUrl);
-            return `${parsedUrl.protocol}//${parsedUrl.hostname}${contactLink}`;
-          } else if (!contactLink.startsWith('http')) {
-            const parsedUrl = new URL(contactUrl);
-            return `${parsedUrl.protocol}//${parsedUrl.hostname}/${contactLink}`;
-          }
-          return contactLink;
+    });
+    
+    // Try to find a form on the contact links
+    for (const link of contactLinks) {
+      const contactHtml = await fetchHtml(link);
+      if (contactHtml) {
+        const $contact = cheerio.load(contactHtml);
+        if ($contact('form').length > 0) {
+          return link;
         }
       }
     }
     
-    return null;
+    // Check common contact paths
+    const urlObj = new URL(cleanupUrl(url));
+    const domain = urlObj.hostname;
+    const protocol = urlObj.protocol;
+    
+    return await checkCommonContactPaths(protocol, domain, COMMON_CONTACT_PATHS);
   } catch (error) {
     console.error(`Error finding contact form for ${url}:`, error);
     return null;
   }
+}
+
+/**
+ * Check common contact paths for a contact form
+ */
+async function checkCommonContactPaths(protocol: string, domain: string, paths: string[]): Promise<string | null> {
+  for (const path of paths) {
+    try {
+      const contactUrl = `${protocol}//${domain}${path}`;
+      const html = await fetchHtml(contactUrl);
+      
+      if (html) {
+        const $ = cheerio.load(html);
+        if ($('form').length > 0) {
+          return contactUrl;
+        }
+      }
+    } catch (error) {
+      // Continue to next path
+    }
+    
+    // Small delay between requests
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+  
+  return null;
 }
 
 /**
@@ -584,9 +471,7 @@ async function extractSocialProfiles(url: string): Promise<Array<{
     if (!html) return [];
     
     const $ = cheerio.load(html);
-    
-    // Find all links
-    const socialProfiles: Array<{
+    const results: Array<{
       platform: string, 
       url: string, 
       username: string, 
@@ -595,108 +480,47 @@ async function extractSocialProfiles(url: string): Promise<Array<{
       iconUrl?: string
     }> = [];
     
-    // Check all links on the page
+    // Extract from all links
     $('a').each((_, element) => {
-      const href = $(element).attr('href');
-      if (!href) return;
-      
-      // Clean up the URL
-      const cleanHref = href.split('?')[0].toLowerCase();
-      
-      // Check against each social platform
-      for (const platform of SOCIAL_PLATFORMS) {
-        // Check if URL contains any of the platform domains
-        const isPlatformURL = platform.domains.some(domain => cleanHref.includes(domain));
-        
-        if (isPlatformURL) {
-          // Extract username based on platform-specific patterns
-          let username = '';
-          
-          for (const pattern of platform.patterns) {
-            const match = cleanHref.match(pattern);
-            if (match && match[1]) {
-              username = match[1];
-              break;
-            }
-          }
-          
-          // Only add if we found a username and it's not already in the list
-          if (username && !socialProfiles.some(p => 
-              p.platform === platform.name && p.username === username)) {
-            
-            // Try to extract display name from surrounding text or image alt
-            let displayName = $(element).text().trim();
-            if (!displayName || displayName === username) {
-              const img = $(element).find('img');
-              if (img.length > 0) {
-                displayName = img.attr('alt') || '';
-              }
-            }
-            
-            const socialProfile = {
-              platform: platform.name,
-              url: cleanHref,
-              username: username,
-              displayName: displayName || undefined,
-              iconUrl: platform.iconUrl
-            };
-            
-            socialProfiles.push(socialProfile);
-          }
-        }
-      }
-    });
-    
-    // Look for additional metadata in meta tags and JSON-LD
-    $('script[type="application/ld+json"]').each((_, element) => {
       try {
-        const jsonLd = JSON.parse($(element).html() || '{}');
+        const href = $(element).attr('href');
+        if (!href) return;
         
-        // Check for organization social profiles
-        if (jsonLd.sameAs && Array.isArray(jsonLd.sameAs)) {
-          for (const socialUrl of jsonLd.sameAs) {
-            // Check against each social platform
-            for (const platform of SOCIAL_PLATFORMS) {
-              // Check if URL contains any of the platform domains
-              const isPlatformURL = platform.domains.some(domain => 
-                socialUrl.toLowerCase().includes(domain));
+        // Try to normalize the URL
+        let fullUrl: string;
+        try {
+          fullUrl = new URL(href, url).href;
+        } catch (error) {
+          return; // Skip invalid URLs
+        }
+        
+        // Check against platform patterns
+        for (const { platform, regex } of SOCIAL_PLATFORM_PATTERNS) {
+          const match = fullUrl.match(regex);
+          if (match && match[1]) {
+            const username = match[1].replace(/\/$/, ''); // Remove trailing slash
+            
+            // Check for duplicates before adding
+            if (!results.some(r => r.platform === platform && r.username === username)) {
+              const socialResult = {
+                platform,
+                url: fullUrl,
+                username,
+                // Try to get additional info
+                displayName: $(element).attr('title') || $(element).text().trim() || undefined,
+                iconUrl: $(element).find('img').attr('src') || undefined
+              };
               
-              if (isPlatformURL) {
-                // Extract username based on platform-specific patterns
-                for (const pattern of platform.patterns) {
-                  const match = socialUrl.match(pattern);
-                  if (match && match[1]) {
-                    const username = match[1];
-                    
-                    // Only add if not already in the list
-                    if (!socialProfiles.some(p => 
-                        p.platform === platform.name && p.username === username)) {
-                      
-                      const socialProfile = {
-                        platform: platform.name,
-                        url: socialUrl,
-                        username: username,
-                        displayName: jsonLd.name || undefined,
-                        description: jsonLd.description || undefined,
-                        iconUrl: platform.iconUrl
-                      };
-                      
-                      socialProfiles.push(socialProfile);
-                    }
-                    
-                    break;
-                  }
-                }
-              }
+              results.push(socialResult);
             }
           }
         }
       } catch (error) {
-        // Skip JSON parsing errors
+        // Skip problematic elements
       }
     });
     
-    return socialProfiles;
+    return results;
   } catch (error) {
     console.error(`Error extracting social profiles from ${url}:`, error);
     return [];
@@ -707,269 +531,217 @@ async function extractSocialProfiles(url: string): Promise<Array<{
  * Extract phone numbers from HTML with country code detection
  */
 async function extractPhoneNumbers(url: string): Promise<string[]> {
-  try {
-    const html = await fetchHtml(url);
-    if (!html) return [];
-    
-    const $ = cheerio.load(html);
-    const bodyText = $('body').text();
-    
-    // Regular expressions for phone numbers with various formats
-    const phonePatterns = [
-      /\+\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g, // International format
-      /\(\d{3}\)[-.\s]?\d{3}[-.\s]?\d{4}/g, // (123) 456-7890
-      /\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/g, // 123-456-7890
-      /\d{3}\.?\d{3}\.?\d{4}/g, // 123.456.7890
-      /(?:Phone|Tel|Telephone)(?::|\.)?[-.\s]?\+?[-.\d\s]{7,}/gi // Phone: 123-456-7890
-    ];
-    
-    let phoneNumbers: string[] = [];
-    
-    // Apply each pattern to body text
-    for (const pattern of phonePatterns) {
-      const matches = bodyText.match(pattern) || [];
-      phoneNumbers = [...phoneNumbers, ...matches];
-    }
-    
-    // Look for phone number in meta tags or microdata
-    $('meta').each((_, element) => {
-      const content = $(element).attr('content') || '';
-      for (const pattern of phonePatterns) {
-        const matches = content.match(pattern) || [];
-        phoneNumbers = [...phoneNumbers, ...matches];
-      }
+  const html = await fetchHtml(url);
+  if (!html) return [];
+  
+  const $ = cheerio.load(html);
+  
+  // Remove script and style elements
+  $('script, style').remove();
+  
+  // Get all text
+  const text = $.text();
+  
+  // Phone number patterns (international and US formats)
+  const phonePatterns = [
+    /\+\d{1,3}[-.\s]?\(?\d{1,3}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g, // International
+    /\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, // US format (xxx) xxx-xxxx
+    /\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/g // US simple xxx-xxx-xxxx
+  ];
+  
+  const phones: Set<string> = new Set();
+  
+  // Extract using patterns
+  for (const pattern of phonePatterns) {
+    const matches = text.match(pattern) || [];
+    matches.forEach(match => {
+      const cleaned = match.replace(/\s+/g, ' ').trim();
+      phones.add(cleaned);
     });
-    
-    // Process phone numbers
-    const processedNumbers = phoneNumbers
-      .map(phone => {
-        // Clean up the phone number
-        let cleaned = phone
-          .replace(/(?:Phone|Tel|Telephone)(?::|\.)?/gi, '')
-          .trim();
-        
-        return cleaned;
-      })
-      .filter((phone, index, self) => self.indexOf(phone) === index); // Remove duplicates
-    
-    return processedNumbers;
-  } catch (error) {
-    console.error(`Error extracting phone numbers from ${url}:`, error);
-    return [];
   }
+  
+  // Look for tel: links
+  $('a[href^="tel:"]').each((_, element) => {
+    const href = $(element).attr('href');
+    if (href) {
+      const phone = href.replace('tel:', '').trim();
+      phones.add(phone);
+    }
+  });
+  
+  return Array.from(phones);
 }
 
 /**
  * Check if a given text appears to be an address
  */
 function isLikelyAddress(text: string): boolean {
-  const addressIndicators = [
-    /\d+\s+[A-Za-z]+\s+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct|Plaza|Plz|Square|Sq)/i,
-    /[A-Za-z]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?/,
-    /\b(?:floor|suite|room|apt|apartment)\s+\w+/i,
-    /\b[A-Z]{2}\s+\d{5}(?:-\d{4})?\b/,
-    /\b(?:Address|Location)(?::|\.)?[-.\s]/i
-  ];
+  text = text.toLowerCase();
   
-  return addressIndicators.some(pattern => pattern.test(text));
+  // Check for postal code patterns
+  const hasPostalCode = /\d{5}(-\d{4})?/.test(text); // US
+  const hasZipOrPostal = /\bzip\b|\bpostal\b/.test(text);
+  
+  // Check for address indicators
+  const hasStreet = /\bst\.?|\bstreet\b|\bave\.?|\bavenue\b|\bblvd\.?|\bboulevard\b|\bln\.?|\blane\b|\bdr\.?|\bdrive\b|\bway\b|\broad\b|\brd\.?\b/i.test(text);
+  const hasAddressNumber = /^\d+\s+\w+/.test(text.trim());
+  
+  // Check for state/province patterns
+  const hasStateAbbr = /\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/i.test(text);
+  
+  // Check for city, state format
+  const hasCityStateFormat = /\w+,\s*\w{2}\s*\d{5}/i.test(text);
+  
+  // Calculate a confidence score
+  let score = 0;
+  if (hasPostalCode) score += 2;
+  if (hasZipOrPostal) score += 1;
+  if (hasStreet) score += 2;
+  if (hasAddressNumber) score += 1;
+  if (hasStateAbbr) score += 1;
+  if (hasCityStateFormat) score += 3;
+  
+  return score >= 3; // Threshold for considering it an address
 }
 
 /**
  * Extract physical address from HTML
  */
 async function extractAddress(url: string): Promise<string | null> {
-  try {
-    const html = await fetchHtml(url);
-    if (!html) return null;
-    
-    const $ = cheerio.load(html);
-    
-    // Look for structured data first
-    let address: string | null = null;
-    
-    // Check JSON-LD
-    $('script[type="application/ld+json"]').each((_, element) => {
-      try {
-        const jsonLd = JSON.parse($(element).html() || '{}');
-        
-        if (jsonLd.address) {
-          const addressObj = jsonLd.address;
-          address = `${addressObj.streetAddress || ''}, ${addressObj.addressLocality || ''}, ${addressObj.addressRegion || ''} ${addressObj.postalCode || ''}, ${addressObj.addressCountry || ''}`;
-          return false; // Break the loop
-        }
-        
-        // Check for address in Organization or LocalBusiness
-        if ((jsonLd['@type'] === 'Organization' || jsonLd['@type'] === 'LocalBusiness') && jsonLd.address) {
-          const addressObj = jsonLd.address;
-          address = `${addressObj.streetAddress || ''}, ${addressObj.addressLocality || ''}, ${addressObj.addressRegion || ''} ${addressObj.postalCode || ''}, ${addressObj.addressCountry || ''}`;
-          return false;
-        }
-      } catch (error) {
-        // Skip JSON parsing errors
+  const html = await fetchHtml(url);
+  if (!html) return null;
+  
+  const $ = cheerio.load(html);
+  
+  // Look for common address containers
+  const addressSelectors = [
+    'address',
+    '[itemtype="http://schema.org/PostalAddress"]',
+    '.address',
+    '.contact-address',
+    '.location',
+    'footer .address',
+    '.footer address',
+    '.vcard .adr',
+    '[data-role="address"]'
+  ];
+  
+  // Check each selector
+  for (const selector of addressSelectors) {
+    const elements = $(selector);
+    if (elements.length > 0) {
+      const addressText = elements.first().text().trim();
+      if (addressText && isLikelyAddress(addressText)) {
+        return addressText;
       }
-    });
-    
-    if (address) {
-      return address.replace(/,\s+,/g, ',').replace(/\s+/g, ' ').trim();
     }
-    
-    // Look for address in footer or contact section
-    ['footer', '.footer', '.contact', '#contact', '.address', '#address'].forEach(selector => {
-      if (address) return;
-      
-      const element = $(selector);
-      if (element.length) {
-        const text = element.text();
-        const paragraphs = text.split(/[\r\n]+/);
-        
-        for (const paragraph of paragraphs) {
-          if (isLikelyAddress(paragraph)) {
-            address = paragraph.trim().replace(/\s+/g, ' ');
-            break;
-          }
-        }
-      }
-    });
-    
-    return address;
-  } catch (error) {
-    console.error(`Error extracting address from ${url}:`, error);
-    return null;
   }
+  
+  // Fallback: scan all paragraphs and divs with less than 150 chars
+  // which might contain addresses
+  const candidates: string[] = [];
+  
+  $('p, div').each((_, element) => {
+    const text = $(element).text().trim();
+    if (text.length > 10 && text.length < 150 && isLikelyAddress(text)) {
+      candidates.push(text);
+    }
+  });
+  
+  return candidates.length > 0 ? candidates[0] : null;
 }
 
 /**
  * Main function to run the advanced contact extraction process
  */
 export async function runAdvancedContactExtraction(options: {
-  isDryRun?: boolean;
   premiumOnly?: boolean;
   batchSize?: number;
-  limit?: number;
-} = {}) {
-  console.log('Starting advanced contact information extraction process...');
+  isDryRun?: boolean;
+}) {
+  console.log("Starting advanced contact information extraction...");
   
-  const isDryRun = options.isDryRun || false;
-  const premiumOnly = options.premiumOnly || false;
-  const batchSize = options.batchSize || BATCH_SIZE;
-  const limit = options.limit || Infinity;
-  
-  console.log(`Configuration:`);
-  console.log(`- Dry run mode: ${isDryRun ? 'Enabled' : 'Disabled'}`);
-  console.log(`- Processing ${premiumOnly ? 'premium opportunities only' : 'all opportunities'}`);
-  console.log(`- Batch size: ${batchSize}`);
-  if (limit < Infinity) console.log(`- Processing limit: ${limit} opportunities`);
+  const { premiumOnly = false, batchSize = 10, isDryRun = false } = options;
   
   try {
-    // Get current statistics
-    const totalStats = await db.select({
-      total: sql`COUNT(*)`,
-      with_contact: sql`COUNT(*) FILTER (WHERE "contactInfo" IS NOT NULL AND "contactInfo" != '[]' AND "contactInfo" != '{}')`
-    }).from(discoveredOpportunities);
+    // Get opportunities that need contact info
+    // Priority: Premium opportunities without contact info first,
+    // then other opportunities without contact info
+    let opportunities;
     
-    const premiumStats = await db.select({
-      total: sql`COUNT(*) FILTER (WHERE "isPremium" = true)`,
-      with_contact: sql`COUNT(*) FILTER (WHERE "isPremium" = true AND "contactInfo" IS NOT NULL AND "contactInfo" != '[]' AND "contactInfo" != '{}')`
-    }).from(discoveredOpportunities);
-    
-    console.log('\nCurrent Contact Information Coverage:');
-    console.log(`- Total opportunities: ${totalStats[0].total}`);
-    console.log(`- With contact info: ${totalStats[0].with_contact} (${((totalStats[0].with_contact / totalStats[0].total) * 100).toFixed(1)}%)`);
-    console.log(`- Premium opportunities: ${premiumStats[0].total}`);
-    console.log(`- Premium with contact info: ${premiumStats[0].with_contact} (${((premiumStats[0].with_contact / premiumStats[0].total) * 100).toFixed(1)}%)`);
-    
-    // Determine which opportunities to process - make sure we only get ones with valid URLs
-    let whereClause;
     if (premiumOnly) {
-      whereClause = sql`"isPremium" = true AND "url" IS NOT NULL AND "url" != '' AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`;
-    } else {
-      whereClause = sql`"url" IS NOT NULL AND "url" != '' AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`;
-    }
-    
-    // Get the total number of opportunities to process
-    const countResult = await db.select({
-      count: sql`COUNT(*)`
-    }).from(discoveredOpportunities).where(whereClause);
-    
-    const totalToProcess = Math.min(countResult[0].count, limit);
-    
-    console.log(`\nFound ${totalToProcess} opportunities without contact information to process`);
-    
-    if (totalToProcess === 0) {
-      console.log('No opportunities to process. Exiting.');
-      return;
-    }
-    
-    // Process opportunities in batches
-    let processed = 0;
-    let successCount = 0;
-    let failureCount = 0;
-    
-    while (processed < totalToProcess) {
-      // Get the next batch of opportunities
-      const opportunities = await db.select()
+      opportunities = await db.select()
         .from(discoveredOpportunities)
-        .where(whereClause)
-        .limit(batchSize)
-        .offset(processed);
+        .where(
+          and(
+            discoveredOpportunities.isPremium,
+            or(
+              isNull(discoveredOpportunities.contactInfo),
+              eq(discoveredOpportunities.contactInfo, '{}'),
+              eq(discoveredOpportunities.contactInfo, '[]')
+            )
+          )
+        )
+        .limit(batchSize);
+    } else {
+      // Get a mix of premium and regular opportunities
+      const premiumOpportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(
+          and(
+            discoveredOpportunities.isPremium,
+            or(
+              isNull(discoveredOpportunities.contactInfo),
+              eq(discoveredOpportunities.contactInfo, '{}'),
+              eq(discoveredOpportunities.contactInfo, '[]')
+            )
+          )
+        )
+        .limit(Math.ceil(batchSize * 0.4)); // 40% premium
       
-      if (opportunities.length === 0) break;
+      const regularOpportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(
+          and(
+            not(discoveredOpportunities.isPremium),
+            or(
+              isNull(discoveredOpportunities.contactInfo),
+              eq(discoveredOpportunities.contactInfo, '{}'),
+              eq(discoveredOpportunities.contactInfo, '[]')
+            )
+          )
+        )
+        .limit(batchSize - premiumOpportunities.length); // Remaining spots for regular
       
-      console.log(`\nProcessing batch ${Math.ceil(processed / batchSize) + 1} (${processed + 1} to ${processed + opportunities.length} of ${totalToProcess})`);
-      
-      // Process each opportunity in the batch
-      const results = await Promise.all(
-        opportunities.map(opportunity => processOpportunity(opportunity, isDryRun))
-      );
-      
-      // Update statistics
-      const batchSuccesses = results.filter(r => r.success).length;
-      const batchFailures = results.filter(r => !r.success).length;
-      
-      successCount += batchSuccesses;
-      failureCount += batchFailures;
-      processed += opportunities.length;
-      
-      console.log(`Batch results: ${batchSuccesses} successes, ${batchFailures} failures`);
-      console.log(`Progress: ${processed}/${totalToProcess} (${(processed/totalToProcess*100).toFixed(1)}%)`);
-      
-      // Add a small delay between batches to avoid overwhelming the system
-      if (processed < totalToProcess) {
+      opportunities = [...premiumOpportunities, ...regularOpportunities];
+    }
+    
+    console.log(`Processing ${opportunities.length} opportunities` + 
+                (premiumOnly ? " (premium only)" : ""));
+    
+    // Process opportunities in sequence to avoid overwhelming APIs
+    for (const opportunity of opportunities) {
+      try {
+        console.log(`Processing ${opportunity.id}: ${opportunity.domain} (${opportunity.isPremium ? 'Premium' : 'Regular'})`);
+        
+        const startTime = Date.now();
+        const result = await processOpportunity(opportunity, isDryRun);
+        const duration = Date.now() - startTime;
+        
+        console.log(`Completed ${opportunity.id}: ${opportunity.domain} in ${duration}ms`);
+        console.log(`Result: ${result.emails.length} emails, ${result.social.length} social profiles, ` + 
+                    `Contact form: ${result.contactForm ? 'Yes' : 'No'}`);
+        
+        // Add a delay between processing opportunities
         await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error(`Error processing opportunity ${opportunity.id}:`, error);
       }
     }
     
-    console.log('\nExtraction process complete!');
-    console.log(`Processed ${processed} opportunities`);
-    console.log(`- Successful extractions: ${successCount} (${(successCount/processed*100).toFixed(1)}%)`);
-    console.log(`- Failed extractions: ${failureCount} (${(failureCount/processed*100).toFixed(1)}%)`);
-    
-    // Get updated statistics
-    const updatedTotalStats = await db.select({
-      total: sql`COUNT(*)`,
-      with_contact: sql`COUNT(*) FILTER (WHERE "contactInfo" IS NOT NULL AND "contactInfo" != '[]' AND "contactInfo" != '{}')`
-    }).from(discoveredOpportunities);
-    
-    const updatedPremiumStats = await db.select({
-      total: sql`COUNT(*) FILTER (WHERE "isPremium" = true)`,
-      with_contact: sql`COUNT(*) FILTER (WHERE "isPremium" = true AND "contactInfo" IS NOT NULL AND "contactInfo" != '[]' AND "contactInfo" != '{}')`
-    }).from(discoveredOpportunities);
-    
-    console.log('\nUpdated Contact Information Coverage:');
-    console.log(`- Total opportunities: ${updatedTotalStats[0].total}`);
-    console.log(`- With contact info: ${updatedTotalStats[0].with_contact} (${((updatedTotalStats[0].with_contact / updatedTotalStats[0].total) * 100).toFixed(1)}%)`);
-    console.log(`- Premium opportunities: ${updatedPremiumStats[0].total}`);
-    console.log(`- Premium with contact info: ${updatedPremiumStats[0].with_contact} (${((updatedPremiumStats[0].with_contact / updatedPremiumStats[0].total) * 100).toFixed(1)}%)`);
-    
-    const improvementTotal = updatedTotalStats[0].with_contact - totalStats[0].with_contact;
-    const improvementPremium = updatedPremiumStats[0].with_contact - premiumStats[0].with_contact;
-    
-    console.log(`\nImprovement:`);
-    console.log(`- Added contact info to ${improvementTotal} opportunities overall`);
-    console.log(`- Added contact info to ${improvementPremium} premium opportunities`);
-    
+    console.log("Advanced contact extraction completed!");
   } catch (error) {
-    console.error('Error in advanced contact extraction process:', error);
+    console.error("Error running advanced contact extraction:", error);
   }
 }
 
@@ -977,219 +749,131 @@ export async function runAdvancedContactExtraction(options: {
  * Process a single opportunity to extract contact information
  */
 async function processOpportunity(opportunity: any, isDryRun: boolean): Promise<{
-  success: boolean,
-  opportunity: any
+  emails: string[],
+  contactForm: string | null,
+  social: Array<{platform: string, url: string, username: string}>,
+  phone: string[],
+  address: string | null
 }> {
+  // Initialize result object
+  const result = {
+    emails: [] as string[],
+    contactForm: null as string | null,
+    social: [] as Array<{platform: string, url: string, username: string}>,
+    phone: [] as string[],
+    address: null as string | null
+  };
+  
+  // Set up execution time limit
+  const timeoutPromise = new Promise<typeof result>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Processing timed out after ${MAX_EXECUTION_TIME}ms`));
+    }, MAX_EXECUTION_TIME);
+  });
+  
   try {
-    console.log(`Processing opportunity ID: ${opportunity?.id}`);
-    
-    // Validate the opportunity has required fields
-    if (!opportunity || !opportunity.url) {
-      console.log('Missing required fields in opportunity. Skipping.');
-      return { success: false, opportunity };
-    }
-    
-    console.log(`Processing opportunity: ${opportunity.pageTitle || 'Untitled'} (${opportunity.url})`);
-    
-    // Extract domain for processing
-    const domain = extractDomain(opportunity.url);
-    console.log(`Domain: ${domain}`);
-    
-    // Skip if no valid domain could be extracted
-    if (!domain) {
-      console.log('No valid domain found. Skipping.');
-      return { success: false, opportunity };
-    }
-    
-    // Create a record of the original contact info for comparison
-    const originalContactInfo = opportunity.contactInfo ? JSON.parse(opportunity.contactInfo) : null;
-    
-    // Initialize contact info with existing data or empty object
-    let contactInfo = originalContactInfo || { 
-      emails: [], 
-      contactForm: null, 
-      socialProfiles: [], 
-      phoneNumbers: [],
-      address: null
-    };
-    
-    // 1. Try to extract from source URL first
-    try {
-      console.log('Extracting from source URL...');
+    // Create a promise for the actual processing
+    const processingPromise = (async () => {
+      const domainUrl = cleanupUrl(opportunity.domain);
       
-      // Extract emails
-      const emails = await extractEmailsFromPage(opportunity.url);
-      if (emails.length > 0) {
-        console.log(`Found ${emails.length} emails: ${emails.join(', ')}`);
-        contactInfo.emails = [...new Set([...contactInfo.emails || [], ...emails])];
-      }
+      // Step 1: Extract emails from main page
+      const emails = await extractEmailsFromPage(domainUrl);
+      result.emails = emails;
       
-      // Extract contact form
-      const contactForm = await findContactFormUrl(opportunity.url);
-      if (contactForm && (!contactInfo.contactForm || contactInfo.contactForm === '')) {
-        console.log(`Found contact form: ${contactForm}`);
-        contactInfo.contactForm = contactForm;
-      }
+      // Step 2: Find and extract contact form
+      const contactForm = await findContactFormUrl(domainUrl);
+      result.contactForm = contactForm;
       
-      // Extract social profiles
-      const socialProfiles = await extractSocialProfiles(opportunity.url);
-      if (socialProfiles.length > 0) {
-        console.log(`Found ${socialProfiles.length} social profiles`);
+      // Step 3: Extract social profiles
+      const socialProfiles = await extractSocialProfiles(domainUrl);
+      result.social = socialProfiles;
+      
+      // Skip these for now as they might be time-consuming
+      // We'll implement them in the future based on performance
+      /*
+      // Step 4: Extract phone numbers
+      const phones = await extractPhoneNumbers(domainUrl);
+      result.phone = phones;
+      
+      // Step 5: Extract address
+      const address = await extractAddress(domainUrl);
+      result.address = address;
+      */
+      
+      // If we didn't find contact info on the main page, try contact pages
+      if (emails.length === 0 || socialProfiles.length === 0) {
+        const contactPages = await findContactPages(domainUrl);
         
-        // Merge with existing profiles, avoiding duplicates
-        const existingPlatforms = (contactInfo.socialProfiles || []).map(p => p.platform + p.username);
-        const newProfiles = socialProfiles.filter(p => !existingPlatforms.includes(p.platform + p.username));
-        
-        contactInfo.socialProfiles = [
-          ...(contactInfo.socialProfiles || []),
-          ...newProfiles
-        ];
-      }
-      
-      // Extract phone numbers
-      const phoneNumbers = await extractPhoneNumbers(opportunity.url);
-      if (phoneNumbers.length > 0) {
-        console.log(`Found ${phoneNumbers.length} phone numbers: ${phoneNumbers.join(', ')}`);
-        contactInfo.phoneNumbers = [...new Set([...contactInfo.phoneNumbers || [], ...phoneNumbers])];
-      }
-      
-      // Extract physical address
-      const address = await extractAddress(opportunity.url);
-      if (address && (!contactInfo.address || contactInfo.address === '')) {
-        console.log(`Found address: ${address}`);
-        contactInfo.address = address;
-      }
-    } catch (error) {
-      console.error(`Error processing source URL: ${error}`);
-    }
-    
-    // 2. If still missing info, try to find contact pages and extract from there
-    if (!contactInfo.emails.length || !contactInfo.contactForm || !contactInfo.socialProfiles.length) {
-      try {
-        console.log('Looking for additional contact pages...');
-        const contactPages = await findContactPages(opportunity.url);
-        
-        if (contactPages.length > 1) { // Skip the first one which is the source URL
-          console.log(`Found ${contactPages.length - 1} additional contact pages`);
-          
-          // Process each contact page (excluding the source URL which was already processed)
-          for (let i = 1; i < contactPages.length; i++) {
-            const contactPage = contactPages[i];
-            console.log(`Processing contact page ${i}: ${contactPage}`);
-            
-            // Extract emails
-            if (!contactInfo.emails.length) {
-              const emails = await extractEmailsFromPage(contactPage);
-              if (emails.length > 0) {
-                console.log(`Found ${emails.length} emails: ${emails.join(', ')}`);
-                contactInfo.emails = [...new Set([...contactInfo.emails || [], ...emails])];
-              }
-            }
-            
-            // Extract contact form
-            if (!contactInfo.contactForm) {
-              const contactForm = await findContactFormUrl(contactPage);
-              if (contactForm) {
-                console.log(`Found contact form: ${contactForm}`);
-                contactInfo.contactForm = contactForm;
-              }
-            }
-            
-            // Extract social profiles
-            if (!contactInfo.socialProfiles.length) {
-              const socialProfiles = await extractSocialProfiles(contactPage);
-              if (socialProfiles.length > 0) {
-                console.log(`Found ${socialProfiles.length} social profiles`);
-                
-                // Merge with existing profiles, avoiding duplicates
-                const existingPlatforms = (contactInfo.socialProfiles || []).map(p => p.platform + p.username);
-                const newProfiles = socialProfiles.filter(p => !existingPlatforms.includes(p.platform + p.username));
-                
-                contactInfo.socialProfiles = [
-                  ...(contactInfo.socialProfiles || []),
-                  ...newProfiles
-                ];
-              }
-            }
-            
-            // Extract phone numbers
-            if (!contactInfo.phoneNumbers?.length) {
-              const phoneNumbers = await extractPhoneNumbers(contactPage);
-              if (phoneNumbers.length > 0) {
-                console.log(`Found ${phoneNumbers.length} phone numbers: ${phoneNumbers.join(', ')}`);
-                contactInfo.phoneNumbers = [...new Set([...contactInfo.phoneNumbers || [], ...phoneNumbers])];
-              }
-            }
-            
-            // Extract physical address
-            if (!contactInfo.address) {
-              const address = await extractAddress(contactPage);
-              if (address) {
-                console.log(`Found address: ${address}`);
-                contactInfo.address = address;
-              }
-            }
-            
-            // If we have all the info we need, break the loop
-            if (contactInfo.emails.length && contactInfo.contactForm && 
-                contactInfo.socialProfiles.length && contactInfo.phoneNumbers?.length && 
-                contactInfo.address) {
-              break;
+        for (const contactPage of contactPages) {
+          // Extract emails from contact page
+          const contactEmails = await extractEmailsFromPage(contactPage);
+          for (const email of contactEmails) {
+            if (!result.emails.includes(email)) {
+              result.emails.push(email);
             }
           }
+          
+          // Extract social profiles from contact page
+          const contactSocial = await extractSocialProfiles(contactPage);
+          for (const profile of contactSocial) {
+            if (!result.social.some(p => p.platform === profile.platform && p.username === profile.username)) {
+              result.social.push(profile);
+            }
+          }
+          
+          // Stop if we found substantial info
+          if (result.emails.length > 0 && result.social.length > 0) {
+            break;
+          }
         }
-      } catch (error) {
-        console.error(`Error processing contact pages: ${error}`);
-      }
-    }
-    
-    // 3. Extract estimated email from domain if no emails found
-    if (!contactInfo.emails.length) {
-      // Generate potential email formats based on domain
-      const commonEmails = [
-        `contact@${domain}`,
-        `info@${domain}`,
-        `hello@${domain}`,
-        `support@${domain}`,
-        `team@${domain}`,
-        `admin@${domain}`,
-        `sales@${domain}`,
-        `marketing@${domain}`
-      ];
-      
-      console.log('No emails found. Adding potential domain-based emails as fallback.');
-      contactInfo.emails = commonEmails;
-    }
-    
-    // Update database with new contact info
-    const hasChanges = JSON.stringify(contactInfo) !== JSON.stringify(originalContactInfo);
-    
-    if (hasChanges) {
-      console.log('Contact information updated.');
-      
-      if (!isDryRun) {
-        await db.update(discoveredOpportunities)
-          .set({ 
-            contactInfo: JSON.stringify(contactInfo),
-            lastUpdated: new Date()
-          })
-          .where(sql`id = ${opportunity.id}`);
-        
-        console.log('Database updated.');
-      } else {
-        console.log('DRY RUN: No database changes made.');
       }
       
-      return { success: true, opportunity: { ...opportunity, contactInfo } };
-    } else {
-      console.log('No new contact information found.');
-      return { success: false, opportunity };
+      return result;
+    })();
+    
+    // Race between processing and timeout
+    const completedResult = await Promise.race([processingPromise, timeoutPromise]);
+    
+    // Update the database with the contact info if not a dry run
+    if (!isDryRun) {
+      const contactInfo = {
+        emails: completedResult.emails,
+        contactForm: completedResult.contactForm,
+        social: completedResult.social.map(s => ({
+          platform: s.platform,
+          url: s.url,
+          username: s.username
+        })),
+        phone: completedResult.phone,
+        address: completedResult.address,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      await db.update(discoveredOpportunities)
+        .set({ contactInfo: contactInfo })
+        .where(eq(discoveredOpportunities.id, opportunity.id));
     }
     
+    return completedResult;
   } catch (error) {
     console.error(`Error processing opportunity ${opportunity.id}:`, error);
-    return { success: false, opportunity };
+    
+    // Return whatever partial data we collected
+    return result;
   }
 }
 
-// This file is used as a module, so we don't auto-execute it
+// Run the function if this module is executed directly
+if (require.main === module) {
+  const options = {
+    premiumOnly: process.argv.includes('--premium-only'),
+    isDryRun: process.argv.includes('--dry-run'),
+    batchSize: process.argv.includes('--batch-size') 
+      ? parseInt(process.argv[process.argv.indexOf('--batch-size') + 1], 10) 
+      : 50
+  };
+  
+  runAdvancedContactExtraction(options)
+    .catch(console.error)
+    .finally(() => process.exit(0));
+}
