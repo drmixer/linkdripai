@@ -537,3 +537,9 @@ export type DailyDrip = typeof dailyDrips.$inferSelect;
 export type SplashUsage = typeof splashUsage.$inferSelect;
 export type CrawlerJob = typeof crawlerJobs.$inferSelect;
 export type EmailSetting = typeof emailSettings.$inferSelect;
+
+// New contact activity types
+export type ContactActivity = typeof contactActivities.$inferSelect;
+export type InsertContactActivity = z.infer<typeof insertContactActivitySchema>;
+export type ContactMethod = typeof contactMethodEnum.enumValues[number];
+export type ContactStatus = typeof contactStatusEnum.enumValues[number];
