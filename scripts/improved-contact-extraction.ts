@@ -1,19 +1,3 @@
-#!/bin/bash
-
-# Run the fixed contact improvement script
-# This script improves contact extraction for both premium and regular opportunities
-# with a focus on premium ones to meet our coverage targets
-
-# Import the .env file if it exists
-if [ -f .env ]; then
-  export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
-fi
-
-# Set proper Node options for memory optimization
-export NODE_OPTIONS="--max-old-space-size=2048"
-
-# Create a focused version of the contact improvement script
-cat > scripts/improved-contact-extraction.ts << EOL
 /**
  * Contact Improvement Script
  * 
@@ -108,7 +92,7 @@ function cleanupUrl(url: string): string {
     
     return trimmed;
   } catch (error) {
-    console.error(\`Error cleaning URL \${url}:\`, error);
+    console.error(`Error cleaning URL ${url}:`, error);
     return url;
   }
 }
@@ -123,7 +107,7 @@ async function fetchHtml(url: string, maxRetries = MAX_RETRIES): Promise<string 
   // Throttle requests to the same domain
   if (shouldThrottleDomain(domain)) {
     const waitTime = THROTTLE_DELAY;
-    console.log(\`Throttling request to \${domain}, waiting \${waitTime}ms...\`);
+    console.log(`Throttling request to ${domain}, waiting ${waitTime}ms...`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
   }
   
@@ -158,10 +142,10 @@ async function fetchHtml(url: string, maxRetries = MAX_RETRIES): Promise<string 
       
       if (retries <= maxRetries) {
         const backoff = calculateBackoff(retries);
-        console.log(\`Fetch error for \${url}, retrying in \${Math.round(backoff / 1000)}s... (Attempt \${retries} of \${maxRetries})\`);
+        console.log(`Fetch error for ${url}, retrying in ${Math.round(backoff / 1000)}s... (Attempt ${retries} of ${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, backoff));
       } else {
-        // console.error(\`Failed to fetch \${url} after \${maxRetries} retries:\`, error);
+        // console.error(`Failed to fetch ${url} after ${maxRetries} retries:`, error);
         return null;
       }
     }
@@ -189,7 +173,7 @@ async function extractEmailsFromPage(url: string): Promise<string[]> {
   const standardEmails = content.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [];
   
   // Look for obfuscated emails (e.g., "email at domain dot com")
-  const textPatterns = content.match(/[A-Za-z0-9._%+-]+\\s*[@\\[\\(]at[\\)\\]]\\s*[A-Za-z0-9.-]+\\s*[\\.\\[\\(]dot[\\)\\]]\\s*[A-Za-z]{2,}/gi) || [];
+  const textPatterns = content.match(/[A-Za-z0-9._%+-]+\s*[@\[\(]at[\)\]]\s*[A-Za-z0-9.-]+\s*[\.[\(]dot[\)\]]\s*[A-Za-z]{2,}/gi) || [];
   
   // Look for emails in mailto: links
   const mailtoEmails: string[] = [];
@@ -208,8 +192,8 @@ async function extractEmailsFromPage(url: string): Promise<string[]> {
   textPatterns.forEach(pattern => {
     try {
       const processed = pattern
-        .replace(/\\s*[@\\[\\(]at[\\)\\]]\\s*/i, '@')
-        .replace(/\\s*[\\.\\[\\(]dot[\\)\\]]\\s*/gi, '.');
+        .replace(/\s*[@\[\(]at[\)\]]\s*/i, '@')
+        .replace(/\s*[\.[\(]dot[\)\]]\s*/gi, '.');
       if (processed.match(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/)) {
         allEmails.push(processed);
       }
@@ -247,12 +231,12 @@ async function findContactPages(baseUrl: string): Promise<string[]> {
     
     // Add all common paths
     for (const path of commonPaths) {
-      contactUrls.push(\`\${protocol}//\${host}\${path}\`);
+      contactUrls.push(`${protocol}//${host}${path}`);
     }
     
     return contactUrls;
   } catch (error) {
-    console.error(\`Error finding contact pages for \${baseUrl}:\`, error);
+    console.error(`Error finding contact pages for ${baseUrl}:`, error);
     return [baseUrl];
   }
 }
@@ -317,7 +301,7 @@ async function findContactFormUrl(url: string): Promise<string | null> {
     
     return null;
   } catch (error) {
-    console.error(\`Error finding contact form for \${url}:\`, error);
+    console.error(`Error finding contact form for ${url}:`, error);
     return null;
   }
 }
@@ -363,10 +347,10 @@ async function extractSocialProfiles(url: string): Promise<Array<{platform: stri
       for (const { platform, regex } of platformMatchers) {
         const match = href.match(regex);
         if (match && match[1]) {
-          const username = match[1].replace(/\\/$/, ''); // Remove trailing slash
+          const username = match[1].replace(/\/$/, ''); // Remove trailing slash
           
-          if (!processedUrls.has(\`\${platform}-\${username}\`)) {
-            processedUrls.add(\`\${platform}-\${username}\`);
+          if (!processedUrls.has(`${platform}-${username}`)) {
+            processedUrls.add(`${platform}-${username}`);
             results.push({
               platform,
               url: href,
@@ -379,7 +363,7 @@ async function extractSocialProfiles(url: string): Promise<Array<{platform: stri
     
     return results;
   } catch (error) {
-    console.error(\`Error extracting social profiles for \${url}:\`, error);
+    console.error(`Error extracting social profiles for ${url}:`, error);
     return [];
   }
 }
@@ -388,10 +372,10 @@ async function extractSocialProfiles(url: string): Promise<Array<{platform: stri
  * Process an opportunity to extract and update contact information
  */
 async function processOpportunity(opportunity: any) {
-  console.log(\`Processing \${opportunity.domain} (Premium: \${opportunity.isPremium})\`);
+  console.log(`Processing ${opportunity.domain} (Premium: ${opportunity.isPremium})`);
   
   try {
-    const baseUrl = cleanupUrl(opportunity.url || \`https://\${opportunity.domain}\`);
+    const baseUrl = cleanupUrl(opportunity.url || `https://${opportunity.domain}`);
     const domain = extractDomain(baseUrl);
     let contactInfo: any = { emails: [], socialProfiles: [], contactForms: [] };
     
@@ -441,14 +425,14 @@ async function processOpportunity(opportunity: any) {
         .set({ contactInfo: JSON.stringify(contactInfo) })
         .where(eq(discoveredOpportunities.id, opportunity.id));
       
-      console.log(\`Updated contact info for \${domain}: \${contactInfo.emails.length} emails, \${contactInfo.socialProfiles.length} social profiles, \${contactInfo.contactForms.length} contact forms\`);
+      console.log(`Updated contact info for ${domain}: ${contactInfo.emails.length} emails, ${contactInfo.socialProfiles.length} social profiles, ${contactInfo.contactForms.length} contact forms`);
       return true;
     } else {
-      console.log(\`No contact info found for \${domain}\`);
+      console.log(`No contact info found for ${domain}`);
       return false;
     }
   } catch (error) {
-    console.error(\`Error processing opportunity \${opportunity.id}:\`, error);
+    console.error(`Error processing opportunity ${opportunity.id}:`, error);
     return false;
   }
 }
@@ -472,7 +456,7 @@ async function improveContactCoverage() {
       )
       .orderBy(discoveredOpportunities.domainAuthority, "desc");
     
-    console.log(\`Found \${premiumOpportunities.length} premium opportunities without contact info\`);
+    console.log(`Found ${premiumOpportunities.length} premium opportunities without contact info`);
     
     let premiumProcessed = 0;
     for (const opportunity of premiumOpportunities) {
@@ -483,7 +467,7 @@ async function improveContactCoverage() {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
     
-    console.log(\`Processed \${premiumProcessed} premium opportunities\`);
+    console.log(`Processed ${premiumProcessed} premium opportunities`);
     
     // Then, process regular opportunities
     console.log("Processing regular opportunities...");
@@ -498,7 +482,7 @@ async function improveContactCoverage() {
       .orderBy(discoveredOpportunities.domainAuthority, "desc")
       .limit(50); // Process a limited batch of regular opportunities
     
-    console.log(\`Found \${regularOpportunities.length} regular opportunities without contact info (processing 50)\`);
+    console.log(`Found ${regularOpportunities.length} regular opportunities without contact info (processing 50)`);
     
     let regularProcessed = 0;
     for (const opportunity of regularOpportunities) {
@@ -509,7 +493,7 @@ async function improveContactCoverage() {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
     
-    console.log(\`Processed \${regularProcessed} regular opportunities\`);
+    console.log(`Processed ${regularProcessed} regular opportunities`);
     console.log("Contact information improvement process completed!");
     
   } catch (error) {
@@ -519,9 +503,3 @@ async function improveContactCoverage() {
 
 // Run the process
 improveContactCoverage().catch(console.error);
-EOL
-
-echo "Running improved contact extraction..."
-npx tsx scripts/improved-contact-extraction.ts
-
-echo "Extraction completed!"
