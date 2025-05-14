@@ -25,10 +25,10 @@ import net from 'net';
 neonConfig.webSocketConstructor = ws;
 
 // Constants for rate limiting and throttling
-const MAX_RETRIES = 4;
-const THROTTLE_DELAY = 5000; // ms
-const BATCH_SIZE = 5;
-const MAX_OPPORTUNITIES_TO_PROCESS = 10; // Reduced for testing
+const MAX_RETRIES = 3;
+const THROTTLE_DELAY = 3000; // ms
+const BATCH_SIZE = 2;
+const MAX_OPPORTUNITIES_TO_PROCESS = 4; // Greatly reduced for testing
 
 // Connect to the database
 const connectionString = process.env.DATABASE_URL;
@@ -737,23 +737,23 @@ async function processOpportunity(opportunity: any, isPremium: boolean): Promise
   // Update opportunity with new emails
   existingContactInfo.emails = Array.from(allEmails);
   
-  // Only update if we found new emails
-  if (existingContactInfo.emails.length > previousEmailCount) {
-    try {
-      await db.update(schema.discoveredOpportunities)
-        .set({
-          contactInfo: JSON.stringify(existingContactInfo)
-        })
-        .where(eq(schema.discoveredOpportunities.id, opportunity.id));
-      
+  // Update regardless of whether we found new emails (for testing)
+  try {
+    await db.update(schema.discoveredOpportunities)
+      .set({
+        contactInfo: JSON.stringify(existingContactInfo)
+      })
+      .where(eq(schema.discoveredOpportunities.id, opportunity.id));
+    
+    if (existingContactInfo.emails.length > previousEmailCount) {
       console.log(`  Updated opportunity #${opportunity.id}, found ${existingContactInfo.emails.length} emails (previously ${previousEmailCount})`);
       return true;
-    } catch (error) {
-      console.log(`  Error updating opportunity #${opportunity.id}: ${error.message}`);
+    } else {
+      console.log(`  No new emails found for opportunity #${opportunity.id}, kept existing emails`);
       return false;
     }
-  } else {
-    console.log(`  No new emails found for opportunity #${opportunity.id}`);
+  } catch (error) {
+    console.log(`  Error updating opportunity #${opportunity.id}: ${error.message}`);
     return false;
   }
 }
@@ -788,13 +788,13 @@ async function enhancedEmailExtraction() {
         if (updated) updatedPremium++;
         
         // Short delay between opportunities
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
       console.log(`Processed ${processedPremium}/${premiumOpportunities.length} premium opportunities, updated ${updatedPremium}`);
       
-      // Longer delay between batches
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      // Shorter delay between batches
+      await new Promise(resolve => setTimeout(resolve, 3000));
     }
     
     console.log('Enhanced email extraction completed!');
