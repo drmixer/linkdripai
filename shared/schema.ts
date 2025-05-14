@@ -10,7 +10,16 @@ export const users = pgTable("users", {
   firstName: text("firstName").notNull(),
   lastName: text("lastName").notNull(),
   email: text("email").notNull(),
+  // Subscription related fields
   subscription: text("subscription").default("Free Trial"),
+  subscriptionId: text("subscriptionId"), // Lemon Squeezy subscription ID
+  subscriptionStatus: text("subscriptionStatus").default("none"), // active, cancelled, past_due, etc.
+  planVaraintId: text("planVariantId"), // Lemon Squeezy variant ID for the plan
+  customerId: text("customerId"), // Lemon Squeezy customer ID
+  subscriptionRenewsAt: timestamp("subscriptionRenewsAt"), // When the subscription renews
+  subscriptionEndsAt: timestamp("subscriptionEndsAt"), // When the subscription ends if cancelled
+  splashCredits: integer("splashCredits").default(0), // Purchased splash credits
+  // Old subscription tracking fields - maintained for backward compatibility
   dailyOpportunitiesLimit: integer("dailyOpportunitiesLimit").default(5),
   splashesAllowed: integer("splashesallowed").default(1),
   splashesUsed: integer("splashesused").default(0),
@@ -71,6 +80,13 @@ const baseInsertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   subscription: true,
+  subscriptionId: true,
+  subscriptionStatus: true,
+  planVaraintId: true,
+  customerId: true,
+  subscriptionRenewsAt: true,
+  subscriptionEndsAt: true,
+  splashCredits: true,
   dailyOpportunitiesLimit: true,
   splashesAllowed: true,
   splashesUsed: true,

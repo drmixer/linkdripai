@@ -11,12 +11,25 @@ import {
   SubscriptionPlan, 
   SplashPackage,
   PLAN_DETAILS,
-  SPLASH_DETAILS
+  SPLASH_DETAILS,
+  PLAN_VARIANT_IDS
 } from '../services/lemon-squeezy-service';
 import { storage } from '../storage';
 import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+
+/**
+ * Helper function to determine subscription plan from variant ID
+ */
+function determineSubscriptionPlan(variantId: string): string {
+  for (const [planKey, planVariantId] of Object.entries(PLAN_VARIANT_IDS)) {
+    if (planVariantId === variantId) {
+      return PLAN_DETAILS[planKey as SubscriptionPlan].name;
+    }
+  }
+  return 'Free Trial';
+}
 
 const paymentRouter = Router();
 const lemonSqueezy = getLemonSqueezyService();
@@ -84,7 +97,7 @@ paymentRouter.post('/checkout/subscription', async (req, res) => {
     const checkoutUrl = await lemonSqueezy.createCheckoutUrl(
       planId as SubscriptionPlan,
       user.email,
-      user.fullName || user.username,
+      `${user.firstName} ${user.lastName}` || user.username,
       { userId: user.id }
     );
     
@@ -115,7 +128,7 @@ paymentRouter.post('/checkout/splash', async (req, res) => {
     const checkoutUrl = await lemonSqueezy.createSplashCheckoutUrl(
       packageId as SplashPackage,
       user.email,
-      user.fullName || user.username,
+      `${user.firstName} ${user.lastName}` || user.username,
       { userId: user.id }
     );
     
@@ -165,9 +178,11 @@ paymentRouter.post('/webhook', async (req, res) => {
       // Update user subscription details
       await db.update(users)
         .set({
+          subscription: status === 'active' ? determineSubscriptionPlan(String(variantId)) : 'Free Trial',
           subscriptionId,
           subscriptionStatus: status,
           planVaraintId: String(variantId),
+          customerId: String(customerId),
         })
         .where(eq(users.id, Number(userId)));
       
@@ -226,7 +241,7 @@ paymentRouter.post('/webhook', async (req, res) => {
         if (user) {
           await db.update(users)
             .set({
-              splashCredits: (user.splashCredits || 0) + splashQuantity,
+              splashesAllowed: (user.splashesAllowed || 0) + splashQuantity,
             })
             .where(eq(users.id, user.id));
           

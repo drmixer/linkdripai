@@ -16,6 +16,7 @@ import { getDiscoveryScheduler } from "./services/discovery-scheduler";
 import { EmailService, createEmailServiceForUser } from "./services/email-service";
 import emailWebhookRoutes from "./routes/email-webhook";
 import emailIntegrationRoutes from "./routes/email-integration-routes";
+import paymentRoutes from "./routes/payment-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
