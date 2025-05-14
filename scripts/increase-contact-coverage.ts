@@ -683,10 +683,23 @@ async function extractSocialProfiles(url: string): Promise<Array<{platform: stri
 }
 
 /**
- * Main function to improve contact information coverage
- * @param isDryRun If true, no actual database updates will be performed
+ * Configuration options for the contact coverage process
  */
-export async function increaseContactCoverage(isDryRun = false) {
+interface ContactCoverageConfig {
+  isDryRun?: boolean;
+  premiumOnly?: boolean;
+  batchSize?: number;
+}
+
+/**
+ * Main function to improve contact information coverage
+ * @param config Configuration options for the contact coverage process
+ */
+export async function increaseContactCoverage(config: ContactCoverageConfig | boolean = {}) {
+  // For backward compatibility, if a boolean is passed, assume it's isDryRun
+  const isDryRun = typeof config === 'boolean' ? config : config.isDryRun ?? false;
+  const premiumOnly = typeof config === 'boolean' ? false : config.premiumOnly ?? false;
+  const batchSize = typeof config === 'boolean' ? BATCH_SIZE : config.batchSize ?? BATCH_SIZE;
   try {
     console.log('Starting contact information coverage improvement process...');
     
@@ -717,11 +730,11 @@ export async function increaseContactCoverage(isDryRun = false) {
     
     if (premiumOpportunities.length > 0) {
       // Process in batches to avoid overwhelming servers
-      const totalPremiumBatches = Math.ceil(premiumOpportunities.length / BATCH_SIZE);
+      const totalPremiumBatches = Math.ceil(premiumOpportunities.length / batchSize);
       
       for (let batchIndex = 0; batchIndex < totalPremiumBatches; batchIndex++) {
-        const start = batchIndex * BATCH_SIZE;
-        const end = Math.min(start + BATCH_SIZE, premiumOpportunities.length);
+        const start = batchIndex * batchSize;
+        const end = Math.min(start + batchSize, premiumOpportunities.length);
         const batch = premiumOpportunities.slice(start, end);
         
         console.log(`Processing premium batch ${batchIndex + 1} of ${totalPremiumBatches} (${start + 1} to ${end} of ${premiumOpportunities.length})`);
@@ -743,22 +756,26 @@ export async function increaseContactCoverage(isDryRun = false) {
     }
     
     // Second priority: Process regular opportunities without contact info
-    // Limit this to a reasonable number to avoid excessive resource usage
-    console.log('\nProcessing regular opportunities without contact info...');
-    
-    const regularOpportunities = await db.select()
-      .from(discoveredOpportunities)
-      .where(sql`"isPremium" = false AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`);
-    
-    console.log(`Found ${regularOpportunities.length} regular opportunities without contact info`);
-    
-    // Determine how many we need to process to reach target coverage
-    const targetRegularCoverage = 0.65; // 65% target for regular opportunities
-    const currentRegularTotal = currentStats.total - currentStats.premium_total;
-    const currentRegularWithContact = currentStats.with_contact - currentStats.premium_with_contact;
-    const currentRegularCoverage = currentRegularWithContact / currentRegularTotal;
-    
-    if (currentRegularCoverage < targetRegularCoverage) {
+    // Skip if premiumOnly is true
+    if (premiumOnly) {
+      console.log('\nSkipping regular opportunities (premium-only mode enabled)');
+    } else {
+      // Limit this to a reasonable number to avoid excessive resource usage
+      console.log('\nProcessing regular opportunities without contact info...');
+      
+      const regularOpportunities = await db.select()
+        .from(discoveredOpportunities)
+        .where(sql`"isPremium" = false AND ("contactInfo" IS NULL OR "contactInfo" = '[]' OR "contactInfo" = '{}')`);
+      
+      console.log(`Found ${regularOpportunities.length} regular opportunities without contact info`);
+      
+      // Determine how many we need to process to reach target coverage
+      const targetRegularCoverage = 0.65; // 65% target for regular opportunities
+      const currentRegularTotal = currentStats.total - currentStats.premium_total;
+      const currentRegularWithContact = currentStats.with_contact - currentStats.premium_with_contact;
+      const currentRegularCoverage = currentRegularWithContact / currentRegularTotal;
+      
+      if (currentRegularCoverage < targetRegularCoverage) {
       const neededAdditional = Math.ceil(targetRegularCoverage * currentRegularTotal - currentRegularWithContact);
       const toProcess = Math.min(neededAdditional, regularOpportunities.length);
       
@@ -770,11 +787,11 @@ export async function increaseContactCoverage(isDryRun = false) {
         const opportunitiesToProcess = regularOpportunities.slice(0, toProcess);
         
         // Process in batches
-        const totalRegularBatches = Math.ceil(opportunitiesToProcess.length / BATCH_SIZE);
+        const totalRegularBatches = Math.ceil(opportunitiesToProcess.length / batchSize);
         
         for (let batchIndex = 0; batchIndex < totalRegularBatches; batchIndex++) {
-          const start = batchIndex * BATCH_SIZE;
-          const end = Math.min(start + BATCH_SIZE, opportunitiesToProcess.length);
+          const start = batchIndex * batchSize;
+          const end = Math.min(start + batchSize, opportunitiesToProcess.length);
           const batch = opportunitiesToProcess.slice(start, end);
           
           console.log(`Processing regular batch ${batchIndex + 1} of ${totalRegularBatches} (${start + 1} to ${end} of ${opportunitiesToProcess.length})`);
@@ -822,8 +839,11 @@ export async function increaseContactCoverage(isDryRun = false) {
 
 /**
  * Process a single opportunity to extract and update contact information
+ * @param opportunity The opportunity to process
+ * @param isPremium Whether this is a premium opportunity
+ * @param isDryRun If true, no actual database updates will be performed
  */
-async function processOpportunity(opportunity: any, isPremium: boolean) {
+async function processOpportunity(opportunity: any, isPremium: boolean, isDryRun = false) {
   try {
     console.log(`Processing opportunity #${opportunity.id}: ${opportunity.url} (${isPremium ? 'Premium' : 'Regular'})`);
     

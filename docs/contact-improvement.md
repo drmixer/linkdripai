@@ -34,8 +34,11 @@ We've created a comprehensive contact information extraction system that:
 To run the contact information improvement process:
 
 ```bash
-# Run the script
+# Run the script (for actual database updates)
 ./run-contact-improvement.sh
+
+# Run in dry run mode (no database changes)
+./run-contact-improvement.sh --dry-run
 ```
 
 This will:
@@ -43,6 +46,15 @@ This will:
 2. Then process regular opportunities until we reach target coverage
 
 The script will show progress and statistics throughout the extraction process.
+
+### Dry Run Mode
+
+The `--dry-run` flag allows you to test the contact extraction process without making any actual changes to the database. This is useful for:
+
+- Testing the extraction logic
+- Verifying connection to external websites
+- Estimating how many opportunities would be updated
+- Checking for any potential errors or issues
 
 ## Technical Implementation
 
