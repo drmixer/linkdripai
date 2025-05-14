@@ -19,7 +19,7 @@ export NODE_OPTIONS="--max-old-space-size=2048"
 
 echo "Running advanced contact extraction..."
 
-# Process 50 opportunities at a time, prioritizing premium
-npx tsx scripts/advanced-contact-extractor.ts --batch-size 50
+# Process 10 opportunities at a time, focusing on premium
+npx tsx scripts/advanced-contact-extractor.ts --premium-only --batch-size 10
 
 echo "Contact extraction completed!"

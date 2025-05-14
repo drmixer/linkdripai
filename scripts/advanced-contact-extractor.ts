@@ -25,11 +25,14 @@ import * as https from "https";
 import * as dns from "dns";
 import * as punycode from "punycode";
 
+// Export these utility functions for testing
+export { cleanupUrl, extractEmailsFromPage, findContactPages, findContactFormUrl, extractSocialProfiles };
+
 // Configuration
 const MAX_RETRIES = 3;
 const THROTTLE_DELAY = 5000; // ms between requests to same domain
 const REQUEST_TIMEOUT = 15000; // 15 second timeout
-const MAX_EXECUTION_TIME = 10000; // 10 seconds per opportunity
+const MAX_EXECUTION_TIME = 30000; // 30 seconds per opportunity
 const domainLastAccessTime: Record<string, number> = {};
 const USER_AGENTS = [
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -863,17 +866,19 @@ async function processOpportunity(opportunity: any, isDryRun: boolean): Promise<
   }
 }
 
-// Run the function if this module is executed directly
-if (require.main === module) {
-  const options = {
-    premiumOnly: process.argv.includes('--premium-only'),
-    isDryRun: process.argv.includes('--dry-run'),
-    batchSize: process.argv.includes('--batch-size') 
-      ? parseInt(process.argv[process.argv.indexOf('--batch-size') + 1], 10) 
+// Process any command line arguments
+const processArgs = () => {
+  const args = process.argv;
+  return {
+    premiumOnly: args.includes('--premium-only'),
+    isDryRun: args.includes('--dry-run'),
+    batchSize: args.includes('--batch-size') 
+      ? parseInt(args[args.indexOf('--batch-size') + 1], 10) 
       : 50
   };
-  
-  runAdvancedContactExtraction(options)
-    .catch(console.error)
-    .finally(() => process.exit(0));
-}
+};
+
+// Start the extraction process
+const options = processArgs();
+runAdvancedContactExtraction(options)
+  .catch(console.error);
