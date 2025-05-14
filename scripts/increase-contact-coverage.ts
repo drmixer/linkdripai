@@ -684,8 +684,9 @@ async function extractSocialProfiles(url: string): Promise<Array<{platform: stri
 
 /**
  * Main function to improve contact information coverage
+ * @param isDryRun If true, no actual database updates will be performed
  */
-export async function increaseContactCoverage() {
+export async function increaseContactCoverage(isDryRun = false) {
   try {
     console.log('Starting contact information coverage improvement process...');
     
@@ -727,7 +728,7 @@ export async function increaseContactCoverage() {
         
         // Process opportunities in sequence with enhanced extraction
         for (const opportunity of batch) {
-          await processOpportunity(opportunity, true); // true = premium opportunity
+          await processOpportunity(opportunity, true, isDryRun); // true = premium opportunity
           
           // Add a small delay between opportunities
           await setTimeout(1000);
@@ -780,7 +781,7 @@ export async function increaseContactCoverage() {
           
           // Process opportunities in sequence
           for (const opportunity of batch) {
-            await processOpportunity(opportunity, false); // false = regular opportunity
+            await processOpportunity(opportunity, false, isDryRun); // false = regular opportunity
             
             // Add a small delay between opportunities
             await setTimeout(1000);
@@ -877,11 +878,15 @@ async function processOpportunity(opportunity: any, isPremium: boolean) {
       });
       
       // Update the opportunity in the database
-      await db.update(discoveredOpportunities)
-        .set({
-          contactInfo: contactInfo
-        })
-        .where(eq(discoveredOpportunities.id, opportunity.id));
+      if (!isDryRun) {
+        await db.update(discoveredOpportunities)
+          .set({
+            contactInfo: contactInfo
+          })
+          .where(eq(discoveredOpportunities.id, opportunity.id));
+      } else {
+        console.log(`[DRY RUN] Would update opportunity #${opportunity.id} with contact information`);
+      }
       
       return true;
     } else {

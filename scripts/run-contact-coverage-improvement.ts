@@ -12,11 +12,19 @@
 
 import { increaseContactCoverage } from './increase-contact-coverage';
 
+// Parse CLI arguments
+const args = process.argv.slice(2);
+const isDryRun = args.includes('--dry-run');
+
 (async () => {
   console.log('Starting contact coverage improvement process...');
   
+  if (isDryRun) {
+    console.log('DRY RUN MODE: No actual database updates will be performed');
+  }
+  
   try {
-    await increaseContactCoverage();
+    await increaseContactCoverage(isDryRun);
     console.log('Contact coverage improvement completed successfully.');
   } catch (error) {
     console.error('Error during contact coverage improvement:', error);
