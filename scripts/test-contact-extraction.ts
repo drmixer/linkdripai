@@ -566,11 +566,18 @@ async function testContactExtraction() {
   try {
     // Get premium opportunities without contact info
     // Also make sure the URL doesn't contain query parameters which often create issues
+    // And avoid large domains like google, facebook, etc. which can time out
     const premiumOpportunities = await db.query.discoveredOpportunities.findMany({
-      where: (opportunity, { eq, and, isNull, ne, not, like }) => (
+      where: (opportunity, { eq, and, isNull, ne, not, like, or }) => (
         and(
           eq(opportunity.isPremium, true),
           not(like(opportunity.url, '%?%')), // Avoid URLs with query parameters
+          not(like(opportunity.url, '%google.%')), // Avoid Google domains
+          not(like(opportunity.url, '%facebook.%')), // Avoid Facebook
+          not(like(opportunity.url, '%twitter.%')), // Avoid Twitter
+          not(like(opportunity.url, '%linkedin.%')), // Avoid LinkedIn
+          not(like(opportunity.url, '%youtube.%')), // Avoid YouTube
+          not(like(opportunity.url, '%instagram.%')), // Avoid Instagram
           or(
             isNull(opportunity.contactInfo),
             eq(opportunity.contactInfo as any, '{}'),
@@ -579,7 +586,7 @@ async function testContactExtraction() {
         )
       ),
       orderBy: (opportunity, { desc }) => [desc(opportunity.domainAuthority)],
-      limit: 3 // Get top 3 so we have fallbacks
+      limit: 5 // Get top 5 so we have more fallbacks
     });
     
     if (!premiumOpportunities.length) {
@@ -628,9 +635,20 @@ async function testContactExtraction() {
         const contactPages = await findContactPages(url);
         console.log(`Found ${contactPages.length} potential contact pages`);
         
-        // Extract emails from contact pages
-        for (const contactPage of contactPages) {
+        // Extract emails from contact pages (limit to 3 to avoid timeouts)
+        const limitedContactPages = contactPages.slice(0, 3);
+        if (limitedContactPages.length < contactPages.length) {
+          console.log(`Limiting contact page checking to ${limitedContactPages.length} out of ${contactPages.length} pages to avoid timeouts`);
+        }
+        
+        for (const contactPage of limitedContactPages) {
           try {
+            // Check if we've exceeded the max execution time
+            if (Date.now() - startTime > MAX_EXECUTION_TIME * 0.7) {
+              console.log('70% of maximum execution time reached, skipping remaining contact pages');
+              break;
+            }
+            
             console.log(`Extracting emails from contact page: ${contactPage}`);
             const pageEmails = await extractEmailsFromPage(contactPage);
             console.log(`Found ${pageEmails.length} emails on contact page`);
@@ -699,9 +717,6 @@ const timeoutId = setTimeout(() => {
   console.log('Terminating the script. You may want to try with a different opportunity.');
   process.exit(1);
 }, MAX_EXECUTION_TIME + 10000); // Add 10 seconds buffer for clean shutdown
-
-// Make the timeout unref so it doesn't keep the process alive
-timeoutId.unref();
 
 // Run the test
 testContactExtraction()

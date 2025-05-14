@@ -34,17 +34,37 @@ As of May 14, 2025:
 
 ## Running the Improved Extraction
 
-Use the following command to run the improved contact extraction:
+There are two methods to run the improved contact extraction:
+
+### 1. Full Extraction
+
+For a full extraction process that updates the database:
 
 ```bash
 ./run-improved-contact-extraction.sh
 ```
 
-The script will:
+This script will:
 1. Process premium opportunities first to maximize high-value contacts
 2. Use intelligent throttling to avoid rate limiting
 3. Apply exponential backoff for failed requests
 4. Provide detailed progress reporting
+
+### 2. Testing
+
+For testing the extraction on a single opportunity without updating the database:
+
+```bash
+./run-contact-extraction-test.sh
+```
+
+For a faster, simplified test using known good domains:
+
+```bash
+./run-simple-contact-test.sh
+```
+
+The test scripts are useful for verifying that the extraction methods are working correctly without processing the entire database.
 
 ## Expected Outcomes
 
