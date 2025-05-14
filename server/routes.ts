@@ -25,6 +25,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register email integration routes
   app.use(emailIntegrationRoutes);
   
+  // Register payment routes
+  app.use('/api/payments', paymentRoutes);
+  
   // Start the discovery scheduler to continuously find opportunities
   const discoveryScheduler = getDiscoveryScheduler();
   // Run every 12 hours (in production this would be configured based on system load)
