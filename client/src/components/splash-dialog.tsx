@@ -111,12 +111,12 @@ export default function SplashDialog({ open, onOpenChange }: SplashDialogProps) 
           </Card>
           
           <Card 
-            className={`cursor-pointer hover:border-primary/50 transition-colors ${selectedPackage === SplashPackage.PACK_3 ? 'border-primary' : 'border-border'}`}
-            onClick={() => setSelectedPackage(SplashPackage.PACK_3)}
+            className={`cursor-pointer hover:border-primary/50 transition-colors ${selectedPackage === SplashPackage.TRIPLE ? 'border-primary' : 'border-border'}`}
+            onClick={() => setSelectedPackage(SplashPackage.TRIPLE)}
           >
             <CardHeader className="space-y-1 pb-2">
               <CardTitle className="text-xl flex items-center gap-2">
-                {selectedPackage === SplashPackage.PACK_3 && (
+                {selectedPackage === SplashPackage.TRIPLE && (
                   <CheckIcon className="h-4 w-4 text-primary" />
                 )}
                 <span>3 Splashes</span>
@@ -125,14 +125,14 @@ export default function SplashDialog({ open, onOpenChange }: SplashDialogProps) 
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">$18</div>
-              <p className="text-sm text-muted-foreground">$6 per credit</p>
+              <p className="text-sm text-muted-foreground">$6 per credit (save 14%)</p>
             </CardContent>
             <CardFooter>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="w-full"
-                onClick={() => setSelectedPackage(SplashPackage.PACK_3)}
+                onClick={() => setSelectedPackage(SplashPackage.TRIPLE)}
               >
                 Select
               </Button>
@@ -140,12 +140,12 @@ export default function SplashDialog({ open, onOpenChange }: SplashDialogProps) 
           </Card>
           
           <Card 
-            className={`cursor-pointer hover:border-primary/50 transition-colors ${selectedPackage === SplashPackage.PACK_7 ? 'border-primary' : 'border-border'}`}
-            onClick={() => setSelectedPackage(SplashPackage.PACK_7)}
+            className={`cursor-pointer hover:border-primary/50 transition-colors ${selectedPackage === SplashPackage.SEVEN ? 'border-primary' : 'border-border'}`}
+            onClick={() => setSelectedPackage(SplashPackage.SEVEN)}
           >
             <CardHeader className="space-y-1 pb-2">
               <CardTitle className="text-xl flex items-center gap-2">
-                {selectedPackage === SplashPackage.PACK_7 && (
+                {selectedPackage === SplashPackage.SEVEN && (
                   <CheckIcon className="h-4 w-4 text-primary" />
                 )}
                 <span>7 Splashes</span>
@@ -154,14 +154,14 @@ export default function SplashDialog({ open, onOpenChange }: SplashDialogProps) 
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">$35</div>
-              <p className="text-sm text-muted-foreground">$5 per credit</p>
+              <p className="text-sm text-muted-foreground">$5 per credit (save 29%)</p>
             </CardContent>
             <CardFooter>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="w-full"
-                onClick={() => setSelectedPackage(SplashPackage.PACK_7)}
+                onClick={() => setSelectedPackage(SplashPackage.SEVEN)}
               >
                 Select
               </Button>
