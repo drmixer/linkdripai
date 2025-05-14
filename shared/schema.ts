@@ -14,7 +14,7 @@ export const users = pgTable("users", {
   subscription: text("subscription").default("Free Trial"),
   subscriptionId: text("subscriptionId"), // Lemon Squeezy subscription ID
   subscriptionStatus: text("subscriptionStatus").default("none"), // active, cancelled, past_due, etc.
-  planVaraintId: text("planVariantId"), // Lemon Squeezy variant ID for the plan
+  planVariantId: text("planVariantId"), // Lemon Squeezy variant ID for the plan
   customerId: text("customerId"), // Lemon Squeezy customer ID
   subscriptionRenewsAt: timestamp("subscriptionRenewsAt"), // When the subscription renews
   subscriptionEndsAt: timestamp("subscriptionEndsAt"), // When the subscription ends if cancelled

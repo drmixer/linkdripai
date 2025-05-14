@@ -14,6 +14,7 @@ import {
   SPLASH_DETAILS,
   PLAN_VARIANT_IDS
 } from '../services/lemon-squeezy-service';
+import { getSubscriptionService } from '../services/subscription-service';
 import { storage } from '../storage';
 import { db } from '../db';
 import { users } from '@shared/schema';
@@ -33,6 +34,7 @@ function determineSubscriptionPlan(variantId: string): string {
 
 const paymentRouter = Router();
 const lemonSqueezy = getLemonSqueezyService();
+const subscriptionService = getSubscriptionService();
 
 /**
  * Get subscription plans
@@ -175,18 +177,19 @@ paymentRouter.post('/webhook', async (req, res) => {
         return res.status(400).json({ message: 'No user ID in custom data' });
       }
       
-      // Update user subscription details
-      await db.update(users)
-        .set({
-          subscription: status === 'active' ? determineSubscriptionPlan(String(variantId)) : 'Free Trial',
+      // Update user subscription details using the subscription service
+      try {
+        await subscriptionService.updateUserSubscription(
+          Number(userId),
           subscriptionId,
-          subscriptionStatus: status,
-          planVaraintId: String(variantId),
-          customerId: String(customerId),
-        })
-        .where(eq(users.id, Number(userId)));
-      
-      console.log(`[Payment] Updated subscription for user ${userId}: ${subscriptionId} (${status})`);
+          String(customerId),
+          String(variantId)
+        );
+        
+        console.log(`[Payment] Updated subscription for user ${userId}: ${subscriptionId} (${status})`);
+      } catch (error) {
+        console.error(`[Payment] Error updating subscription for user ${userId}:`, error);
+      }
     }
     
     // Handle subscription cancelled
