@@ -5,12 +5,59 @@
  * to help with configuration of variant IDs for LinkDripAI.
  */
 
-import { getLemonSqueezyService } from '../server/services/lemon-squeezy-service';
+import axios from 'axios';
+
+// Simple API client for direct testing
+class LemonSqueezyTestClient {
+  private apiKey: string;
+  private baseUrl: string = 'https://api.lemonsqueezy.com/v1';
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+    
+    if (!this.apiKey) {
+      throw new Error('Lemon Squeezy API key is required');
+    }
+  }
+
+  /**
+   * Make a request to the LemonSqueezy API
+   */
+  async makeRequest(
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE', 
+    endpoint: string, 
+    data?: any
+  ) {
+    try {
+      const response = await axios({
+        method,
+        url: `${this.baseUrl}${endpoint}`,
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Accept': 'application/vnd.api+json',
+          'Content-Type': 'application/vnd.api+json'
+        },
+        data
+      });
+      
+      return response.data;
+    } catch (error: any) {
+      console.error(`[LemonSqueezy] API error:`, error.response?.data || error.message);
+      throw error;
+    }
+  }
+}
 
 async function testLemonSqueezy() {
   try {
     console.log('Testing LemonSqueezy API Connection...');
-    const lemonSqueezy = getLemonSqueezyService();
+    const apiKey = process.env.LEMON_SQUEEZY_API_KEY || '';
+    
+    if (!apiKey) {
+      throw new Error('LEMON_SQUEEZY_API_KEY environment variable is not set');
+    }
+    
+    const lemonSqueezy = new LemonSqueezyTestClient(apiKey);
     
     // Get stores
     console.log('\n--- Stores ---');
@@ -51,14 +98,15 @@ async function testLemonSqueezy() {
       console.log('No products found.');
     }
     
-    console.log('\nCopy the Variant IDs to set up your environment variables:\n');
-    console.log('# Example .env additions:');
-    console.log('# LEMON_SQUEEZY_STARTER_VARIANT_ID=12345');
-    console.log('# LEMON_SQUEEZY_GROW_VARIANT_ID=12346');
-    console.log('# LEMON_SQUEEZY_PRO_VARIANT_ID=12347');
-    console.log('# LEMON_SQUEEZY_SINGLE_SPLASH_VARIANT_ID=12348');
-    console.log('# LEMON_SQUEEZY_TRIPLE_SPLASH_VARIANT_ID=12349');
-    console.log('# LEMON_SQUEEZY_SEVEN_SPLASH_VARIANT_ID=12350');
+    console.log('\nVariant IDs for environment variables:');
+    console.log('\n# Subscription Plans');
+    console.log('LEMON_SQUEEZY_STARTER_VARIANT_ID=802543');
+    console.log('LEMON_SQUEEZY_GROW_VARIANT_ID=802555');
+    console.log('LEMON_SQUEEZY_PRO_VARIANT_ID=802556');
+    console.log('\n# Splash Packages');
+    console.log('LEMON_SQUEEZY_SINGLE_SPLASH_VARIANT_ID=802558');
+    console.log('LEMON_SQUEEZY_TRIPLE_SPLASH_VARIANT_ID=802561');
+    console.log('LEMON_SQUEEZY_SEVEN_SPLASH_VARIANT_ID=802564');
     
   } catch (error) {
     console.error('Error testing LemonSqueezy:', error);

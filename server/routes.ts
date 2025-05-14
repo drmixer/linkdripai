@@ -18,6 +18,7 @@ import emailWebhookRoutes from "./routes/email-webhook";
 import emailIntegrationRoutes from "./routes/email-integration-routes";
 import paymentRoutes from "./routes/payment-routes";
 import subscriptionRoutes from "./routes/subscription-routes";
+import lemonSqueezyWebhookRoutes from "./routes/webhook-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -31,6 +32,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register subscription routes
   app.use('/api/subscription', subscriptionRoutes);
+  
+  // Register LemonSqueezy webhook routes
+  app.use('/api/subscription', lemonSqueezyWebhookRoutes);
   
   // Start the discovery scheduler to continuously find opportunities
   const discoveryScheduler = getDiscoveryScheduler();

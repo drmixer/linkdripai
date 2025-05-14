@@ -6,6 +6,11 @@
  */
 
 import axios from 'axios';
+import { 
+  SUBSCRIPTION_VARIANT_IDS, 
+  SPLASH_PACKAGE_VARIANT_IDS,
+  PLAN_FEATURES 
+} from '../config/lemon-squeezy-config';
 
 // Subscription plan IDs - these should match your actual product IDs in Lemon Squeezy
 export enum SubscriptionPlan {
@@ -26,25 +31,25 @@ export const PLAN_DETAILS = {
   [SubscriptionPlan.STARTER]: {
     name: 'Starter',
     price: 9,
-    websites: 1,
-    dripsPerDay: 5,
-    splashesPerMonth: 1,
+    websites: PLAN_FEATURES.Starter.websitesLimit,
+    dripsPerDay: PLAN_FEATURES.Starter.dailyDripsPerSite,
+    splashesPerMonth: PLAN_FEATURES.Starter.splashesPerMonth,
     description: 'Perfect for individuals getting started with link building',
   },
   [SubscriptionPlan.GROW]: {
     name: 'Grow',
     price: 19,
-    websites: 2,
-    dripsPerDay: 10,
-    splashesPerMonth: 3,
+    websites: PLAN_FEATURES.Grow.websitesLimit,
+    dripsPerDay: PLAN_FEATURES.Grow.dailyDripsPerSite,
+    splashesPerMonth: PLAN_FEATURES.Grow.splashesPerMonth,
     description: 'Ideal for small businesses looking to scale their outreach',
   },
   [SubscriptionPlan.PRO]: {
     name: 'Pro',
     price: 39,
-    websites: 5,
-    dripsPerDay: 15,
-    splashesPerMonth: 7,
+    websites: PLAN_FEATURES.Pro.websitesLimit,
+    dripsPerDay: PLAN_FEATURES.Pro.dailyDripsPerSite,
+    splashesPerMonth: PLAN_FEATURES.Pro.splashesPerMonth,
     description: 'For agencies and serious link builders who need maximum results',
   }
 };
@@ -61,29 +66,28 @@ export const SPLASH_DETAILS = {
     name: 'Triple Splash',
     price: 18,
     quantity: 3,
-    description: 'Three premium opportunity credits (save $3)',
+    description: 'Three premium opportunity credits (save 14%)',
   },
   [SplashPackage.SEVEN]: {
     name: 'Seven Splash',
     price: 35,
     quantity: 7,
-    description: 'Seven premium opportunity credits (save $14)',
+    description: 'Seven premium opportunity credits (save 29%)',
   }
 };
 
 // Map subscription plan IDs to actual Lemon Squeezy variant IDs
-// These need to be updated with your actual IDs from Lemon Squeezy
 export const PLAN_VARIANT_IDS: Record<SubscriptionPlan, string> = {
-  [SubscriptionPlan.STARTER]: process.env.LEMON_SQUEEZY_STARTER_VARIANT_ID || '',
-  [SubscriptionPlan.GROW]: process.env.LEMON_SQUEEZY_GROW_VARIANT_ID || '',
-  [SubscriptionPlan.PRO]: process.env.LEMON_SQUEEZY_PRO_VARIANT_ID || ''
+  [SubscriptionPlan.STARTER]: SUBSCRIPTION_VARIANT_IDS.STARTER,
+  [SubscriptionPlan.GROW]: SUBSCRIPTION_VARIANT_IDS.GROW,
+  [SubscriptionPlan.PRO]: SUBSCRIPTION_VARIANT_IDS.PRO
 };
 
 // Map splash package IDs to actual Lemon Squeezy variant IDs
 export const SPLASH_VARIANT_IDS: Record<SplashPackage, string> = {
-  [SplashPackage.SINGLE]: process.env.LEMON_SQUEEZY_SINGLE_SPLASH_VARIANT_ID || '',
-  [SplashPackage.TRIPLE]: process.env.LEMON_SQUEEZY_TRIPLE_SPLASH_VARIANT_ID || '',
-  [SplashPackage.SEVEN]: process.env.LEMON_SQUEEZY_SEVEN_SPLASH_VARIANT_ID || ''
+  [SplashPackage.SINGLE]: SPLASH_PACKAGE_VARIANT_IDS.SINGLE,
+  [SplashPackage.TRIPLE]: SPLASH_PACKAGE_VARIANT_IDS.TRIPLE,
+  [SplashPackage.SEVEN]: SPLASH_PACKAGE_VARIANT_IDS.SEVEN
 };
 
 export class LemonSqueezyService {
