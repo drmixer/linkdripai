@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Run the simple contact extraction test
-# This script tests the extraction process on a predefined list of domains
-# to verify the extraction functionality works properly
+# Run a simplified contact extraction test
+# This script tests basic contact extraction on a known domain
+# without relying on the advanced extraction methods
 
 # Import the .env file if it exists
 if [ -f .env ]; then
@@ -12,8 +12,7 @@ fi
 # Set proper Node options for memory optimization
 export NODE_OPTIONS="--max-old-space-size=2048"
 
-# Run the script
 echo "Running simple contact extraction test..."
-npx tsx scripts/run-simple-contact-test.ts
+npx tsx scripts/simple-contact-test.ts
 
 echo "Test completed!"
