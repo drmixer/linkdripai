@@ -1,193 +1,221 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog";
-import { Button, ButtonProps } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Sparkles } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle
+} from '@/components/ui/card';
+import { SplashPackage } from '@/lib/splash-packages';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Package, Zap, CheckIcon, Loader2 } from 'lucide-react';
 
-// Package options for buying splashes
-interface SplashPackage {
-  id: string;
-  name: string;
-  count: number;
-  price: number;
-  savings?: string;
-}
-
-// Premium button styling for the buy button
-export function BuyButton({ children, ...props }: ButtonProps) {
-  return (
-    <Button variant="premium" size="sm" className="gap-2" {...props}>
-      <Sparkles className="h-4 w-4" />
-      {children}
-    </Button>
-  );
-}
-
-// Buy splashes dialog props
 interface BuySplashesDialogProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  onClose?: () => void;
+  open: boolean;
+  onOpenChange: (purchased: boolean) => void;
 }
 
-// Splash packages with pricing
-const splashPackages: SplashPackage[] = [
-  { id: "single", name: "Single Splash", count: 1, price: 7 },
-  { id: "triple", name: "3-Pack", count: 3, price: 18, savings: "Save 14%" },
-  { id: "seven", name: "7-Pack", count: 7, price: 35, savings: "Save 29%" }
-];
-
-// Buy splashes dialog component
-export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySplashesDialogProps) {
-  const [selectedPackage, setSelectedPackage] = useState<string>(splashPackages[0].id);
+export function BuySplashesDialog({ open, onOpenChange }: BuySplashesDialogProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Safe function to handle dialog closing
-  const handleClose = () => {
-    // Always attempt to close the dialog using both methods for maximum compatibility
-    if (typeof onOpenChange === 'function') {
-      onOpenChange(false);
-    }
-    if (typeof onClose === 'function') {
-      onClose();
-    }
-  };
-
-  // Mutation for purchasing splashes
-  const purchaseMutation = useMutation({
-    mutationFn: async (packageId: string) => {
-      const response = await apiRequest("POST", "/api/payments/checkout/splash", { packageId });
-      return await response.json();
+  const [selectedPackage, setSelectedPackage] = useState<SplashPackage | null>(null);
+  
+  // Checkout mutation
+  const checkoutMutation = useMutation({
+    mutationFn: async (packageId: SplashPackage) => {
+      const res = await apiRequest('POST', '/api/subscription/checkout/splash', { packageId });
+      return await res.json();
     },
     onSuccess: (data) => {
-      // If we have a checkout URL, redirect to Lemon Squeezy for payment
       if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        toast({
-          title: "Checkout Error",
-          description: "Unable to create checkout. Please try again.",
-          variant: "destructive",
-        });
+        window.open(data.checkoutUrl, '_blank');
+        onOpenChange(true);
       }
     },
     onError: (error: Error) => {
       toast({
-        title: "Checkout Failed",
-        description: error.message,
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to create checkout',
+        variant: 'destructive',
       });
-    }
+    },
   });
 
-  // Get selected package details
-  const getSelectedPackage = () => {
-    return splashPackages.find(pkg => pkg.id === selectedPackage) || splashPackages[0];
+  const handleBuy = () => {
+    if (!selectedPackage) {
+      toast({
+        title: 'Please select a package',
+        description: 'Select a Splash package to continue',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    checkoutMutation.mutate(selectedPackage);
   };
-
-  // Handle purchase submit
-  const handlePurchase = () => {
-    purchaseMutation.mutate(selectedPackage);
-  };
-
-  // If the dialog is not requested to be open, don't render it at all
-  if (open === false) {
-    return null;
-  }
 
   return (
-    <Dialog 
-      open={true} 
-      onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          handleClose();
-        }
-      }}
-    >
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) onOpenChange(false);
+    }}>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Purchase Splashes
+            <Package className="h-6 w-6 text-primary" />
+            <span>Buy Splash Credits</span>
           </DialogTitle>
           <DialogDescription>
-            Splashes give you instant access to premium, high-quality backlink opportunities
-            (DA 40+, relevance 80%+, spam &lt;2%). Your monthly Splash allocation is shared
-            across all your sites.
+            Splash credits let you get premium backlink opportunities instantly (Domain Authority 40+, Spam Score &lt;2, Relevance 80%+).
           </DialogDescription>
         </DialogHeader>
-
-        <div className="py-4">
-          <div className="space-y-5">
-            <RadioGroup 
-              defaultValue={selectedPackage}
-              onValueChange={setSelectedPackage}
-              className="space-y-3"
-            >
-              {splashPackages.map((pkg) => (
-                <div 
-                  key={pkg.id}
-                  className={`
-                    flex items-center justify-between space-x-2 rounded-lg border p-4 
-                    ${selectedPackage === pkg.id ? 'border-primary bg-primary/5' : 'border-border'}
-                  `}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={pkg.id} id={pkg.id} />
-                    <Label 
-                      htmlFor={pkg.id}
-                      className="flex flex-col cursor-pointer"
-                    >
-                      <span className="font-medium">{pkg.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        Get {pkg.count} high-quality opportunit{pkg.count > 1 ? 'ies' : 'y'} (DA 40+)
-                      </span>
-                    </Label>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="font-medium">${pkg.price}</span>
-                    {pkg.savings && (
-                      <span className="text-xs text-green-600">{pkg.savings}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
+        
+        <div className="grid gap-4 py-4 sm:grid-cols-3">
+          <Card 
+            className={`cursor-pointer hover:border-primary/50 transition-colors ${selectedPackage === SplashPackage.SINGLE ? 'border-primary' : 'border-border'}`}
+            onClick={() => setSelectedPackage(SplashPackage.SINGLE)}
+          >
+            <CardHeader className="space-y-1 pb-2">
+              <CardTitle className="text-xl flex items-center gap-2">
+                {selectedPackage === SplashPackage.SINGLE && (
+                  <CheckIcon className="h-4 w-4 text-primary" />
+                )}
+                <span>1 Splash</span>
+              </CardTitle>
+              <CardDescription>Single high-quality opportunity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">$7</div>
+              <p className="text-sm text-muted-foreground">per credit</p>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full"
+                onClick={() => setSelectedPackage(SplashPackage.SINGLE)}
+              >
+                Select
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          <Card 
+            className={`cursor-pointer hover:border-primary/50 transition-colors ${selectedPackage === SplashPackage.PACK_3 ? 'border-primary' : 'border-border'}`}
+            onClick={() => setSelectedPackage(SplashPackage.PACK_3)}
+          >
+            <CardHeader className="space-y-1 pb-2">
+              <CardTitle className="text-xl flex items-center gap-2">
+                {selectedPackage === SplashPackage.PACK_3 && (
+                  <CheckIcon className="h-4 w-4 text-primary" />
+                )}
+                <span>3 Splashes</span>
+              </CardTitle>
+              <CardDescription>Popular choice</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">$18</div>
+              <p className="text-sm text-muted-foreground">$6 per credit</p>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full"
+                onClick={() => setSelectedPackage(SplashPackage.PACK_3)}
+              >
+                Select
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          <Card 
+            className={`cursor-pointer hover:border-primary/50 transition-colors ${selectedPackage === SplashPackage.PACK_7 ? 'border-primary' : 'border-border'}`}
+            onClick={() => setSelectedPackage(SplashPackage.PACK_7)}
+          >
+            <CardHeader className="space-y-1 pb-2">
+              <CardTitle className="text-xl flex items-center gap-2">
+                {selectedPackage === SplashPackage.PACK_7 && (
+                  <CheckIcon className="h-4 w-4 text-primary" />
+                )}
+                <span>7 Splashes</span>
+              </CardTitle>
+              <CardDescription>Best value</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">$35</div>
+              <p className="text-sm text-muted-foreground">$5 per credit</p>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full"
+                onClick={() => setSelectedPackage(SplashPackage.PACK_7)}
+              >
+                Select
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+        
+        <div className="bg-muted p-4 rounded-lg">
+          <h4 className="font-medium mb-2 flex items-center gap-2">
+            <Zap className="h-4 w-4 text-yellow-500" />
+            Premium Opportunity Quality
+          </h4>
+          <ul className="space-y-1 text-sm">
+            <li className="flex items-center gap-2">
+              <CheckIcon className="h-3 w-3 text-green-500" />
+              <span>Domain Authority 40+</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckIcon className="h-3 w-3 text-green-500" />
+              <span>Low Spam Score &lt;2</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckIcon className="h-3 w-3 text-green-500" />
+              <span>High Relevance 80%+</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckIcon className="h-3 w-3 text-green-500" />
+              <span>Verified Contact Information</span>
+            </li>
+          </ul>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-3">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            className="sm:w-auto w-full"
+        <DialogFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
           >
             Cancel
           </Button>
-          <BuyButton 
-            onClick={handlePurchase}
-            disabled={purchaseMutation.isPending}
-            className="sm:w-auto w-full"
+          <Button 
+            onClick={handleBuy}
+            disabled={!selectedPackage || checkoutMutation.isPending}
           >
-            {purchaseMutation.isPending ? "Processing..." : `Buy ${getSelectedPackage().count} Splash${getSelectedPackage().count > 1 ? 'es' : ''}`}
-          </BuyButton>
+            {checkoutMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              'Buy Now'
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-// Export BuySplashesDialog as the default export
-export default BuySplashesDialog;
