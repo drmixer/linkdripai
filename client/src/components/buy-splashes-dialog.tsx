@@ -44,8 +44,8 @@ interface BuySplashesDialogProps {
 // Splash packages with pricing
 const splashPackages: SplashPackage[] = [
   { id: "single", name: "Single Splash", count: 1, price: 7 },
-  { id: "pack3", name: "3-Pack", count: 3, price: 18, savings: "Save 14%" },
-  { id: "pack7", name: "7-Pack", count: 7, price: 35, savings: "Save 29%" }
+  { id: "triple", name: "3-Pack", count: 3, price: 18, savings: "Save 14%" },
+  { id: "seven", name: "7-Pack", count: 7, price: 35, savings: "Save 29%" }
 ];
 
 // Buy splashes dialog component
@@ -68,20 +68,24 @@ export function BuySplashesDialog({ open = false, onOpenChange, onClose }: BuySp
   // Mutation for purchasing splashes
   const purchaseMutation = useMutation({
     mutationFn: async (packageId: string) => {
-      const response = await apiRequest("POST", "/api/purchase-splashes", { packageId });
+      const response = await apiRequest("POST", "/api/payments/checkout/splash", { packageId });
       return await response.json();
     },
     onSuccess: (data) => {
-      toast({
-        title: "Purchase Successful!",
-        description: `You've added ${data.count} Splashes to your account.`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/user-stats"] });
-      handleClose();
+      // If we have a checkout URL, redirect to Lemon Squeezy for payment
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        toast({
+          title: "Checkout Error",
+          description: "Unable to create checkout. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
-        title: "Purchase Failed",
+        title: "Checkout Failed",
         description: error.message,
         variant: "destructive",
       });
