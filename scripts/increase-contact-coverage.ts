@@ -776,17 +776,17 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
       const currentRegularCoverage = currentRegularWithContact / currentRegularTotal;
       
       if (currentRegularCoverage < targetRegularCoverage) {
-      const neededAdditional = Math.ceil(targetRegularCoverage * currentRegularTotal - currentRegularWithContact);
-      const toProcess = Math.min(neededAdditional, regularOpportunities.length);
-      
-      console.log(`Need to add contact info to ${neededAdditional} regular opportunities to reach ${(targetRegularCoverage * 100).toFixed(1)}% coverage`);
-      console.log(`Will process ${toProcess} opportunities`);
-      
-      if (toProcess > 0) {
-        // Select a subset to process
-        const opportunitiesToProcess = regularOpportunities.slice(0, toProcess);
+        const neededAdditional = Math.ceil(targetRegularCoverage * currentRegularTotal - currentRegularWithContact);
+        const toProcess = Math.min(neededAdditional, regularOpportunities.length);
         
-        // Process in batches
+        console.log(`Need to add contact info to ${neededAdditional} regular opportunities to reach ${(targetRegularCoverage * 100).toFixed(1)}% coverage`);
+        console.log(`Will process ${toProcess} opportunities`);
+        
+        if (toProcess > 0) {
+          // Select a subset to process
+          const opportunitiesToProcess = regularOpportunities.slice(0, toProcess);
+          
+          // Process in batches
         const totalRegularBatches = Math.ceil(opportunitiesToProcess.length / batchSize);
         
         for (let batchIndex = 0; batchIndex < totalRegularBatches; batchIndex++) {
