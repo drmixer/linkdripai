@@ -339,13 +339,13 @@ export const discoveredOpportunities = pgTable("discoveredOpportunities", {
   pageContent: text("pageContent"),
   contactInfo: json("contactInfo").$type<{
     emails?: string[];
-    form?: string;
-    social?: Array<{
+    socialProfiles?: Array<{
       platform: string;
       url: string;
       username: string;
       displayName?: string;
     }>;
+    contactForms?: string[];
     phoneNumbers?: string[];
     addresses?: Array<{
       street?: string;
@@ -358,6 +358,12 @@ export const discoveredOpportunities = pgTable("discoveredOpportunities", {
       name?: string;
       title?: string;
       department?: string;
+    };
+    extractionDetails?: {
+      normalized: boolean;
+      source: string;
+      version: string;
+      lastUpdated: string;
     };
     lastVerified?: string; // ISO date string
     sources?: string[]; // Where this contact info was found
@@ -411,6 +417,90 @@ export const splashUsage = pgTable("splashUsage", {
   usedAt: timestamp("usedAt").defaultNow(),
   count: integer("count").default(1),
   source: text("source").default("monthly_allowance"), // allowance or purchased
+});
+
+// Contact activity type enum
+export const contactMethodEnum = pgEnum('contact_method', [
+  'email',              // Email outreach
+  'social_message',     // Direct message on social platform
+  'contact_form',       // Submission via a contact form
+  'phone_call',         // Phone outreach
+  'in_person',          // In-person meeting
+  'other'               // Other contact methods
+]);
+
+// Contact activity status enum
+export const contactStatusEnum = pgEnum('contact_status', [
+  'planned',            // Planned but not executed yet
+  'in_progress',        // Started but not completed (e.g., draft email)
+  'sent',               // Email sent or form submitted
+  'delivered',          // Confirmed delivery (e.g., email didn't bounce)
+  'opened',             // Email was opened
+  'clicked',            // Links in email were clicked
+  'replied',            // Received a reply
+  'converted',          // Resulted in a backlink
+  'rejected',           // Request was rejected
+  'bounced',            // Email bounced or form submission failed
+  'no_response',        // No response after follow-up period
+  'postponed',          // Contact postponed by user
+  'cancelled'           // Contact cancelled
+]);
+
+// Contact activities - unified tracking for all outreach efforts
+export const contactActivities = pgTable("contactActivities", {
+  id: serial("id").primaryKey(),
+  
+  // Relations
+  userId: integer("userId").notNull().references(() => users.id),
+  websiteId: integer("websiteId").references(() => websites.id),
+  opportunityId: integer("opportunityId").notNull().references(() => discoveredOpportunities.id),
+  emailId: integer("emailId").references(() => outreachEmails.id), // Optional reference to email if method is email
+  
+  // Contact method tracking
+  contactMethod: contactMethodEnum("contactMethod").notNull(), // Email, social media, contact form, etc.
+  contactPlatform: text("contactPlatform"), // Specific platform (LinkedIn, Twitter, etc.)
+  contactDetails: text("contactDetails"), // Email address, URL, user handle, etc.
+  
+  // Content
+  subject: text("subject"), // Subject line or topic
+  message: text("message"), // Content of the outreach
+  attachments: json("attachments").$type<string[]>(), // URLs or references to attachments
+  
+  // Status tracking
+  status: contactStatusEnum("status").default('planned'),
+  statusNote: text("statusNote"), // Additional notes about the status
+  isFollowUp: boolean("isFollowUp").default(false), // Is this a follow-up attempt
+  parentActivityId: integer("parentActivityId"), // Link to previous contact activity
+  
+  // Timing
+  plannedAt: timestamp("plannedAt"), // When the contact is scheduled
+  executedAt: timestamp("executedAt"), // When the contact was actually made
+  respondedAt: timestamp("respondedAt"), // When a response was received
+  lastStatusChange: timestamp("lastStatusChange").defaultNow(),
+  
+  // Tracking
+  trackingId: text("trackingId"), // Unique ID for tracking responses
+  responseContent: text("responseContent"), // Content of the response
+  responseMetadata: json("responseMetadata"), // Additional data about the response
+  
+  // Reminders & follow-up
+  reminderDate: timestamp("reminderDate"), // When to remind the user about this contact
+  followUpScheduled: timestamp("followUpScheduled"), // When follow-up is scheduled
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow()
+});
+
+// Schema for inserting a new contact activity
+export const insertContactActivitySchema = createInsertSchema(contactActivities).omit({
+  id: true,
+  trackingId: true,
+  responseContent: true,
+  responseMetadata: true,
+  lastStatusChange: true,
+  createdAt: true, 
+  updatedAt: true
 });
 
 // Crawler configuration and status
