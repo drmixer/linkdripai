@@ -18,8 +18,10 @@ import axios from 'axios';
 
 // Configuration constants
 const MAX_RETRIES = 3;
-const THROTTLE_DELAY = 5000; // 5 seconds between requests to the same domain
-const BATCH_SIZE = 20; // Default batch size
+const THROTTLE_DELAY = 3000; // Default throttle delay between requests to the same domain (ms)
+const CONTACT_PAGE_DELAY = 1500; // Delay between checking contact pages (ms)
+const REQUEST_TIMEOUT = 15000; // Timeout for HTTP requests (ms)
+const DEFAULT_BATCH_SIZE = 10; // Default number of opportunities to process in one batch
 
 // Map to track domain request times to prevent rate limiting
 const domainRequestTimes: Map<string, number> = new Map();
@@ -145,7 +147,7 @@ async function fetchHtml(url: string, maxRetries = MAX_RETRIES): Promise<string 
           'Upgrade-Insecure-Requests': '1',
           'Cache-Control': 'max-age=0'
         },
-        timeout: 30000,
+        timeout: REQUEST_TIMEOUT,
         maxRedirects: 5
       });
       
@@ -785,7 +787,7 @@ async function processOpportunity(opportunity: any, isPremium: boolean, isDryRun
         }
         
         // Rate limiting between pages
-        await setTimeout(2000);
+        await setTimeout(CONTACT_PAGE_DELAY);
       }
     }
     
