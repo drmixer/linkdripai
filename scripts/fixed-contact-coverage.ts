@@ -515,10 +515,11 @@ export async function increaseContactCoverage(config: ContactCoverageConfig | bo
     const targetPremiumCoverage = 0.9; // 90% target for premium opportunities
     
     // Get all opportunities - using SQL query instead of Drizzle's orderBy
+    // Note: Only using domainAuthority for sorting since relevanceScore doesn't exist
     const opportunitiesQuery = await db.execute(sql`
       SELECT *
       FROM "discoveredOpportunities"
-      ORDER BY "relevanceScore" DESC, "domainAuthority" DESC
+      ORDER BY "domainAuthority" DESC
     `);
     
     if (!opportunitiesQuery || !opportunitiesQuery.rows || !opportunitiesQuery.rows.length) {
