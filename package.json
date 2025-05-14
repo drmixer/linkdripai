@@ -68,6 +68,7 @@
     "framer-motion": "^11.13.1",
     "googleapis": "^148.0.0",
     "input-otp": "^1.4.2",
+    "lemonsqueezy.ts": "^0.1.8",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.509.0",
     "memorystore": "^1.6.7",
