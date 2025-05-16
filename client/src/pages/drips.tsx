@@ -372,26 +372,29 @@ export default function DripsPage() {
               Refresh
             </Button>
             
-            <Button onClick={() => {
-              // Check if user has any splashes remaining
-              if (userPlan.remainingSplashes > 0) {
-                // User has splashes, show confirmation dialog directly
-                if (websites.length === 1) {
-                  // Only one website, go straight to confirmation
-                  setSelectedWebsiteId(websites[0].id);
-                  setSelectedWebsiteName(websites[0].url);
-                  setShowSplashConfirmation(true);
-                } else if (websites.length > 1) {
-                  // Multiple websites, show website selection dialog
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white" 
+              onClick={() => {
+                // Check if user has any splashes remaining
+                if (userPlan.remainingSplashes > 0) {
+                  // User has splashes, show confirmation dialog directly
+                  if (websites.length === 1) {
+                    // Only one website, go straight to confirmation
+                    setSelectedWebsiteId(websites[0].id);
+                    setSelectedWebsiteName(websites[0].url);
+                    setShowSplashConfirmation(true);
+                  } else if (websites.length > 1) {
+                    // Multiple websites, show website selection dialog
+                    setIsSplashDialogOpen(true);
+                  }
+                } else {
+                  // No splashes remaining, show purchase dialog
                   setIsSplashDialogOpen(true);
                 }
-              } else {
-                // No splashes remaining, show purchase dialog
-                setIsSplashDialogOpen(true);
-              }
-            }}>
+              }}
+            >
               <Sparkles className="h-4 w-4 mr-2" />
-              Get Splash {userPlan.remainingSplashes > 0 && `(${userPlan.remainingSplashes})`}
+              Use Splash {userPlan.remainingSplashes > 0 && `(${userPlan.remainingSplashes})`}
             </Button>
           </div>
         </div>
@@ -634,26 +637,6 @@ export default function DripsPage() {
                           <div className="text-sm text-muted-foreground">
                             Next reset: {new Date(userPlan.nextSplashReset).toLocaleDateString()}
                           </div>
-                          <Button 
-                            variant="outline" 
-                            className="w-full" 
-                            disabled={userPlan.remainingSplashes <= 0}
-                            onClick={() => {
-                              if (userPlan.remainingSplashes > 0) {
-                                // If user has splashes, show website selection dialog
-                                setIsSplashDialogOpen(true);
-                              } else {
-                                // Otherwise redirect to billing page to buy more
-                                window.location.href = '/billing';
-                              }
-                            }}
-                          >
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            {userPlan.remainingSplashes > 0 
-                              ? `Use splash (${userPlan.remainingSplashes} left)` 
-                              : "Buy more splashes"
-                            }
-                          </Button>
                         </div>
                       </CardContent>
                     </Card>
