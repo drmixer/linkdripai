@@ -11,7 +11,7 @@ import nodemailer from 'nodemailer';
 import { createTransport } from 'nodemailer';
 import { randomBytes } from 'crypto';
 import { db } from '../db';
-import { users, outreachEmails, emailSettings } from '@shared/schema';
+import { users, outreachEmails, userEmailSettings } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { log } from '../vite';
 import sgMail from '@sendgrid/mail';
@@ -216,12 +216,12 @@ export class EmailService {
     const verificationToken = randomBytes(32).toString('hex');
     
     // Store the token in the database
-    await db.update(emailSettings)
+    await db.update(userEmailSettings)
       .set({
         verificationToken,
         verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       })
-      .where(eq(emailSettings.userId, userId));
+      .where(eq(userEmailSettings.userId, userId));
     
     // Create a verification link
     const verificationLink = `https://linkdripai.com/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
@@ -285,8 +285,8 @@ export async function createEmailServiceForUser(userId: number): Promise<EmailSe
   try {
     // Get the user's email settings
     const [userSettings] = await db.select()
-      .from(emailSettings)
-      .where(eq(emailSettings.userId, userId));
+      .from(userEmailSettings)
+      .where(eq(userEmailSettings.userId, userId));
     
     if (!userSettings || !userSettings.isConfigured) {
       log(`Email not configured for user ${userId}`, 'email-service');

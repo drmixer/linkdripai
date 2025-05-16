@@ -1,7 +1,7 @@
 /**
  * Script to add the userEmailSettings and websiteEmailSettings tables to the database
  */
-import { db } from "../server/db.js";
+import { db } from "../server/db";
 import { sql } from "drizzle-orm";
 
 /**
@@ -62,7 +62,6 @@ async function addEmailSettingsTables() {
     
     if (websiteTableExists.rows[0].exists) {
       console.log("websiteEmailSettings table already exists, skipping creation.");
-      return;
     } else {
       // Create the website email settings table
       await db.execute(sql`

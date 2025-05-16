@@ -112,7 +112,7 @@ export const insertUserSchema = baseInsertUserSchema.extend({
 // Email settings related schemas
 
 // Email settings for users 
-export const emailSettings = pgTable("emailSettings", {
+export const userEmailSettings = pgTable("userEmailSettings", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull().references(() => users.id),
   provider: text("provider"),
@@ -562,7 +562,8 @@ export type OpportunityMatch = typeof opportunityMatches.$inferSelect;
 export type DailyDrip = typeof dailyDrips.$inferSelect;
 export type SplashUsage = typeof splashUsage.$inferSelect;
 export type CrawlerJob = typeof crawlerJobs.$inferSelect;
-export type EmailSetting = typeof emailSettings.$inferSelect;
+export type UserEmailSetting = typeof userEmailSettings.$inferSelect;
+export type WebsiteEmailSetting = typeof websiteEmailSettings.$inferSelect;
 
 // New contact activity types
 export type ContactActivity = typeof contactActivities.$inferSelect;
