@@ -150,7 +150,17 @@ export default function Header() {
             <TooltipTrigger asChild>
               <div className="hidden md:flex items-center px-3 py-1.5 bg-primary-50 rounded-lg">
                 <Sparkles className="h-4 w-4 text-blue-500 mr-1.5" />
-                <span className="text-sm font-medium text-gray-900">{splashesAvailable} Splashes</span>
+                <span 
+                  className="text-sm font-medium text-gray-900 cursor-pointer" 
+                  onClick={() => {
+                    if (websites.length > 0) {
+                      // Redirect to drips page which will handle the splash confirmation
+                      window.location.href = "/drips";
+                    }
+                  }}
+                >
+                  {splashesAvailable} Splashes
+                </span>
                 <Button 
                   variant="link" 
                   className="h-auto p-0 ml-1.5 text-primary-600 text-xs"

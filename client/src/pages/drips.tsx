@@ -365,7 +365,10 @@ export default function DripsPage() {
               Refresh
             </Button>
             
-            <Button onClick={handleGetSplash}>
+            <Button onClick={() => {
+              // Use our fixed handleGetSplash function that correctly routes to confirmation dialog
+              handleGetSplash();
+            }}>
               <Sparkles className="h-4 w-4 mr-2" />
               Get Splash {userPlan.remainingSplashes > 0 && `(${userPlan.remainingSplashes})`}
             </Button>
