@@ -6,6 +6,7 @@ import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { OutreachTable } from '@/components/outreach-table';
+import Layout from '@/components/layout';
 import {
   Dialog,
   DialogContent,
@@ -61,7 +62,7 @@ export default function EmailOutreachPage() {
   // Show configuration needed message if email is not configured
   if (!settingsLoading && !settings?.isConfigured) {
     return (
-      <div className="container py-8 max-w-full">
+      <Layout title="Email Outreach" subtitle="Manage your email outreach campaigns and track responses from your prospects.">
         <Helmet>
           <title>Email Outreach - LinkDripAI</title>
           <meta 
@@ -69,8 +70,6 @@ export default function EmailOutreachPage() {
             content="Manage your email outreach campaigns and track responses from your prospects."
           />
         </Helmet>
-        
-        <h1 className="text-3xl font-bold mb-8">Email Outreach</h1>
         
         <div className="bg-white rounded-lg border shadow-sm p-8 text-center">
           <div className="mb-6">
@@ -101,30 +100,28 @@ export default function EmailOutreachPage() {
             </Button>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   // Show loading while settings and emails are being fetched
   if (settingsLoading) {
     return (
-      <div className="container mx-auto py-8 max-w-7xl">
+      <Layout title="Email Outreach">
         <Helmet>
           <title>Email Outreach - LinkDripAI</title>
         </Helmet>
-        
-        <h1 className="text-3xl font-bold mb-8">Email Outreach</h1>
         
         <div className="flex justify-center items-center h-60">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2 text-lg">Loading email settings...</span>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="container py-8 max-w-full">
+    <Layout title="Email Outreach" subtitle="Manage your email outreach campaigns and track responses from your prospects.">
       <Helmet>
         <title>Email Outreach - LinkDripAI</title>
         <meta 
@@ -134,8 +131,6 @@ export default function EmailOutreachPage() {
       </Helmet>
       
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Email Outreach</h1>
-        
         <div className="flex gap-3">
           <Dialog open={showEmailSettings} onOpenChange={setShowEmailSettings}>
             <DialogTrigger asChild>
@@ -249,6 +244,6 @@ export default function EmailOutreachPage() {
           </Button>
         </div>
       )}
-    </div>
+    </Layout>
   );
 }

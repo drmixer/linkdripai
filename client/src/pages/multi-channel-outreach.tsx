@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, ArrowLeft, Loader2 } from 'lucide-react';
 import MultiChannelOutreach from '@/components/MultiChannelOutreach';
+import Layout from '@/components/layout';
 import { useAuth } from '@/hooks/use-auth';
 
 /**
