@@ -27,7 +27,9 @@ const db = drizzle(pool, { schema });
 
 // Constants
 const MAX_JOB_DURATION_HOURS = 1; // Jobs running more than this are considered stalled
-const BATCH_SIZE = 20; // Process stalled jobs in batches to avoid database overload
+const BATCH_SIZE = 10; // Process stalled jobs in smaller batches to avoid timeouts
+const PAUSE_BETWEEN_JOBS_MS = 50; // Shorter pause between jobs
+const PAUSE_BETWEEN_BATCHES_MS = 500; // Shorter pause between batches
 
 interface CleanupStats {
   totalStalledJobs: number;
@@ -125,11 +127,11 @@ async function cleanStalledCrawlerJobs() {
         }
         
         // Brief pause to avoid overwhelming the database
-        await setTimeout(100);
+        await setTimeout(PAUSE_BETWEEN_JOBS_MS);
       }
       
-      // Longer pause between batches
-      await setTimeout(1000);
+      // Shorter pause between batches
+      await setTimeout(PAUSE_BETWEEN_BATCHES_MS);
     }
     
     // Generate summary report

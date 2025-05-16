@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initMaintenanceService } from "./services/maintenance-service";
 
 const app = express();
 app.use(express.json());
@@ -38,6 +39,10 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Initialize maintenance service to automatically clean up stalled crawler jobs
+  // This helps prevent memory leaks and 502 errors by cleaning up every 15 minutes
+  initMaintenanceService();
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
