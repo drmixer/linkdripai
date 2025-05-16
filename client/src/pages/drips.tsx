@@ -316,8 +316,17 @@ export default function DripsPage() {
             <Button 
               className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => {
-                // Always show website selection dialog first
-                setIsSplashDialogOpen(true);
+                console.log("Splash button clicked");
+                // If only one website, show confirmation directly, otherwise show selection dialog
+                if (websites.length === 1) {
+                  setSelectedWebsiteId(websites[0].id);
+                  setSelectedWebsiteName(websites[0].url);
+                  setShowSplashConfirmation(true);
+                  console.log("Showing confirmation directly for single website:", websites[0].url);
+                } else {
+                  setIsSplashDialogOpen(true);
+                  console.log("Showing website selection dialog for multiple websites");
+                }
               }}
             >
               <Sparkles className="h-4 w-4 mr-2" />
