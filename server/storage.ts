@@ -1486,16 +1486,33 @@ Best regards,
   }
   
   async completeOnboarding(userId: number): Promise<User> {
-    const [updatedUser] = await db.update(users)
-      .set({ onboardingCompleted: true })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    if (!updatedUser) {
-      throw new Error("User not found");
+    try {
+      // Execute a direct SQL query to ensure proper column case
+      const result = await db.query.users.findFirst({
+        where: eq(users.id, userId)
+      });
+      
+      if (!result) {
+        throw new Error("User not found");
+      }
+      
+      // Use raw SQL to update the onboardingCompleted column
+      await db.$executeRaw`UPDATE users SET "onboardingCompleted" = true WHERE id = ${userId}`;
+      
+      // Fetch the updated user
+      const updatedUser = await db.query.users.findFirst({
+        where: eq(users.id, userId)
+      });
+      
+      if (!updatedUser) {
+        throw new Error("Failed to fetch updated user");
+      }
+      
+      return updatedUser;
+    } catch (error) {
+      console.error("Error in completeOnboarding:", error);
+      throw error;
     }
-    
-    return updatedUser;
   }
 }
 
