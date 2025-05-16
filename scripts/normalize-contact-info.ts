@@ -117,8 +117,8 @@ async function normalizeContactInfo() {
             console.error(`Could not parse contactInfo string for ${opportunity.domain} (ID: ${opportunity.id}):`, e);
             
             // Try to extract data using regex if JSON parsing fails
-            const emailRegex = /"email":\\s*\\["([^"]+)"\\]/g;
-            const formRegex = /"form":\\s*"([^"]+)"/g;
+            const emailRegex = /"email":\s*\["([^"]+)"\]/g;
+            const formRegex = /"form":\s*"([^"]+)"/g;
             
             // Extract emails using regex
             const emailMatches = (rawContactInfo as string).match(emailRegex);

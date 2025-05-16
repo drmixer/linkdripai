@@ -1,134 +1,253 @@
 /**
  * Contact Information Coverage Analysis
  * 
- * This script provides a detailed analysis of the current contact information
- * coverage across all opportunities, broken down by contact type and premium status.
+ * This script analyzes the current contact information coverage
+ * and provides detailed metrics on various aspects of the data.
  */
 
-import { db } from "../server/db";
-import { discoveredOpportunities } from "../shared/schema";
-import { sql } from "drizzle-orm";
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { count, eq, and, not, isNull, sql, gt, lt } from 'drizzle-orm';
+import * as schema from '../shared/schema';
+import ws from 'ws';
 
-// Standard contact info structure
-interface NormalizedContactInfo {
-  emails: string[];
-  socialProfiles: Array<{
-    platform: string;
-    url: string;
-    username: string;
-  }>;
-  contactForms: string[];
-  extractionDetails: {
-    normalized: boolean;
-    source: string;
-    version: string;
-    lastUpdated: string;
-  };
+// Configure neon to use the WebSocket constructor
+neonConfig.webSocketConstructor = ws;
+
+// Database connection
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is not set');
 }
+
+const pool = new Pool({ connectionString });
+const db = drizzle(pool, { schema });
 
 async function analyzeContactCoverage() {
-  console.log("Starting contact information coverage analysis...");
-  
   try {
-    // Get all opportunities
-    const allOpportunities = await db.select()
-      .from(discoveredOpportunities);
+    console.log('=== LinkDripAI Contact Information Coverage Analysis ===\n');
+    
+    // Get total count of opportunities
+    const [totalCount] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities);
+    
+    console.log(`Total Opportunities: ${totalCount.count}`);
+    
+    // Count opportunities with any contact information
+    const [withContactInfo] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities)
+      .where(not(isNull(schema.discoveredOpportunities.contactInfo)));
+    
+    console.log(`Opportunities with Any Contact Info: ${withContactInfo.count} (${((withContactInfo.count / totalCount.count) * 100).toFixed(2)}%)`);
+    
+    // Count opportunities with email contacts
+    const [withEmailContacts] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities)
+      .where(
+        and(
+          not(isNull(schema.discoveredOpportunities.contactInfo)),
+          sql`${schema.discoveredOpportunities.contactInfo}::jsonb->'emails' IS NOT NULL`,
+          sql`jsonb_array_length(${schema.discoveredOpportunities.contactInfo}::jsonb->'emails') > 0`
+        )
+      );
+    
+    console.log(`Opportunities with Email Contacts: ${withEmailContacts.count} (${((withEmailContacts.count / totalCount.count) * 100).toFixed(2)}%)`);
+    
+    // Count opportunities with social profiles
+    const [withSocialProfiles] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities)
+      .where(
+        and(
+          not(isNull(schema.discoveredOpportunities.contactInfo)),
+          sql`${schema.discoveredOpportunities.contactInfo}::jsonb->'socialProfiles' IS NOT NULL`,
+          sql`jsonb_array_length(${schema.discoveredOpportunities.contactInfo}::jsonb->'socialProfiles') > 0`
+        )
+      );
+    
+    console.log(`Opportunities with Social Profiles: ${withSocialProfiles.count} (${((withSocialProfiles.count / totalCount.count) * 100).toFixed(2)}%)`);
+    
+    // Count opportunities with contact forms
+    const [withContactForms] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities)
+      .where(
+        and(
+          not(isNull(schema.discoveredOpportunities.contactInfo)),
+          sql`${schema.discoveredOpportunities.contactInfo}::jsonb->'contactForms' IS NOT NULL`,
+          sql`jsonb_array_length(${schema.discoveredOpportunities.contactInfo}::jsonb->'contactForms') > 0`
+        )
+      );
+    
+    console.log(`Opportunities with Contact Forms: ${withContactForms.count} (${((withContactForms.count / totalCount.count) * 100).toFixed(2)}%)`);
+    
+    // Count premium opportunities (DA 40+)
+    const [premiumCount] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities)
+      .where(sql`${schema.discoveredOpportunities.domainAuthority}::float >= 40`);
+    
+    console.log(`\nPremium Opportunities (DA 40+): ${premiumCount.count} (${((premiumCount.count / totalCount.count) * 100).toFixed(2)}%)`);
+    
+    // Count premium opportunities with any contact information
+    const [premiumWithContactInfo] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities)
+      .where(
+        and(
+          sql`${schema.discoveredOpportunities.domainAuthority}::float >= 40`,
+          not(isNull(schema.discoveredOpportunities.contactInfo))
+        )
+      );
+    
+    console.log(`Premium Opportunities with Any Contact Info: ${premiumWithContactInfo.count} (${((premiumWithContactInfo.count / premiumCount.count) * 100).toFixed(2)}%)`);
+    
+    // Count premium opportunities with email contacts
+    const [premiumWithEmailContacts] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities)
+      .where(
+        and(
+          sql`${schema.discoveredOpportunities.domainAuthority}::float >= 40`,
+          not(isNull(schema.discoveredOpportunities.contactInfo)),
+          sql`${schema.discoveredOpportunities.contactInfo}::jsonb->'emails' IS NOT NULL`,
+          sql`jsonb_array_length(${schema.discoveredOpportunities.contactInfo}::jsonb->'emails') > 0`
+        )
+      );
+    
+    console.log(`Premium Opportunities with Email Contacts: ${premiumWithEmailContacts.count} (${((premiumWithEmailContacts.count / premiumCount.count) * 100).toFixed(2)}%)`);
+    
+    // Get DA ranges distribution
+    console.log('\n=== Domain Authority Distribution ===');
+    
+    const daRanges = [
+      { min: 0, max: 10, label: '0-10' },
+      { min: 10, max: 20, label: '10-20' },
+      { min: 20, max: 30, label: '20-30' },
+      { min: 30, max: 40, label: '30-40' },
+      { min: 40, max: 50, label: '40-50' },
+      { min: 50, max: 60, label: '50-60' },
+      { min: 60, max: 70, label: '60-70' },
+      { min: 70, max: 80, label: '70-80' },
+      { min: 80, max: 90, label: '80-90' },
+      { min: 90, max: 100, label: '90-100' }
+    ];
+    
+    for (const range of daRanges) {
+      const [rangeCount] = await db
+        .select({ count: count() })
+        .from(schema.discoveredOpportunities)
+        .where(
+          and(
+            sql`${schema.discoveredOpportunities.domainAuthority}::float >= ${range.min}`,
+            sql`${schema.discoveredOpportunities.domainAuthority}::float < ${range.max}`
+          )
+        );
       
-    const totalOpportunities = allOpportunities.length;
-    const premiumOpportunities = allOpportunities.filter(o => o.isPremium).length;
-    const regularOpportunities = totalOpportunities - premiumOpportunities;
-    
-    console.log(`\nTotal Opportunities: ${totalOpportunities}`);
-    console.log(`Premium Opportunities: ${premiumOpportunities}`);
-    console.log(`Regular Opportunities: ${regularOpportunities}`);
-    
-    // Get all opportunities with contact info
-    const opportunitiesWithContact = allOpportunities.filter(o => o.contactInfo !== null);
-    const totalWithContact = opportunitiesWithContact.length;
-    const premiumWithContact = opportunitiesWithContact.filter(o => o.isPremium).length;
-    const regularWithContact = totalWithContact - premiumWithContact;
-    
-    console.log(`\nOpportunities with Contact Info: ${totalWithContact} (${((totalWithContact / totalOpportunities) * 100).toFixed(2)}%)`);
-    console.log(`Premium with Contact Info: ${premiumWithContact} (${((premiumWithContact / premiumOpportunities) * 100).toFixed(2)}%)`);
-    console.log(`Regular with Contact Info: ${regularWithContact} (${((regularWithContact / regularOpportunities) * 100).toFixed(2)}%)`);
-    
-    // Analyze by contact type
-    let withEmails = 0;
-    let withSocial = 0;
-    let withForms = 0;
-    
-    let premiumWithEmails = 0;
-    let premiumWithSocial = 0;
-    let premiumWithForms = 0;
-    
-    for (const opportunity of opportunitiesWithContact) {
-      try {
-        // Parse the contact info which might be stored in various formats
-        let contactInfo: NormalizedContactInfo;
-        
-        if (typeof opportunity.contactInfo === 'string') {
-          // Try to parse it as JSON
-          try {
-            // Handle doubly-escaped JSON strings
-            if (opportunity.contactInfo.startsWith('"') && opportunity.contactInfo.endsWith('"')) {
-              const unquoted = opportunity.contactInfo.slice(1, -1);
-              const unescaped = unquoted.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-              contactInfo = JSON.parse(unescaped);
-            } else {
-              contactInfo = JSON.parse(opportunity.contactInfo);
-            }
-          } catch (e) {
-            console.error(`Error parsing contact info for opportunity ${opportunity.id}: ${e.message}`);
-            continue;
-          }
-        } else {
-          // It's already an object
-          contactInfo = opportunity.contactInfo as unknown as NormalizedContactInfo;
-        }
-        
-        // Count by type
-        const hasEmails = contactInfo.emails && contactInfo.emails.length > 0;
-        const hasSocial = contactInfo.socialProfiles && contactInfo.socialProfiles.length > 0;
-        const hasForms = contactInfo.contactForms && contactInfo.contactForms.length > 0;
-        
-        if (hasEmails) withEmails++;
-        if (hasSocial) withSocial++;
-        if (hasForms) withForms++;
-        
-        if (opportunity.isPremium) {
-          if (hasEmails) premiumWithEmails++;
-          if (hasSocial) premiumWithSocial++;
-          if (hasForms) premiumWithForms++;
-        }
-      } catch (error) {
-        console.error(`Error analyzing opportunity ${opportunity.id}:`, error);
-      }
+      console.log(`DA ${range.label}: ${rangeCount.count} opportunities`);
     }
     
-    console.log(`\nContact Info by Type:`);
-    console.log(`- With Email: ${withEmails} (${((withEmails / totalWithContact) * 100).toFixed(2)}%)`);
-    console.log(`- With Social: ${withSocial} (${((withSocial / totalWithContact) * 100).toFixed(2)}%)`);
-    console.log(`- With Contact Forms: ${withForms} (${((withForms / totalWithContact) * 100).toFixed(2)}%)`);
+    // Get contact info by extraction method
+    console.log('\n=== Contact Info by Extraction Method ===');
     
-    console.log(`\nPremium Contact Info by Type:`);
-    console.log(`- With Email: ${premiumWithEmails} (${((premiumWithEmails / premiumWithContact) * 100).toFixed(2)}%)`);
-    console.log(`- With Social: ${premiumWithSocial} (${((premiumWithSocial / premiumWithContact) * 100).toFixed(2)}%)`);
-    console.log(`- With Contact Forms: ${premiumWithForms} (${((premiumWithForms / premiumWithContact) * 100).toFixed(2)}%)`);
+    const extractionMethods = await db
+      .select({
+        source: sql`${schema.discoveredOpportunities.contactInfo}::jsonb->'extractionDetails'->>'source'`,
+        count: count()
+      })
+      .from(schema.discoveredOpportunities)
+      .where(not(isNull(schema.discoveredOpportunities.contactInfo)))
+      .groupBy(sql`${schema.discoveredOpportunities.contactInfo}::jsonb->'extractionDetails'->>'source'`);
     
-    // Additional metrics for premium opportunities
-    const highDAOpportunities = allOpportunities.filter(o => o.domainAuthority >= 50).length;
-    const highDAWithContact = opportunitiesWithContact.filter(o => o.domainAuthority >= 50).length;
+    for (const method of extractionMethods) {
+      console.log(`Method: ${method.source || 'Unknown'}, Count: ${method.count}`);
+    }
     
-    console.log(`\nHigh Domain Authority (DA≥50) Coverage:`);
-    console.log(`- High DA Opportunities: ${highDAOpportunities}`);
-    console.log(`- With Contact Info: ${highDAWithContact} (${((highDAWithContact / highDAOpportunities) * 100).toFixed(2)}%)`);
+    // Get most common social profile platforms
+    console.log('\n=== Most Common Social Profile Platforms ===');
     
+    const topSocialPlatforms = await db.execute(sql`
+      WITH social_platforms AS (
+        SELECT jsonb_array_elements(${schema.discoveredOpportunities.contactInfo}::jsonb->'socialProfiles')->>'platform' as platform
+        FROM "discoveredOpportunities"
+        WHERE ${schema.discoveredOpportunities.contactInfo}::jsonb->'socialProfiles' IS NOT NULL
+        AND jsonb_array_length(${schema.discoveredOpportunities.contactInfo}::jsonb->'socialProfiles') > 0
+      )
+      SELECT platform, COUNT(*) as count
+      FROM social_platforms
+      WHERE platform IS NOT NULL
+      GROUP BY platform
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+    
+    if (Array.isArray(topSocialPlatforms.rows)) {
+      for (const platform of topSocialPlatforms.rows) {
+        console.log(`Platform: ${platform.platform || 'Unknown'}, Count: ${platform.count}`);
+      }
+    } else {
+      console.log("No social platform data available");
+    }
+    
+    // Get most common email domains
+    console.log('\n=== Most Common Email Domains ===');
+    
+    const topEmailDomains = await db.execute(sql`
+      WITH email_domains AS (
+        SELECT split_part(jsonb_array_elements_text(${schema.discoveredOpportunities.contactInfo}::jsonb->'emails'), '@', 2) as domain
+        FROM ${schema.discoveredOpportunities._.name}
+        WHERE ${schema.discoveredOpportunities.contactInfo}::jsonb->'emails' IS NOT NULL
+        AND jsonb_array_length(${schema.discoveredOpportunities.contactInfo}::jsonb->'emails') > 0
+      )
+      SELECT domain, COUNT(*) as count
+      FROM email_domains
+      WHERE domain != ''
+      GROUP BY domain
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+    
+    for (const domain of topEmailDomains) {
+      console.log(`Domain: ${domain.domain || 'Unknown'}, Count: ${domain.count}`);
+    }
+    
+    // Get number of normalized vs non-normalized records
+    console.log('\n=== Normalization Status ===');
+    
+    const [normalizedCount] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities)
+      .where(
+        and(
+          not(isNull(schema.discoveredOpportunities.contactInfo)),
+          sql`${schema.discoveredOpportunities.contactInfo}::jsonb->'extractionDetails'->>'normalized' = 'true'`
+        )
+      );
+    
+    const [nonNormalizedCount] = await db
+      .select({ count: count() })
+      .from(schema.discoveredOpportunities)
+      .where(
+        and(
+          not(isNull(schema.discoveredOpportunities.contactInfo)),
+          sql`${schema.discoveredOpportunities.contactInfo}::jsonb->'extractionDetails' IS NULL OR
+              ${schema.discoveredOpportunities.contactInfo}::jsonb->'extractionDetails'->>'normalized' != 'true'`
+        )
+      );
+    
+    console.log(`Normalized Records: ${normalizedCount.count}`);
+    console.log(`Non-Normalized Records: ${nonNormalizedCount.count}`);
+
+    console.log('\n=== Analysis Complete ===');
   } catch (error) {
-    console.error("Error in analysis:", error);
+    console.error('Error in contact coverage analysis:', error);
+  } finally {
+    await pool.end();
   }
-  
-  console.log("\nAnalysis completed!");
 }
 
-// Run the function
-analyzeContactCoverage().catch(console.error);
+// Run the analysis
+analyzeContactCoverage();
