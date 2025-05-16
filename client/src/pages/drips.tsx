@@ -194,68 +194,17 @@ export default function DripsPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   
   // Handle splash button click
-  const handleUseSplash = () => {
-    // Check if user has any websites
-    if (websites.length === 0) {
-      toast({
-        title: "No websites configured",
-        description: "Please add at least one website to get premium opportunities.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Check if user has any splashes remaining
-    if (userPlan.remainingSplashes <= 0) {
-      // If no splashes remaining, skip confirmation and show purchase dialog directly
-      setIsSplashDialogOpen(true);
-      return;
-    }
-    
-    // User has splashes available, determine next step
-    if (websites.length === 1) {
-      // Only one website, go straight to confirmation
-      setSelectedWebsiteId(websites[0].id);
-      setSelectedWebsiteName(websites[0].url);
-      setShowSplashConfirmation(true);
-    } else if (websites.length > 1) {
-      // Multiple websites, show website selection dialog first
-      setIsSplashDialogOpen(true);
-    }
-  };
+
   
-  // Handle website selection from the website dialog
-  const handleWebsiteSelect = (websiteId: number) => {
-    // Find the selected website name
-    const website = websites.find(w => w.id === websiteId);
-    const websiteName = website ? website.url : '';
-    
-    // First close the website selection dialog
-    setIsSplashDialogOpen(false);
-    
-    // Set selected website info
-    setSelectedWebsiteId(websiteId);
-    setSelectedWebsiteName(websiteName);
-    
-    // Using setTimeout to ensure dialog states don't conflict
-    setTimeout(() => {
-      // Only show confirmation if user has splashes available
-      if (userPlan.remainingSplashes > 0) {
-        setShowSplashConfirmation(true);
-      } else {
-        // If no splashes, show purchase dialog
-        setIsSplashDialogOpen(true);
-      }
-    }, 100);
-  };
+
   
   // Handle confirmation of Splash usage from the confirmation dialog
-  const handleConfirmSplash = () => {
-    if (!selectedWebsiteId) return;
+  const handleConfirmSplash = (websiteId: number) => {
+    if (!websiteId) return;
     
     // Execute the splash mutation with the selected website ID
     splashMutation.mutate({ 
-      websiteId: selectedWebsiteId 
+      websiteId: websiteId 
     });
     
     // Reset state and close confirmation dialog
@@ -364,13 +313,13 @@ export default function DripsPage() {
               Refresh
             </Button>
             
-            <SplashButton 
-              remainingSplashes={userPlan.remainingSplashes}
-              totalSplashes={userPlan.totalSplashes}
-              websites={websites}
-              onUseSplash={handleConfirmSplash}
-              onPurchase={() => setIsSplashDialogOpen(true)}
-            />
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setIsSplashDialogOpen(true)}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Use Splash {userPlan.remainingSplashes > 0 && `(${userPlan.remainingSplashes})`}
+            </Button>
           </div>
         </div>
         
