@@ -792,6 +792,72 @@ export default function DripsPage() {
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* Splash Confirmation Dialog */}
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-amber-500" />
+              <span>Confirm Splash Usage</span>
+            </DialogTitle>
+            <DialogDescription>
+              You're about to use 1 Splash credit to reveal a premium backlink opportunity.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-secondary/30 p-4 rounded-md my-4">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <p className="text-sm font-medium">Premium Opportunity Guaranteed</p>
+            </div>
+            <p className="text-xs text-muted-foreground ml-6">
+              DA 40+, Relevance 80%+, Spam Score &lt;2%
+            </p>
+            
+            {selectedWebsiteName && (
+              <div className="mt-3 pt-3 border-t border-border/40">
+                <p className="text-sm flex items-center">
+                  <Globe className="h-4 w-4 mr-2 text-primary" />
+                  For website: <span className="font-medium ml-1">{selectedWebsiteName}</span>
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <p className="text-sm text-muted-foreground">
+            You have {userPlan.remainingSplashes} Splash credit{userPlan.remainingSplashes !== 1 ? 's' : ''} remaining. This action cannot be undone.
+          </p>
+          
+          <DialogFooter className="flex sm:justify-between gap-3 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowConfirmation(false);
+                setSelectedWebsiteId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmSplash}
+              disabled={!selectedWebsiteId || splashMutation.isPending}
+            >
+              {splashMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Use Splash
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </div>
     </Layout>
   );
