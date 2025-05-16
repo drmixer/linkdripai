@@ -15,6 +15,7 @@ import { Calendar, CreditCard, LucideIcon, Package, RefreshCw, Settings, User } 
 import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';
 import Layout from '@/components/layout';
+import { SubscriptionPlan } from '@/lib/subscription-plans';
 
 interface UserStats {
   remainingSplashes: number;
@@ -176,8 +177,10 @@ const AccountSummary = () => {
 
 const SubscriptionTab = () => {
   return (
-    <div className="max-w-4xl mx-auto">
-      <SubscriptionCard />
+    <div className="max-w-4xl mx-auto grid grid-cols-1 gap-6 md:grid-cols-3">
+      <SubscriptionCard tier={SubscriptionPlan.STARTER} />
+      <SubscriptionCard tier={SubscriptionPlan.GROW} popular={true} />
+      <SubscriptionCard tier={SubscriptionPlan.PRO} />
     </div>
   );
 };

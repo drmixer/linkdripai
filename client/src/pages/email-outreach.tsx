@@ -95,7 +95,7 @@ export default function EmailOutreachPage() {
               </AlertDescription>
             </Alert>
             
-            <Button size="lg" onClick={() => window.location.href = '/onboarding?step=email'}>
+            <Button size="lg" onClick={() => window.location.href = '/settings?tab=email'}>
               Set Up Email
             </Button>
           </div>
