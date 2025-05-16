@@ -373,8 +373,22 @@ export default function DripsPage() {
             </Button>
             
             <Button onClick={() => {
-              // Use our fixed handleGetSplash function that correctly routes to confirmation dialog
-              handleGetSplash();
+              // Check if user has any splashes remaining
+              if (userPlan.remainingSplashes > 0) {
+                // User has splashes, show confirmation dialog directly
+                if (websites.length === 1) {
+                  // Only one website, go straight to confirmation
+                  setSelectedWebsiteId(websites[0].id);
+                  setSelectedWebsiteName(websites[0].url);
+                  setShowSplashConfirmation(true);
+                } else if (websites.length > 1) {
+                  // Multiple websites, show website selection dialog
+                  setIsSplashDialogOpen(true);
+                }
+              } else {
+                // No splashes remaining, show purchase dialog
+                setIsSplashDialogOpen(true);
+              }
             }}>
               <Sparkles className="h-4 w-4 mr-2" />
               Get Splash {userPlan.remainingSplashes > 0 && `(${userPlan.remainingSplashes})`}
