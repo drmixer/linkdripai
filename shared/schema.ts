@@ -430,6 +430,15 @@ export const contactMethodEnum = pgEnum('contact_method', [
 ]);
 
 // Contact activity status enum
+export const contactActivityStatusEnum = pgEnum('contact_activity_status', [
+  'pending',            // Activity recorded but outcome unknown
+  'sent',               // Message sent successfully
+  'replied',            // Got a response
+  'success',            // Achieved desired outcome (e.g., backlink)
+  'rejected',           // Request explicitly rejected
+  'failed',             // Failed to deliver/technical issue
+  'no_response'         // No response after follow-up period
+]);
 export const contactStatusEnum = pgEnum('contact_status', [
   'planned',            // Planned but not executed yet
   'in_progress',        // Started but not completed (e.g., draft email)

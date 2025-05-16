@@ -1,28 +1,40 @@
 import { useState } from 'react';
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { 
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { Mail, Copy, Check, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Loader2, Mail, Save } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/hooks/use-auth';
+
+// Define form validation schema
+const formSchema = z.object({
+  to: z.string().email('Please enter a valid email address'),
+  fromName: z.string().min(2, 'Name must be at least 2 characters'),
+  subject: z.string().min(5, 'Subject must be at least 5 characters'),
+  message: z.string().min(20, 'Message must be at least 20 characters'),
+});
 
 interface EmailOutreachFormProps {
   opportunityId: number;
@@ -32,172 +44,222 @@ interface EmailOutreachFormProps {
   onSuccess?: () => void;
 }
 
-// Form validation schema
-const formSchema = z.object({
-  emailTo: z.string().email("Please select a valid email address"),
-  subject: z.string().min(5, "Subject must be at least 5 characters"),
-  message: z.string().min(20, "Message must be at least 20 characters"),
-  templateId: z.string().optional(),
-  scheduledFor: z.string().optional(),
-});
-
-export default function EmailOutreachForm({ 
-  opportunityId, 
-  emails, 
-  domain, 
+export default function EmailOutreachForm({
+  opportunityId,
+  emails,
+  domain,
   websiteName,
   onSuccess
 }: EmailOutreachFormProps) {
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [copied, setCopied] = useState('');
+  const [selectedEmail, setSelectedEmail] = useState(emails.length > 0 ? emails[0] : '');
   
-  // Fetch available email templates
-  const { data: templates, isLoading: isLoadingTemplates } = useQuery({
+  // Get email templates
+  const { data: templates = [] } = useQuery({
     queryKey: ['/api/email-templates'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', `/api/email-templates`);
-      const data = await response.json();
-      return data;
-    }
+    enabled: emails.length > 0,
   });
   
-  // Form setup
+  // Form definition with default values
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      emailTo: emails[0] || "",
-      subject: `Opportunity for collaboration with ${websiteName}`,
+      to: selectedEmail,
+      fromName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+      subject: `Collaboration opportunity with ${user?.websites?.[0]?.domain || 'my website'}`,
       message: getDefaultMessage(websiteName),
-      templateId: "",
-      scheduledFor: "",
     },
   });
-  
-  // Send email mutation
-  const { mutate: sendEmail, isPending } = useMutation({
-    mutationFn: async (formData: z.infer<typeof formSchema>) => {
-      const response = await apiRequest('POST', `/api/outreach/email/${opportunityId}`, {
-        ...formData,
-        templateId: formData.templateId ? parseInt(formData.templateId) : undefined,
+
+  // Record email outreach mutation
+  const recordOutreachMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const response = await apiRequest('POST', '/api/outreach/email', {
+        ...values,
+        opportunityId,
+        domain,
+        websiteName,
       });
       return response.json();
     },
     onSuccess: () => {
-      // Reset form, invalidate queries and call success callback
-      form.reset();
-      queryClient.invalidateQueries({ queryKey: ['/api/outreach-history', opportunityId] });
+      toast({
+        title: 'Outreach recorded',
+        description: 'Your email outreach has been recorded',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/outreach/history'] });
       if (onSuccess) onSuccess();
     },
-  });
-  
-  // Apply template mutation
-  const { mutate: applyTemplate, isPending: isApplyingTemplate } = useMutation({
-    mutationFn: async (templateId: string) => {
-      const response = await apiRequest('GET', `/api/email-templates/${templateId}`);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // Update form with template data
-      form.setValue('subject', data.subject);
-      form.setValue('message', data.content);
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to record outreach',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
-  
-  // Handler for form submission
+
+  // Submit handler
   function onSubmit(values: z.infer<typeof formSchema>) {
-    sendEmail(values);
+    recordOutreachMutation.mutate(values);
   }
-  
-  // Handler for template selection
+
+  // Handle email selection
+  function handleEmailChange(email: string) {
+    setSelectedEmail(email);
+    form.setValue('to', email);
+  }
+
+  // Handle template selection
   function handleTemplateChange(templateId: string) {
-    form.setValue('templateId', templateId);
-    
-    if (templateId) {
-      applyTemplate(templateId);
+    const template = templates.find(t => t.id.toString() === templateId);
+    if (template) {
+      const subject = template.subject.replace(/{{website}}/g, domain);
+      const message = template.content
+        .replace(/{{website}}/g, websiteName)
+        .replace(/{{domain}}/g, domain);
+      
+      form.setValue('subject', subject);
+      form.setValue('message', message);
     }
   }
-  
-  // Generate default message
+
+  // Copy text to clipboard
+  function copyToClipboard(text: string, type: string) {
+    navigator.clipboard.writeText(text);
+    setCopied(type);
+    setTimeout(() => setCopied(''), 2000);
+  }
+
+  // Generate a default message template
   function getDefaultMessage(websiteName: string): string {
-    return `Hi there,
+    return `Hello ${websiteName} team,
 
-I recently came across your website ${websiteName} and I'm impressed with your content. I noticed an opportunity for collaboration that could benefit both our audiences.
+I was exploring your website and was impressed by your content on [topic]. I run a website in a similar niche, and I think there may be an opportunity for us to collaborate.
 
-I've created a comprehensive resource on [Your Topic] that would complement your article about [Their Relevant Article]. Would you be interested in checking it out? I believe it would add value to your readers.
+Recently, I published a comprehensive guide on [your topic] that I believe would be valuable for your audience. Would you be interested in checking it out for a potential link?
 
-Looking forward to your response!
+I'm also open to discussing other collaboration opportunities that would be mutually beneficial.
 
-Best regards,
-[Your Name]
-[Your Website]`;
+Looking forward to your response,
+[Your Name]`;
+  }
+
+  if (emails.length === 0) {
+    return (
+      <div className="p-6 text-center bg-gray-50 rounded-lg border border-gray-200">
+        <Mail className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+        <h3 className="text-lg font-medium mb-2">No Email Addresses Found</h3>
+        <p className="text-gray-500 mb-4">
+          No email addresses were found for this opportunity.
+        </p>
+        <p className="text-sm text-gray-500">
+          Try reaching out through other contact methods like social media or contact forms.
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <Mail className="h-5 w-5 text-blue-500" />
+        <h3 className="text-lg font-medium">Email Outreach</h3>
+      </div>
+      
+      {/* Email selection if multiple */}
+      {emails.length > 1 && (
+        <div className="mb-6">
+          <FormLabel>Select recipient email:</FormLabel>
+          <Select 
+            value={selectedEmail}
+            onValueChange={handleEmailChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select an email" />
+            </SelectTrigger>
+            <SelectContent>
+              {emails.map((email) => (
+                <SelectItem key={email} value={email}>
+                  {email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Template selection */}
+      {templates.length > 0 && (
+        <div className="mb-6">
+          <FormLabel>Choose a template:</FormLabel>
+          <Select 
+            onValueChange={handleTemplateChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a template" />
+            </SelectTrigger>
+            <SelectContent>
+              {templates.map((template) => (
+                <SelectItem key={template.id} value={template.id.toString()}>
+                  {template.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Email form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Template selection */}
-          {!isLoadingTemplates && templates && templates.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="templateId"
+              name="to"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Template</FormLabel>
-                  <Select 
-                    onValueChange={handleTemplateChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a template" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">No template</SelectItem>
-                      {templates.map((template: any) => (
-                        <SelectItem key={template.id} value={template.id.toString()}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>To</FormLabel>
+                  <FormControl>
+                    <div className="flex">
+                      <Input {...field} readOnly className="bg-gray-50" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="ml-2"
+                        onClick={() => copyToClipboard(field.value, 'to')}
+                      >
+                        {copied === 'to' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          )}
-          
-          {/* Email recipient */}
-          <FormField
-            control={form.control}
-            name="emailTo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email To</FormLabel>
-                <Select 
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+            
+            <FormField
+              control={form.control}
+              name="fromName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>From Name</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select recipient email" />
-                    </SelectTrigger>
+                    <Input placeholder="Your name" {...field} />
                   </FormControl>
-                  <SelectContent>
-                    {emails.map((email, index) => (
-                      <SelectItem key={index} value={email}>
-                        {email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          {/* Email subject */}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
           <FormField
             control={form.control}
             name="subject"
@@ -205,18 +267,28 @@ Best regards,
               <FormItem>
                 <FormLabel>Subject</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="Email subject"
-                    {...field}
-                    disabled={isPending}
-                  />
+                  <div className="flex">
+                    <Input placeholder="Email subject" {...field} />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="ml-2"
+                      onClick={() => copyToClipboard(field.value, 'subject')}
+                    >
+                      {copied === 'subject' ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
-          {/* Email message */}
+
           <FormField
             control={form.control}
             name="message"
@@ -224,107 +296,60 @@ Best regards,
               <FormItem>
                 <FormLabel>Message</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Email message"
-                    rows={12}
-                    {...field}
-                    disabled={isPending}
-                  />
+                  <div className="flex">
+                    <Textarea
+                      placeholder="Your message"
+                      className="min-h-[200px] flex-1"
+                      {...field}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="ml-2 self-start"
+                      onClick={() => copyToClipboard(field.value, 'message')}
+                    >
+                      {copied === 'message' ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
-          {/* Schedule option (if needed) */}
-          <FormField
-            control={form.control}
-            name="scheduledFor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Schedule (Optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="datetime-local"
-                    {...field}
-                    disabled={isPending}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          {/* Submit and preview buttons */}
-          <div className="flex space-x-2">
-            <Button 
-              type="submit" 
-              disabled={isPending || isApplyingTemplate}
+
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              disabled={recordOutreachMutation.isPending}
             >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
+              {recordOutreachMutation.isPending ? (
+                'Recording...'
               ) : (
-                <>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Send Email
-                </>
+                'Record Email Outreach'
               )}
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsPreviewMode(!isPreviewMode)}
-              disabled={isPending || isApplyingTemplate}
-            >
-              {isPreviewMode ? "Edit" : "Preview"}
-            </Button>
-            
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                // Save as a template logic would go here
-                console.log("Save as template");
-              }}
-              disabled={isPending || isApplyingTemplate}
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save as Template
             </Button>
           </div>
         </form>
       </Form>
       
-      {/* Preview mode */}
-      {isPreviewMode && (
-        <div className="mt-6 border rounded-md p-4 space-y-4">
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">From</h3>
-            <p>Your Name &lt;your-email@yourdomain.com&gt;</p>
-          </div>
-          
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">To</h3>
-            <p>{form.getValues().emailTo}</p>
-          </div>
-          
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">Subject</h3>
-            <p className="font-medium">{form.getValues().subject}</p>
-          </div>
-          
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">Message</h3>
-            <div className="whitespace-pre-wrap p-4 bg-gray-50 rounded text-sm">
-              {form.getValues().message}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Tips */}
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <h4 className="font-medium mb-2">Email Outreach Tips</h4>
+          <ul className="text-sm text-gray-600 space-y-2 list-disc pl-4">
+            <li>Personalize your email to show you've actually visited their website</li>
+            <li>Keep your email concise and to the point</li>
+            <li>Clearly explain the value you're offering</li>
+            <li>Include a specific call-to-action</li>
+            <li>Proofread before sending to avoid typos and grammatical errors</li>
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 }

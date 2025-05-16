@@ -1,33 +1,43 @@
 import { useState } from 'react';
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { 
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { MessageSquare, ExternalLink, Copy, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Loader2, ExternalLink, Save, Linkedin, Twitter, Facebook, Instagram } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { FaTwitter, FaLinkedin, FaFacebook, FaInstagram } from 'react-icons/fa';
+
+// Define form validation schema
+const formSchema = z.object({
+  profileUrl: z.string().url('Please enter a valid URL'),
+  message: z.string().min(20, 'Message must be at least 20 characters'),
+});
 
 interface SocialProfile {
   platform: string;
   url: string;
   username: string;
+  displayName?: string;
 }
 
 interface SocialOutreachFormProps {
@@ -38,264 +48,205 @@ interface SocialOutreachFormProps {
   onSuccess?: () => void;
 }
 
-// Form validation schema
-const formSchema = z.object({
-  platform: z.string().min(1, "Please select a platform"),
-  profileUrl: z.string().url("Please enter a valid URL"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
-  templateId: z.string().optional(),
-  scheduledFor: z.string().optional(),
-});
-
-export default function SocialOutreachForm({ 
-  opportunityId, 
+export default function SocialOutreachForm({
+  opportunityId,
   socialProfiles,
-  domain, 
+  domain,
   websiteName,
   onSuccess
 }: SocialOutreachFormProps) {
-  const [selectedPlatform, setSelectedPlatform] = useState<string>("");
-  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [copied, setCopied] = useState('');
+  const [selectedProfileIndex, setSelectedProfileIndex] = useState(socialProfiles.length > 0 ? '0' : '');
   
-  // Fetch available templates
-  const { data: templates, isLoading: isLoadingTemplates } = useQuery({
-    queryKey: ['/api/outreach-templates', 'social'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', `/api/outreach-templates?channel=social`);
-      const data = await response.json();
-      return data;
-    },
-    enabled: false // We'll fetch these on demand
+  // Get templates for social messages
+  const { data: templates = [] } = useQuery({
+    queryKey: ['/api/social-templates'],
+    enabled: socialProfiles.length > 0,
   });
   
-  // Form setup
+  // Form definition with default values
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      platform: socialProfiles.length > 0 ? socialProfiles[0].platform : "",
-      profileUrl: socialProfiles.length > 0 ? socialProfiles[0].url : "",
-      message: getDefaultMessage(websiteName),
-      templateId: "",
-      scheduledFor: "",
+      profileUrl: socialProfiles.length > 0 ? socialProfiles[0].url : '',
+      message: socialProfiles.length > 0 
+        ? getDefaultMessage(websiteName, socialProfiles[0].platform) 
+        : '',
     },
   });
-  
-  // Send social outreach message mutation
-  const { mutate: sendSocialMessage, isPending } = useMutation({
-    mutationFn: async (formData: z.infer<typeof formSchema>) => {
-      const response = await apiRequest('POST', `/api/outreach/social/${opportunityId}`, {
-        ...formData,
-        templateId: formData.templateId ? parseInt(formData.templateId) : undefined,
+
+  // Record social outreach mutation
+  const recordOutreachMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const profile = socialProfiles[parseInt(selectedProfileIndex)];
+      const response = await apiRequest('POST', '/api/outreach/social', {
+        ...values,
+        opportunityId,
+        platform: profile.platform,
+        domain,
+        websiteName,
       });
       return response.json();
     },
     onSuccess: () => {
-      // Reset form, invalidate queries and call success callback
-      form.reset();
-      queryClient.invalidateQueries({ queryKey: ['/api/outreach-history', opportunityId] });
+      toast({
+        title: 'Outreach recorded',
+        description: 'Your social media outreach has been recorded',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/outreach/history'] });
       if (onSuccess) onSuccess();
     },
-  });
-  
-  // Apply template mutation
-  const { mutate: applyTemplate, isPending: isApplyingTemplate } = useMutation({
-    mutationFn: async (templateId: string) => {
-      const response = await apiRequest('GET', `/api/outreach-templates/${templateId}`);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // Update form with template data
-      form.setValue('message', data.content);
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to record outreach',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
-  
-  // Handler for form submission
+
+  // Submit handler
   function onSubmit(values: z.infer<typeof formSchema>) {
-    sendSocialMessage(values);
+    recordOutreachMutation.mutate(values);
   }
-  
-  // Handler for platform selection
-  function handlePlatformChange(platform: string) {
-    setSelectedPlatform(platform);
+
+  // Handle profile selection change
+  function handleProfileSelect(profileIndex: string) {
+    setSelectedProfileIndex(profileIndex);
+    const profile = socialProfiles[parseInt(profileIndex)];
+    form.setValue('profileUrl', profile.url);
+    form.setValue('message', getDefaultMessage(websiteName, profile.platform));
+  }
+
+  // Copy text to clipboard
+  function copyToClipboard(text: string, type: string) {
+    navigator.clipboard.writeText(text);
+    setCopied(type);
+    setTimeout(() => setCopied(''), 2000);
+  }
+
+  // Generate a default message template based on platform
+  function getDefaultMessage(websiteName: string, platform: string): string {
+    // Find an appropriate template based on the platform
+    const template = templates.find(t => 
+      t.platform === platform || t.platform === 'any'
+    );
     
-    // Find the selected profile
-    const selectedProfile = socialProfiles.find(profile => profile.platform === platform);
-    
-    if (selectedProfile) {
-      form.setValue('platform', platform);
-      form.setValue('profileUrl', selectedProfile.url);
-      
-      // Adjust message for the platform (character limits, etc.)
-      if (platform === 'twitter') {
-        const twitterMessage = getTwitterSpecificMessage(websiteName);
-        form.setValue('message', twitterMessage);
-      } else {
-        form.setValue('message', getDefaultMessage(websiteName));
-      }
+    if (template) {
+      return template.content.replace(/{{website}}/g, websiteName);
     }
-  }
-  
-  // Handler for template selection
-  function handleTemplateChange(templateId: string) {
-    form.setValue('templateId', templateId);
     
-    if (templateId) {
-      applyTemplate(templateId);
-    }
+    return `Hi there! I came across ${websiteName} and really enjoyed your content. I run a website in a similar niche, and I think we could potentially collaborate. I've recently published content that your audience might find valuable. Would you be interested in checking it out for a potential mention?`;
   }
-  
-  // Generate default message
-  function getDefaultMessage(websiteName: string): string {
-    return `Hi there,
 
-I recently came across your website ${websiteName} and I'm impressed with your content. I have a resource that would be a perfect fit for your audience interested in [TOPIC].
-
-Would you be interested in a potential collaboration?
-
-Thanks!
-[Your Name]`;
-  }
-  
-  // Generate Twitter-specific message (shorter)
-  function getTwitterSpecificMessage(websiteName: string): string {
-    return `Hi! Loved your work on ${websiteName}! I created a resource on [TOPIC] that complements your content perfectly. Would love to collaborate!`;
-  }
-  
-  // Get platform icon
+  // Get appropriate icon based on platform
   function getPlatformIcon(platform: string) {
     switch (platform.toLowerCase()) {
-      case 'linkedin':
-        return <Linkedin className="h-5 w-5" />;
       case 'twitter':
-        return <Twitter className="h-5 w-5" />;
+        return <FaTwitter className="h-4 w-4 text-blue-400" />;
+      case 'linkedin':
+        return <FaLinkedin className="h-4 w-4 text-blue-700" />;
       case 'facebook':
-        return <Facebook className="h-5 w-5" />;
+        return <FaFacebook className="h-4 w-4 text-blue-600" />;
       case 'instagram':
-        return <Instagram className="h-5 w-5" />;
+        return <FaInstagram className="h-4 w-4 text-pink-600" />;
       default:
-        return <ExternalLink className="h-5 w-5" />;
+        return <MessageSquare className="h-4 w-4 text-gray-500" />;
     }
   }
-  
-  // Character limit based on platform
-  function getCharacterLimit(platform: string): number {
-    switch (platform.toLowerCase()) {
-      case 'twitter':
-        return 280;
-      case 'linkedin':
-        return 1300;
-      case 'instagram':
-        return 2200;
-      case 'facebook':
-        return 5000;
-      default:
-        return 2000;
-    }
+
+  if (socialProfiles.length === 0) {
+    return (
+      <div className="p-6 text-center bg-gray-50 rounded-lg border border-gray-200">
+        <MessageSquare className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+        <h3 className="text-lg font-medium mb-2">No Social Media Profiles Found</h3>
+        <p className="text-gray-500 mb-4">
+          No social media profiles were found for this opportunity.
+        </p>
+        <p className="text-sm text-gray-500">
+          Try reaching out through other contact methods like email or contact forms.
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <MessageSquare className="h-5 w-5 text-blue-500" />
+        <h3 className="text-lg font-medium">Social Media Outreach</h3>
+      </div>
+      
+      {/* Profile selection */}
+      <div className="mb-6">
+        <FormLabel>Select a social profile:</FormLabel>
+        <Select 
+          value={selectedProfileIndex}
+          onValueChange={handleProfileSelect}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a social profile" />
+          </SelectTrigger>
+          <SelectContent>
+            {socialProfiles.map((profile, index) => (
+              <SelectItem key={profile.url} value={index.toString()}>
+                <div className="flex items-center gap-2">
+                  {getPlatformIcon(profile.platform)}
+                  <span className="capitalize">{profile.platform}</span>
+                  {profile.username && <span className="text-gray-500 text-sm">({profile.username})</span>}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Selected profile */}
+      {selectedProfileIndex !== '' && (
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <div className="font-medium flex items-center gap-2">
+              {getPlatformIcon(socialProfiles[parseInt(selectedProfileIndex)].platform)}
+              <span className="capitalize">{socialProfiles[parseInt(selectedProfileIndex)].platform}</span>
+              {socialProfiles[parseInt(selectedProfileIndex)].displayName && 
+                <span className="text-gray-600 text-sm ml-1">
+                  ({socialProfiles[parseInt(selectedProfileIndex)].displayName})
+                </span>
+              }
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center text-xs"
+                onClick={() => copyToClipboard(socialProfiles[parseInt(selectedProfileIndex)].url, 'profile')}
+              >
+                {copied === 'profile' ? (
+                  <>Copied <Check className="h-3 w-3 ml-1" /></>
+                ) : (
+                  <>Copy URL <Copy className="h-3 w-3 ml-1" /></>
+                )}
+              </Button>
+              <a
+                href={socialProfiles[parseInt(selectedProfileIndex)].url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-md"
+              >
+                Open Profile <ExternalLink className="h-3 w-3 ml-1" />
+              </a>
+            </div>
+          </div>
+          <div className="p-3 bg-gray-50 rounded-md text-sm break-all">
+            {socialProfiles[parseInt(selectedProfileIndex)].url}
+          </div>
+        </div>
+      )}
+
+      {/* Message form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Platform selection */}
-          <FormField
-            control={form.control}
-            name="platform"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Social Platform</FormLabel>
-                <Select 
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    handlePlatformChange(value);
-                  }}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select platform" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {socialProfiles.map((profile, index) => (
-                      <SelectItem key={index} value={profile.platform}>
-                        <div className="flex items-center">
-                          {getPlatformIcon(profile.platform)}
-                          <span className="ml-2 capitalize">{profile.platform}</span>
-                          {profile.username && (
-                            <span className="ml-2 text-muted-foreground">({profile.username})</span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          {/* Profile URL */}
-          <FormField
-            control={form.control}
-            name="profileUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Profile URL</FormLabel>
-                <div className="flex space-x-2">
-                  <FormControl>
-                    <Input 
-                      {...field}
-                      disabled={isPending}
-                    />
-                  </FormControl>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => window.open(field.value, '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          {/* Template selection (if available) */}
-          {!isLoadingTemplates && templates && templates.length > 0 && (
-            <FormField
-              control={form.control}
-              name="templateId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Message Template</FormLabel>
-                  <Select 
-                    onValueChange={handleTemplateChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a template" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">No template</SelectItem>
-                      {templates.map((template: any) => (
-                        <SelectItem key={template.id} value={template.id.toString()}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-          
-          {/* Message */}
           <FormField
             control={form.control}
             name="message"
@@ -303,133 +254,60 @@ Thanks!
               <FormItem>
                 <FormLabel>Message</FormLabel>
                 <FormControl>
-                  <div className="space-y-2">
-                    <Textarea 
+                  <div className="flex">
+                    <Textarea
                       placeholder="Your message"
-                      rows={6}
+                      className="min-h-[200px] flex-1"
                       {...field}
-                      disabled={isPending}
-                      maxLength={selectedPlatform ? getCharacterLimit(selectedPlatform) : undefined}
                     />
-                    
-                    {selectedPlatform && (
-                      <div className="text-xs text-right text-muted-foreground">
-                        {field.value.length} / {getCharacterLimit(selectedPlatform)} characters
-                      </div>
-                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="ml-2 self-start"
+                      onClick={() => copyToClipboard(field.value, 'message')}
+                    >
+                      {copied === 'message' ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
-          {/* Schedule option (if needed) */}
-          <FormField
-            control={form.control}
-            name="scheduledFor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Schedule (Optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="datetime-local"
-                    {...field}
-                    disabled={isPending}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          {/* Submit and other buttons */}
-          <div className="flex space-x-2">
-            <Button 
-              type="submit" 
-              disabled={isPending || isApplyingTemplate}
+
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              disabled={recordOutreachMutation.isPending}
             >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
+              {recordOutreachMutation.isPending ? (
+                'Recording...'
               ) : (
-                <>
-                  {selectedPlatform && getPlatformIcon(selectedPlatform)}
-                  <span className="ml-2">Send Message</span>
-                </>
+                'Record Social Outreach'
               )}
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => window.open(form.getValues().profileUrl, '_blank')}
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Visit Profile
-            </Button>
-            
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                // Save as a template logic would go here
-                console.log("Save as template");
-              }}
-              disabled={isPending || isApplyingTemplate}
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save as Template
             </Button>
           </div>
         </form>
       </Form>
       
-      {/* Platform-specific tips */}
-      {selectedPlatform && (
-        <div className="mt-4 p-3 bg-muted rounded-md">
-          <h4 className="text-sm font-medium mb-2">Tips for {selectedPlatform} outreach:</h4>
-          <ul className="text-sm space-y-1 list-disc pl-5">
-            {selectedPlatform.toLowerCase() === 'linkedin' && (
-              <>
-                <li>Personalize your message with specific references to their work</li>
-                <li>Keep it professional and concise</li>
-                <li>Clearly explain the mutual benefit of the collaboration</li>
-                <li>Include your credentials to establish credibility</li>
-              </>
-            )}
-            
-            {selectedPlatform.toLowerCase() === 'twitter' && (
-              <>
-                <li>Keep messages under 280 characters</li>
-                <li>Be direct and get to the point quickly</li>
-                <li>Consider starting with engagement on their tweets first</li>
-                <li>Use a friendly, conversational tone</li>
-              </>
-            )}
-            
-            {selectedPlatform.toLowerCase() === 'facebook' && (
-              <>
-                <li>Send a friend request before messaging if their profile is private</li>
-                <li>Introduce yourself clearly</li>
-                <li>Reference mutual connections if any exist</li>
-                <li>Be respectful of their personal space</li>
-              </>
-            )}
-            
-            {selectedPlatform.toLowerCase() === 'instagram' && (
-              <>
-                <li>Start by engaging with their content</li>
-                <li>Keep DMs brief and friendly</li>
-                <li>Include your website or portfolio link</li>
-                <li>Consider offering a collaboration idea in the first message</li>
-              </>
-            )}
+      {/* Tips */}
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <h4 className="font-medium mb-2">Social Media Outreach Tips</h4>
+          <ul className="text-sm text-gray-600 space-y-2 list-disc pl-4">
+            <li>Personalize your message to show you've actually looked at their content</li>
+            <li>Keep messages concise - social media platforms often have character limits</li>
+            <li>Be clear about what you're requesting but don't be overly promotional</li>
+            <li>Offer something of value in return for consideration</li>
+            <li>For LinkedIn, connect first before sending a detailed message</li>
           </ul>
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
