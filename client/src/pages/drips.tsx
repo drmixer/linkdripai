@@ -89,8 +89,8 @@ export default function DripsPage() {
   
   // Get premium splash
   const splashMutation = useMutation({
-    mutationFn: async (websiteId: number) => {
-      const response = await apiRequest('POST', '/api/opportunities/splash', { websiteId });
+    mutationFn: async (data: { websiteId: number }) => {
+      const response = await apiRequest('POST', '/api/opportunities/splash', data);
       return response.json();
     },
     onSuccess: (data) => {
@@ -853,6 +853,7 @@ export default function DripsPage() {
             <Button 
               onClick={handleConfirmSplash}
               disabled={!selectedWebsiteId || splashMutation.isPending}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-medium"
             >
               {splashMutation.isPending ? (
                 <>
