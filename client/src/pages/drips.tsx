@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import OpportunityCard from '@/components/opportunity-card';
 import Layout from '@/components/layout';
+import SplashConfirmationDialog from '@/components/splash-confirmation-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { 
@@ -55,6 +56,8 @@ export default function DripsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSplashDialogOpen, setIsSplashDialogOpen] = useState(false);
   const [showSplashConfirmation, setShowSplashConfirmation] = useState(false);
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<number | null>(null);
+  const [selectedWebsiteName, setSelectedWebsiteName] = useState('');
   const [activeSection, setActiveSection] = useState<"opportunities" | "analytics" | "contacted">("opportunities");
   const [showRecent, setShowRecent] = useState(true);
   const [sortMethod, setSortMethod] = useState<"relevance" | "da" | "date">("relevance");
@@ -591,8 +594,16 @@ export default function DripsPage() {
                           <Button 
                             variant="outline" 
                             className="w-full" 
-                            disabled={userPlan.remainingSplashes >= userPlan.totalSplashes}
-                            onClick={() => setIsSplashDialogOpen(true)}
+                            disabled={userPlan.remainingSplashes <= 0}
+                            onClick={() => {
+                              if (userPlan.remainingSplashes > 0) {
+                                // If user has splashes, show website selection dialog
+                                setIsSplashDialogOpen(true);
+                              } else {
+                                // Otherwise redirect to billing page to buy more
+                                window.location.href = '/billing';
+                              }
+                            }}
                           >
                             <Sparkles className="h-4 w-4 mr-2" />
                             {userPlan.remainingSplashes > 0 
