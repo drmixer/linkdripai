@@ -1,118 +1,258 @@
-/**
- * Subscription Plans Configuration
- * 
- * This file defines the subscription plans available in LinkDripAI,
- * including their details, features, and pricing.
- */
-
 export enum SubscriptionPlan {
-  STARTER = 'starter',
-  GROW = 'grow',
-  PRO = 'pro'
+  FREE_TRIAL = "Free Trial",
+  STARTER = "Starter",
+  GROW = "Grow",
+  PRO = "Pro",
+}
+
+export enum SplashPackage {
+  SINGLE = "Single Splash",
+  TRIPLE = "Triple Pack",
+  SEVEN = "Seven Pack",
+}
+
+export interface PlanFeature {
+  name: string;
+  included: boolean;
+  limit?: number | string;
+  description?: string;
 }
 
 export interface PlanDetails {
   name: string;
-  description: string;
-  price: number;
-  websites: number;
+  enum: SubscriptionPlan;
+  price: {
+    monthly: number;
+    annually?: number;
+  };
+  features: PlanFeature[];
   dripsPerDay: number;
   splashesPerMonth: number;
-  features: string[];
+  maxWebsites: number;
+  ctaText: string;
+  popular?: boolean;
+  variant?: string; // Lemon Squeezy variant ID
 }
 
-export const PLAN_DETAILS: Record<SubscriptionPlan, PlanDetails> = {
-  [SubscriptionPlan.STARTER]: {
-    name: 'Starter',
-    description: 'Perfect for individual users getting started with backlink outreach.',
-    price: 9,
-    websites: 1,
-    dripsPerDay: 5,
-    splashesPerMonth: 1,
-    features: [
-      '1 website',
-      'Up to 5 drips/day/site',
-      '1 splash/month',
-      'Basic opportunity filtering',
-      'Email templates',
-      'Basic analytics',
-      'Standard support'
-    ]
+export const planFeatures: Record<string, PlanFeature> = {
+  domainInsights: {
+    name: "Domain Insights",
+    included: true,
+    description: "Domain Authority, Spam Score, and more metrics"
   },
-  [SubscriptionPlan.GROW]: {
-    name: 'Grow',
-    description: 'Ideal for growing websites and small agencies.',
-    price: 19,
-    websites: 2,
-    dripsPerDay: 10,
-    splashesPerMonth: 3,
-    features: [
-      '2 websites',
-      'Up to 10 drips/day/site',
-      '3 splashes/month',
-      'Advanced opportunity filtering',
-      'Custom email templates',
-      'Enhanced analytics',
-      'Priority support',
-      'Email tracking'
-    ]
+  seoMetrics: {
+    name: "SEO Metrics",
+    included: true,
+    description: "Page Authority, Domain Authority and backlink data"
   },
-  [SubscriptionPlan.PRO]: {
-    name: 'Pro',
-    description: 'For agencies and serious SEO professionals.',
-    price: 39,
-    websites: 5,
-    dripsPerDay: 15,
-    splashesPerMonth: 7,
-    features: [
-      '5 websites',
-      'Up to 15 drips/day/site',
-      '7 splashes/month',
-      'Advanced opportunity filtering',
-      'AI-powered email personalization',
-      'Full analytics dashboard',
-      'Priority support',
-      'Email tracking and scheduling',
-      'Team collaboration tools'
-    ]
+  relevanceScoring: {
+    name: "Relevance Scoring",
+    included: true,
+    description: "AI-powered content matching with your website"
+  },
+  premiumFilter: {
+    name: "Premium Filters",
+    included: false,
+    description: "Advanced filtering options to find the best opportunities"
+  },
+  advancedMetrics: {
+    name: "Advanced Metrics",
+    included: false,
+    description: "Expanded SEO metrics and analytics"
+  },
+  contactExtraction: {
+    name: "Contact Extraction",
+    included: true,
+    description: "Email and social media contact information"
+  },
+  emailOutreach: {
+    name: "Email Outreach",
+    included: true,
+    description: "Send emails directly from the platform"
+  },
+  multichannel: {
+    name: "Multi-channel Outreach",
+    included: false,
+    description: "Contact via email, social media, and contact forms"
+  },
+  templates: {
+    name: "Outreach Templates",
+    included: true,
+    limit: "5 templates",
+    description: "Customizable outreach templates"
+  },
+  automatedFollowups: {
+    name: "Automated Follow-ups",
+    included: false,
+    description: "Schedule automatic follow-up messages"
+  },
+  reporting: {
+    name: "Performance Reports",
+    included: false,
+    description: "Detailed reports on your outreach performance"
+  },
+  aiAssistant: {
+    name: "AI Writing Assistant",
+    included: false,
+    description: "AI-powered writing suggestions for outreach"
+  },
+  apiAccess: {
+    name: "API Access",
+    included: false,
+    description: "Access our API for custom integrations"
+  },
+  supportBasic: {
+    name: "Email Support",
+    included: true,
+    description: "Get help via email"
+  },
+  supportPriority: {
+    name: "Priority Support",
+    included: false,
+    description: "Priority email and chat support"
   }
 };
 
-// Splash packages for individual purchases
-export enum SplashPackage {
-  SINGLE = 'single',
-  TRIPLE = 'triple',
-  SEVEN = 'seven'
-}
-
-export interface SplashDetails {
+export interface SplashPackageDetails {
   name: string;
-  description: string;
+  enum: SplashPackage;
   price: number;
   count: number;
-  savings: number;
+  savePercentage?: number;
+  description?: string;
+  variant?: string; // Lemon Squeezy variant ID
 }
 
-export const SPLASH_DETAILS: Record<SplashPackage, SplashDetails> = {
-  [SplashPackage.SINGLE]: {
-    name: 'Single Splash',
-    description: 'One premium high-DA backlink opportunity',
+export const splashPackages: SplashPackageDetails[] = [
+  {
+    name: "Single Splash",
+    enum: SplashPackage.SINGLE,
     price: 7,
     count: 1,
-    savings: 0
+    description: "One premium opportunity with high-quality contact info"
   },
-  [SplashPackage.TRIPLE]: {
-    name: 'Triple Splash',
-    description: 'Three premium high-DA backlink opportunities',
+  {
+    name: "Triple Pack",
+    enum: SplashPackage.TRIPLE,
     price: 18,
     count: 3,
-    savings: 15
+    savePercentage: 14,
+    description: "3 premium opportunities with high-quality contact info"
   },
-  [SplashPackage.SEVEN]: {
-    name: 'Seven Splash',
-    description: 'Seven premium high-DA backlink opportunities',
+  {
+    name: "Seven Pack",
+    enum: SplashPackage.SEVEN,
     price: 35,
     count: 7,
-    savings: 30
+    savePercentage: 29,
+    description: "7 premium opportunities with high-quality contact info"
   }
-};
+];
+
+export const subscriptionPlans: PlanDetails[] = [
+  {
+    name: "Free Trial",
+    enum: SubscriptionPlan.FREE_TRIAL,
+    price: {
+      monthly: 0
+    },
+    features: [
+      { ...planFeatures.domainInsights },
+      { ...planFeatures.seoMetrics },
+      { ...planFeatures.relevanceScoring },
+      { ...planFeatures.contactExtraction },
+      { ...planFeatures.emailOutreach },
+      { ...planFeatures.templates, limit: "3 templates" },
+      { ...planFeatures.supportBasic },
+      { ...planFeatures.premiumFilter, included: false },
+      { ...planFeatures.advancedMetrics, included: false },
+      { ...planFeatures.multichannel, included: false },
+      { ...planFeatures.automatedFollowups, included: false },
+      { ...planFeatures.reporting, included: false },
+    ],
+    dripsPerDay: 5,
+    splashesPerMonth: 1,
+    maxWebsites: 1,
+    ctaText: "Start Free Trial",
+  },
+  {
+    name: "Starter",
+    enum: SubscriptionPlan.STARTER,
+    price: {
+      monthly: 9,
+      annually: 90
+    },
+    features: [
+      { ...planFeatures.domainInsights },
+      { ...planFeatures.seoMetrics },
+      { ...planFeatures.relevanceScoring },
+      { ...planFeatures.contactExtraction },
+      { ...planFeatures.emailOutreach },
+      { ...planFeatures.templates, limit: "5 templates" },
+      { ...planFeatures.supportBasic },
+      { ...planFeatures.premiumFilter, included: false },
+      { ...planFeatures.advancedMetrics, included: false },
+      { ...planFeatures.multichannel, included: false },
+      { ...planFeatures.automatedFollowups, included: false },
+      { ...planFeatures.reporting, included: false },
+    ],
+    dripsPerDay: 5,
+    splashesPerMonth: 1,
+    maxWebsites: 1,
+    ctaText: "Get Started",
+  },
+  {
+    name: "Grow",
+    enum: SubscriptionPlan.GROW,
+    price: {
+      monthly: 19,
+      annually: 190
+    },
+    features: [
+      { ...planFeatures.domainInsights },
+      { ...planFeatures.seoMetrics },
+      { ...planFeatures.relevanceScoring },
+      { ...planFeatures.contactExtraction },
+      { ...planFeatures.emailOutreach },
+      { ...planFeatures.templates, limit: "10 templates" },
+      { ...planFeatures.supportBasic },
+      { ...planFeatures.premiumFilter, included: true },
+      { ...planFeatures.advancedMetrics, included: true },
+      { ...planFeatures.multichannel, included: true },
+      { ...planFeatures.automatedFollowups, included: false },
+      { ...planFeatures.reporting, included: false },
+    ],
+    dripsPerDay: 10,
+    splashesPerMonth: 3,
+    maxWebsites: 2,
+    ctaText: "Upgrade to Grow",
+    popular: true,
+  },
+  {
+    name: "Pro",
+    enum: SubscriptionPlan.PRO,
+    price: {
+      monthly: 39,
+      annually: 390
+    },
+    features: [
+      { ...planFeatures.domainInsights },
+      { ...planFeatures.seoMetrics },
+      { ...planFeatures.relevanceScoring },
+      { ...planFeatures.contactExtraction },
+      { ...planFeatures.emailOutreach },
+      { ...planFeatures.templates, limit: "Unlimited" },
+      { ...planFeatures.supportPriority, included: true },
+      { ...planFeatures.premiumFilter, included: true },
+      { ...planFeatures.advancedMetrics, included: true },
+      { ...planFeatures.multichannel, included: true },
+      { ...planFeatures.automatedFollowups, included: true },
+      { ...planFeatures.reporting, included: true },
+      { ...planFeatures.aiAssistant, included: true },
+    ],
+    dripsPerDay: 15,
+    splashesPerMonth: 7,
+    maxWebsites: 5,
+    ctaText: "Upgrade to Pro",
+  }
+];

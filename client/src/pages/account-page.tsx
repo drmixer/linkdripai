@@ -176,8 +176,38 @@ const AccountSummary = () => {
 
 const SubscriptionTab = () => {
   return (
-    <div className="max-w-4xl mx-auto">
-      <SubscriptionCard tier={SubscriptionPlan.STARTER} />
+    <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+      <SubscriptionCard 
+        plan={SubscriptionPlan.STARTER}
+        price={9}
+        features={[
+          "5 drips/day",
+          "1 Splash/month",
+          "1 website",
+          "Basic filters"
+        ]}
+      />
+      <SubscriptionCard 
+        plan={SubscriptionPlan.GROW}
+        price={19}
+        features={[
+          "10 drips/day",
+          "3 Splashes/month",
+          "2 websites",
+          "Advanced filters"
+        ]}
+        popular={true}
+      />
+      <SubscriptionCard 
+        plan={SubscriptionPlan.PRO}
+        price={39}
+        features={[
+          "15 drips/day",
+          "7 Splashes/month",
+          "5 websites",
+          "Full filters"
+        ]}
+      />
     </div>
   );
 };

@@ -10,25 +10,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 import CheckoutButton from './checkout-button';
-import { SubscriptionPlan, PLAN_DETAILS } from '@/lib/subscription-plans';
+import { SubscriptionPlan, subscriptionPlans } from '@/lib/subscription-plans';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
 interface SubscriptionCardProps {
-  tier: SubscriptionPlan;
+  plan: SubscriptionPlan;
+  price: number;
+  features: string[];
+  current?: boolean;
   popular?: boolean;
   className?: string;
 }
 
 const SubscriptionCard = ({
-  tier,
+  plan,
+  price,
+  features,
+  current = false,
   popular = false,
   className = '',
 }: SubscriptionCardProps) => {
   const { user } = useAuth();
-  const plan = PLAN_DETAILS[tier];
+  const planDetails = subscriptionPlans.find(p => p.enum === plan);
   
-  const isCurrentPlan = user?.subscription?.toLowerCase() === tier.toLowerCase();
+  const isCurrentPlan = current || (user?.subscription?.toLowerCase() === plan.toLowerCase());
   
   return (
     <Card className={cn(
@@ -42,19 +48,19 @@ const SubscriptionCard = ({
             Most Popular
           </Badge>
         )}
-        <CardTitle className="text-xl">{plan.name}</CardTitle>
+        <CardTitle className="text-xl">{planDetails?.name || String(plan)}</CardTitle>
         <CardDescription>
-          {plan.description}
+          {planDetails?.description || "Subscription plan"}
         </CardDescription>
         <div className="mt-2">
-          <span className="text-3xl font-bold">${plan.price}</span>
+          <span className="text-3xl font-bold">${price}</span>
           <span className="text-muted-foreground">/mo</span>
         </div>
       </CardHeader>
 
       <CardContent className="flex-grow">
         <ul className="space-y-2">
-          {plan.features.map((feature, index) => (
+          {features.map((feature: string, index: number) => (
             <li key={index} className="flex items-start">
               <Check className="h-5 w-5 text-primary flex-shrink-0 mr-2" />
               <span>{feature}</span>
@@ -70,8 +76,8 @@ const SubscriptionCard = ({
           </Button>
         ) : (
           <CheckoutButton
-            planId={tier}
-            buttonText={`Upgrade to ${plan.name}`}
+            planId={plan}
+            buttonText={`Upgrade to ${planDetails?.name || String(plan)}`}
             fullWidth={true}
             variant={popular ? 'default' : 'outline'}
             className="font-semibold"

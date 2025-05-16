@@ -10,8 +10,8 @@ import { getLemonSqueezyService } from '../services/lemon-squeezy-service';
 import { 
   SubscriptionPlan, 
   SplashPackage,
-  PLAN_DETAILS,
-  SPLASH_DETAILS,
+  subscriptionPlans,
+  splashPackages,
 } from '../../client/src/lib/subscription-plans';
 import { SUBSCRIPTION_PLAN_VARIANTS as PLAN_VARIANT_IDS } from '../config/lemon-squeezy-config';
 import { getSubscriptionService } from '../services/subscription-service';
@@ -26,7 +26,8 @@ import { eq } from 'drizzle-orm';
 function determineSubscriptionPlan(variantId: string): string {
   for (const [planKey, planVariantId] of Object.entries(PLAN_VARIANT_IDS)) {
     if (planVariantId === variantId) {
-      return PLAN_DETAILS[planKey as SubscriptionPlan].name;
+      const plan = subscriptionPlans.find(p => p.enum === planKey as SubscriptionPlan);
+      return plan ? plan.name : 'Free Trial';
     }
   }
   return 'Free Trial';
