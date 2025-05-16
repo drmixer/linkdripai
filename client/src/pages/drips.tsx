@@ -224,7 +224,8 @@ export default function DripsPage() {
       // Only one website, go straight to confirmation
       const websiteId = websites[0].id;
       setSelectedWebsiteId(websiteId);
-      setShowConfirmation(true);
+      setSelectedWebsiteName(websites[0].url);
+      setShowSplashConfirmation(true);
     } else {
       // Multiple websites, show selection dialog
       setIsSplashDialogOpen(true);
@@ -236,11 +237,16 @@ export default function DripsPage() {
     // First close the website selection dialog
     setIsSplashDialogOpen(false);
     
+    // Find the selected website name
+    const website = websites.find(w => w.id === websiteId);
+    const websiteName = website ? website.url : '';
+    
     // Set selected website and open confirmation dialog
     // Using setTimeout to ensure state updates don't conflict
     setTimeout(() => {
       setSelectedWebsiteId(websiteId);
-      setShowConfirmation(true);
+      setSelectedWebsiteName(websiteName);
+      setShowSplashConfirmation(true);
     }, 100);
   };
   
