@@ -758,11 +758,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Record the Splash usage
       // Try-catch to handle potential DB schema mismatch
       try {
-        await db.execute(
-          `INSERT INTO splashusage ("userid", "websiteid", "usedat", "source") 
-           VALUES ($1, $2, $3, $4)`,
-          [user.id, websiteId || null, new Date(), "monthly_allowance"]
-        );
+        // First check if the table exists
+        const { rows } = await db.execute(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_name = 'splashusage'
+          );
+        `);
+        
+        // Only try to insert if the table exists
+        if (rows && rows[0] && rows[0].exists) {
+          await db.execute(
+            `INSERT INTO splashusage ("userid", "websiteid", "usedat", "source") 
+             VALUES ($1, $2, $3, $4)`,
+            [user.id, websiteId || null, new Date(), "monthly_allowance"]
+          );
+        } else {
+          console.log('Splash usage table does not exist, skipping record');
+        }
       } catch (err) {
         console.error('Error recording splash usage:', err);
         // Continue even if this fails, as it's not critical
