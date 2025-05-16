@@ -1,156 +1,194 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'wouter';
+import { useEffect } from 'react';
+import { useLocation, useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Card, 
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, Mail, Link2 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle, ArrowLeft, Loader2 } from 'lucide-react';
 import MultiChannelOutreach from '@/components/MultiChannelOutreach';
+import { useAuth } from '@/hooks/use-auth';
 
+/**
+ * Multi-Channel Outreach Page
+ * 
+ * This page provides a comprehensive interface for reaching out to a specific opportunity
+ * through multiple channels: email, social media, and contact forms.
+ */
 export default function MultiChannelOutreachPage() {
-  const { id } = useParams();
-  const opportunityId = parseInt(id || '0');
-  const [activeTab, setActiveTab] = useState('contact');
-
-  // Fetch opportunity details
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const params = useParams<{ id: string }>();
+  const opportunityId = params?.id ? parseInt(params.id) : undefined;
+  
+  // Get opportunity details to display the name and confirm it exists
   const { data: opportunity, isLoading, error } = useQuery({
-    queryKey: ['/api/opportunities', opportunityId],
-    queryFn: async () => {
-      const response = await apiRequest('GET', `/api/opportunities/${opportunityId}`);
-      return response.json();
-    },
+    queryKey: opportunityId ? [`/api/opportunities/${opportunityId}`] : null,
     enabled: !!opportunityId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Format domain authority for display
-  const formatDomainAuthority = (da: string | number | null | undefined) => {
-    if (da === null || da === undefined) return 'N/A';
-    return typeof da === 'string' ? da : Math.round(da);
-  };
+  // Redirect to opportunities page if user is not authenticated
+  useEffect(() => {
+    if (!user) {
+      setLocation('/auth');
+    }
+  }, [user, setLocation]);
 
-  // Format spam score for display
-  const formatSpamScore = (spam: string | number | null | undefined) => {
-    if (spam === null || spam === undefined) return 'N/A';
-    return typeof spam === 'string' ? spam : Math.round(spam);
-  };
+  // Handle missing opportunity ID in URL
+  if (!opportunityId) {
+    return (
+      <div className="container py-10">
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <CardTitle className="text-amber-700">Missing Information</CardTitle>
+            </div>
+            <CardDescription className="text-amber-600">
+              No opportunity ID was provided. Please select an opportunity from your dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="mt-2" 
+              onClick={() => setLocation('/opportunities')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Opportunities
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  // If loading, show spinner
+  // Show loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // If error or no opportunity found
-  if (error || !opportunity) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-lg font-medium mb-2">
-          {error ? 'Error loading opportunity' : 'Opportunity not found'}
+      <div className="container py-10 flex justify-center items-center min-h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <h2 className="text-xl font-medium">Loading Outreach Options...</h2>
+          <p className="text-gray-500 mt-2">Preparing your outreach channels</p>
         </div>
-        <Button asChild>
-          <Link href="/">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Return to Dashboard
-          </Link>
-        </Button>
       </div>
     );
   }
 
-  // Prepare contact info for the MultiChannelOutreach component
-  const contactInfo = {
-    emails: opportunity.contactInfo?.emails || [],
-    socialProfiles: opportunity.contactInfo?.socialProfiles || [],
-    contactForms: opportunity.contactInfo?.contactForms || [],
-  };
+  // Handle error state
+  if (error) {
+    return (
+      <div className="container py-10">
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <CardTitle className="text-red-700">Error Loading Opportunity</CardTitle>
+            </div>
+            <CardDescription className="text-red-600">
+              We couldn't load the opportunity details. The opportunity may have been deleted or you may not have access.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-red-600 mb-4">Error details: {(error as Error).message}</p>
+            <Button 
+              variant="outline" 
+              onClick={() => setLocation('/opportunities')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Opportunities
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  // Check if we have any contact methods
-  const hasContactMethods = 
-    contactInfo.emails.length > 0 || 
-    contactInfo.socialProfiles.length > 0 || 
-    contactInfo.contactForms.length > 0;
+  // Handle non-existent opportunity
+  if (!opportunity) {
+    return (
+      <div className="container py-10">
+        <Card>
+          <CardHeader>
+            <CardTitle>Opportunity Not Found</CardTitle>
+            <CardDescription>
+              The opportunity you're looking for doesn't exist or has been removed.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              onClick={() => setLocation('/opportunities')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Opportunities
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="container max-w-7xl mx-auto py-6 space-y-6">
-      {/* Header navigation */}
-      <div className="flex justify-between items-center">
-        <Link href="/">
-          <Button variant="ghost" className="flex items-center">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Opportunities
-          </Button>
-        </Link>
+    <div className="container py-10">
+      <div className="mb-6">
+        <Button 
+          variant="outline" 
+          onClick={() => setLocation('/opportunities')}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Opportunities
+        </Button>
       </div>
-
-      {/* Opportunity details */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>{opportunity.pageTitle || opportunity.domain}</CardTitle>
-              <CardDescription className="flex items-center mt-1">
-                <a 
-                  href={opportunity.url} 
-                  target="_blank"
-                  rel="noopener noreferrer" 
-                  className="text-blue-500 hover:underline flex items-center"
-                >
-                  {opportunity.url}
-                  <Link2 className="ml-1 h-3 w-3" />
-                </a>
-              </CardDescription>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="flex items-center gap-1 py-1">
-                DA {formatDomainAuthority(opportunity.domainAuthority)}
-              </Badge>
-              <Badge variant={parseInt(formatSpamScore(opportunity.spamScore)) > 30 ? "destructive" : "outline"} className="flex items-center gap-1 py-1">
-                Spam {formatSpamScore(opportunity.spamScore)}
-              </Badge>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Check if we have contact info */}
-            {!hasContactMethods ? (
-              <div className="p-6 text-center border rounded-md bg-gray-50">
-                <Mail className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                <h3 className="text-lg font-medium mb-1">No contact information available</h3>
-                <p className="text-gray-500 mb-4">
-                  We couldn't find any contact information for this opportunity.
+      
+      <MultiChannelOutreach opportunityId={opportunityId} />
+      
+      <div className="mt-10">
+        <Card>
+          <CardHeader>
+            <CardTitle>Outreach Best Practices</CardTitle>
+            <CardDescription>
+              Tips for successful outreach and relationship building
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium text-base mb-1">Personalize Your Message</h3>
+                <p className="text-sm text-gray-600">
+                  Take time to understand the website's content and audience. Reference specific articles or content
+                  to show you've done your research.
                 </p>
-                <Button asChild>
-                  <Link href="/">
-                    Return to Dashboard
-                  </Link>
-                </Button>
               </div>
-            ) : (
-              // If we have contact info, show the outreach component
-              <MultiChannelOutreach
-                opportunityId={opportunityId}
-                contactInfo={contactInfo}
-                domain={opportunity.domain}
-                websiteName={opportunity.pageTitle || opportunity.domain}
-                onMessageSent={() => {
-                  // Refresh the page or data as needed
-                }}
-              />
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              
+              <div>
+                <h3 className="font-medium text-base mb-1">Provide Clear Value</h3>
+                <p className="text-sm text-gray-600">
+                  Clearly explain how your content will benefit their audience. Focus on the value exchange rather than
+                  just asking for a link.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-medium text-base mb-1">Follow Up (But Don't Spam)</h3>
+                <p className="text-sm text-gray-600">
+                  If you don't receive a response after a week, a single follow-up is appropriate. Be polite and
+                  understanding of their busy schedule.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-medium text-base mb-1">Build a Relationship</h3>
+                <p className="text-sm text-gray-600">
+                  Approach outreach as the start of a potential long-term relationship, not just a transactional
+                  link-building exercise.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
