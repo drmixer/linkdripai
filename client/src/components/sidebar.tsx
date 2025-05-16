@@ -21,9 +21,9 @@ export default function Sidebar() {
   const navItems = [
     {
       title: "Dashboard",
-      href: "/",
+      href: "/dashboard",
       icon: HomeIcon,
-      active: location === "/"
+      active: location === "/dashboard"
     },
     {
       title: "Opportunities",

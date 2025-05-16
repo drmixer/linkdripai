@@ -525,6 +525,22 @@ export const crawlerJobs = pgTable("crawlerJobs", {
   error: text("error"),
 });
 
+// Email settings per website (for multi-website support)
+export const websiteEmailSettings = pgTable("websiteEmailSettings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  websiteId: integer("websiteId").notNull(),
+  fromEmail: text("fromEmail").notNull(),
+  replyToEmail: text("replyToEmail"),
+  defaultTemplateId: integer("defaultTemplateId"),
+  signatureName: text("signatureName"),
+  signatureTitle: text("signatureTitle"),
+  signatureCompany: text("signatureCompany"),
+  active: boolean("active").default(true),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
