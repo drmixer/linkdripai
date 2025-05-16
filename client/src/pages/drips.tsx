@@ -219,7 +219,7 @@ export default function DripsPage() {
   // Handle confirmation of Splash usage
   const handleConfirmSplash = () => {
     if (selectedWebsiteId) {
-      splashMutation.mutate(selectedWebsiteId);
+      splashMutation.mutate({ websiteId: selectedWebsiteId });
       // Reset state
       setSelectedWebsiteId(null);
       setShowConfirmation(false);
