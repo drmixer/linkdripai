@@ -61,7 +61,7 @@ export default function EmailOutreachPage() {
   // Show configuration needed message if email is not configured
   if (!settingsLoading && !settings?.isConfigured) {
     return (
-      <div className="container mx-auto py-8 max-w-7xl">
+      <div className="container py-8 max-w-full">
         <Helmet>
           <title>Email Outreach - LinkDripAI</title>
           <meta 
@@ -124,7 +124,7 @@ export default function EmailOutreachPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 max-w-7xl">
+    <div className="container py-8 max-w-full">
       <Helmet>
         <title>Email Outreach - LinkDripAI</title>
         <meta 

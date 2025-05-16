@@ -69,7 +69,7 @@ export default function SplashDialog({ open, onOpenChange }: SplashDialogProps) 
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) onOpenChange(false);
     }}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-6 w-6 text-primary" />
