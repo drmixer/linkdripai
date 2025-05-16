@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import OpportunityCard from '@/components/opportunity-card';
 import Layout from '@/components/layout';
 import SplashConfirmationDialog from '@/components/splash-confirmation-dialog';
@@ -28,7 +28,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -55,11 +55,11 @@ export default function DripsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSplashDialogOpen, setIsSplashDialogOpen] = useState(false);
   const [showSplashConfirmation, setShowSplashConfirmation] = useState(false);
-  const [selectedWebsiteId, setSelectedWebsiteId] = useState<number | null>(null);
-  const [selectedWebsiteName, setSelectedWebsiteName] = useState('');
   const [activeSection, setActiveSection] = useState<"opportunities" | "analytics" | "contacted">("opportunities");
   const [showRecent, setShowRecent] = useState(true);
   const [sortMethod, setSortMethod] = useState<"relevance" | "da" | "date">("relevance");
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<number | null>(null);
+  const [selectedWebsiteName, setSelectedWebsiteName] = useState('');
   
   // Get user websites
   const { data: websites = [], isLoading: loadingWebsites } = useQuery<any[]>({
@@ -191,17 +191,9 @@ export default function DripsPage() {
   
   // State for confirmation dialog
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [selectedWebsiteId, setSelectedWebsiteId] = useState<number | null>(null);
   
-  // Find the selected website name for the confirmation dialog
-  const selectedWebsiteName = React.useMemo(() => {
-    if (!selectedWebsiteId || websites.length === 0) return '';
-    const website = websites.find(w => w.id === selectedWebsiteId);
-    return website ? website.url : '';
-  }, [selectedWebsiteId, websites]);
-
-  // Handle splash credits - initial button click
-  const handleGetSplash = () => {
+  // Handle splash button click
+  const handleUseSplash = () => {
     // Check if user has any websites
     if (websites.length === 0) {
       toast({
@@ -222,8 +214,7 @@ export default function DripsPage() {
     // User has splashes available, determine next step
     if (websites.length === 1) {
       // Only one website, go straight to confirmation
-      const websiteId = websites[0].id;
-      setSelectedWebsiteId(websiteId);
+      setSelectedWebsiteId(websites[0].id);
       setSelectedWebsiteName(websites[0].url);
       setShowSplashConfirmation(true);
     } else if (websites.length > 1) {
@@ -374,24 +365,7 @@ export default function DripsPage() {
             
             <Button 
               className="bg-blue-600 hover:bg-blue-700 text-white" 
-              onClick={() => {
-                // Check if user has any splashes remaining
-                if (userPlan.remainingSplashes > 0) {
-                  // User has splashes, show confirmation dialog directly
-                  if (websites.length === 1) {
-                    // Only one website, go straight to confirmation
-                    setSelectedWebsiteId(websites[0].id);
-                    setSelectedWebsiteName(websites[0].url);
-                    setShowSplashConfirmation(true);
-                  } else if (websites.length > 1) {
-                    // Multiple websites, show website selection dialog
-                    setIsSplashDialogOpen(true);
-                  }
-                } else {
-                  // No splashes remaining, show purchase dialog
-                  setIsSplashDialogOpen(true);
-                }
-              }}
+              onClick={handleUseSplash}
             >
               <Sparkles className="h-4 w-4 mr-2" />
               Use Splash {userPlan.remainingSplashes > 0 && `(${userPlan.remainingSplashes})`}
