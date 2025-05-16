@@ -40,6 +40,7 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import SplashConfirmationDialog from '@/components/splash-confirmation-dialog';
 
 export default function DripsPage() {
   const { user } = useAuth();
