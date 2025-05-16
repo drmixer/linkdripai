@@ -221,7 +221,7 @@ async function findContactPages(baseUrl: string): Promise<string[]> {
   // Try to analyze the homepage to find contact page links
   try {
     const browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
       timeout: BROWSER_TIMEOUT
     });
