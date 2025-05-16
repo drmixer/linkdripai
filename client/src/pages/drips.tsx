@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import OpportunityCard from '@/components/opportunity-card';
 import Layout from '@/components/layout';
 import { useAuth } from '@/hooks/use-auth';
@@ -15,17 +15,30 @@ import {
   Globe, 
   LayoutDashboard, 
   Mail, 
-  FileText
+  FileText,
+  ArrowUpRight,
+  Calendar,
+  AlertCircle,
+  TrendingUp,
+  Zap,
+  CheckCircle
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DripsPage() {
@@ -43,8 +56,6 @@ export default function DripsPage() {
   const [activeSection, setActiveSection] = useState<"opportunities" | "analytics" | "contacted">("opportunities");
   const [showRecent, setShowRecent] = useState(true);
   const [sortMethod, setSortMethod] = useState<"relevance" | "da" | "date">("relevance");
-  // Chart periods for analytics
-  const [chartPeriod, setChartPeriod] = useState('30d');
   
   // Get user websites
   const { data: websites = [], isLoading: loadingWebsites } = useQuery<any[]>({
@@ -154,12 +165,19 @@ export default function DripsPage() {
     return filtered;
   }, [opportunities, websiteFilter, searchQuery, activeFilters, activeTab, sortMethod]);
   
-  // Chart periods for analytics
+  // Chart period for analytics
   const [chartPeriod, setChartPeriod] = useState('30d');
   
   // State for confirmation dialog
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<number | null>(null);
+  
+  // Find the selected website name for the confirmation dialog
+  const selectedWebsiteName = React.useMemo(() => {
+    if (!selectedWebsiteId || websites.length === 0) return '';
+    const website = websites.find(w => w.id === selectedWebsiteId);
+    return website ? website.url : '';
+  }, [selectedWebsiteId, websites]);
 
   // Handle splash credits
   const handleGetSplash = () => {
