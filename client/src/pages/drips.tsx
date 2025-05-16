@@ -54,6 +54,7 @@ export default function DripsPage() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSplashDialogOpen, setIsSplashDialogOpen] = useState(false);
+  const [showSplashConfirmation, setShowSplashConfirmation] = useState(false);
   const [activeSection, setActiveSection] = useState<"opportunities" | "analytics" | "contacted">("opportunities");
   const [showRecent, setShowRecent] = useState(true);
   const [sortMethod, setSortMethod] = useState<"relevance" | "da" | "date">("relevance");
@@ -101,7 +102,10 @@ export default function DripsPage() {
         title: 'Premium opportunity added!',
         description: 'A new high-quality opportunity has been added to your feed.',
       });
-      setIsSplashDialogOpen(false);
+      // Close confirmation dialog
+      setShowSplashConfirmation(false);
+      setSelectedWebsiteId(null);
+      setSelectedWebsiteName('');
     },
     onError: (error: Error) => {
       toast({
