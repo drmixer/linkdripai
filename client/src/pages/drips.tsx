@@ -209,7 +209,7 @@ export default function DripsPage() {
     
     // Reset state and close confirmation dialog
     setSelectedWebsiteId(null);
-    setShowConfirmation(false);
+    setShowSplashConfirmation(false);
   };
   
   // View contact info
