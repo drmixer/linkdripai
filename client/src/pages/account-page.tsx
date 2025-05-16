@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, CreditCard, LucideIcon, Package, RefreshCw, Settings, User } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';
+import Layout from '@/components/layout';
 
 interface UserStats {
   remainingSplashes: number;
@@ -206,7 +207,7 @@ export default function AccountPage() {
   const { user } = useAuth();
 
   return (
-    <>
+    <Layout>
       <Helmet>
         <title>Account | LinkDripAI</title>
         <meta name="description" content="Manage your LinkDripAI account, subscription, and Splash credits" />
@@ -273,6 +274,6 @@ export default function AccountPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </Layout>
   );
 }
