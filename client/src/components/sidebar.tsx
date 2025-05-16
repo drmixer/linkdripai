@@ -26,16 +26,10 @@ export default function Sidebar() {
       active: location === "/dashboard"
     },
     {
-      title: "Opportunities",
+      title: "All Opportunities (Drips)",
       href: "/opportunities",
       icon: Search,
       active: location.includes("/opportunit")
-    },
-    {
-      title: "Outreach",
-      href: "/outreach",
-      icon: Mail,
-      active: location.includes("/outreach")
     },
     {
       title: "Websites",
@@ -48,18 +42,6 @@ export default function Sidebar() {
       href: "/analytics",
       icon: BarChart,
       active: location.includes("/analytics")
-    },
-    {
-      title: "Automations",
-      href: "/automations",
-      icon: Workflow,
-      active: location.includes("/automation")
-    },
-    {
-      title: "Splash",
-      href: "/splash",
-      icon: Sparkles,
-      active: location.includes("/splash")
     },
     {
       title: "Account",
@@ -78,9 +60,7 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-20 hidden h-screen w-64 flex-col border-r bg-background px-3 py-4 md:flex">
       <div className="flex items-center mb-6 pl-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary mr-2">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-        </svg>
+        <img src="/assets/LinkDripAI-neon.png" alt="LinkDripAI Logo" className="h-8 mr-2" />
         <span className="text-xl font-bold">LinkDripAI</span>
       </div>
       
