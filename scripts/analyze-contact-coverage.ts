@@ -198,7 +198,7 @@ async function analyzeContactCoverage() {
     const topEmailDomains = await db.execute(sql`
       WITH email_domains AS (
         SELECT split_part(jsonb_array_elements_text(${schema.discoveredOpportunities.contactInfo}::jsonb->'emails'), '@', 2) as domain
-        FROM ${schema.discoveredOpportunities._.name}
+        FROM "discoveredOpportunities"
         WHERE ${schema.discoveredOpportunities.contactInfo}::jsonb->'emails' IS NOT NULL
         AND jsonb_array_length(${schema.discoveredOpportunities.contactInfo}::jsonb->'emails') > 0
       )
@@ -210,8 +210,12 @@ async function analyzeContactCoverage() {
       LIMIT 10
     `);
     
-    for (const domain of topEmailDomains) {
-      console.log(`Domain: ${domain.domain || 'Unknown'}, Count: ${domain.count}`);
+    if (Array.isArray(topEmailDomains.rows)) {
+      for (const domain of topEmailDomains.rows) {
+        console.log(`Domain: ${domain.domain || 'Unknown'}, Count: ${domain.count}`);
+      }
+    } else {
+      console.log("No email domain data available");
     }
     
     // Get number of normalized vs non-normalized records
