@@ -1,22 +1,11 @@
 #!/bin/bash
 
-# Contact Info Normalizer Script
-# This script normalizes all contact information to ensure a consistent format
+echo "======================================================="
+echo "  Running Contact Information Normalization"
+echo "  This will standardize all contact info formats"
+echo "======================================================="
 
-# Import the .env file if it exists
-if [ -f .env ]; then
-  export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
-fi
-
-# Set proper Node options for memory optimization
-export NODE_OPTIONS="--max-old-space-size=2048"
-
-echo "======================================================"
-echo "  Running Contact Information Normalizer"
-echo "  Target: Consistent data format across all opportunities"
-echo "======================================================"
-
-# Run the normalizer script
+# Execute the script with Node
 npx tsx scripts/normalize-contact-info.ts
 
 echo "Normalization completed!"

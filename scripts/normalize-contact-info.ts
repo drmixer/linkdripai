@@ -1,159 +1,262 @@
 /**
- * Contact Information Format Normalizer
+ * Normalize Contact Information
  * 
- * This script normalizes the format of contact information across all opportunities
- * to ensure a consistent structure that works with our frontend and email integration.
+ * This script standardizes all contact information into a consistent format:
+ * {
+ *   emails: string[],
+ *   socialProfiles: Array<{platform: string, url: string, username: string}>,
+ *   contactForms: string[],
+ *   extractionDetails: {
+ *     normalized: boolean,
+ *     source: string,
+ *     version: string,
+ *     lastUpdated: string
+ *   }
+ * }
  */
 
-import { db } from "../server/db";
-import { discoveredOpportunities } from "../shared/schema";
-import { sql } from "drizzle-orm";
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { eq, not, isNull, sql } from 'drizzle-orm';
+import * as schema from '../shared/schema';
+import ws from 'ws';
 
+// Configure neon to use the WebSocket constructor
+neonConfig.webSocketConstructor = ws;
+
+// Database connection
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is not set');
+}
+
+const pool = new Pool({ connectionString });
+const db = drizzle(pool, { schema });
+
+// Define the standardized contact info interface
+interface NormalizedContactInfo {
+  emails: string[];
+  socialProfiles: Array<{
+    platform: string;
+    url: string;
+    username: string;
+  }>;
+  contactForms: string[];
+  extractionDetails: {
+    normalized: boolean;
+    source: string;
+    version: string;
+    lastUpdated: string;
+  };
+}
+
+/**
+ * Normalize contact information to a standard format
+ */
 async function normalizeContactInfo() {
-  console.log("Starting contact information normalization process...");
-  
   try {
-    // Get all opportunities with contact info
-    const opportunities = await db.select()
-      .from(discoveredOpportunities)
-      .where(sql`"contactInfo" IS NOT NULL`);
+    console.log('Starting contact information normalization...');
     
-    console.log(`Found ${opportunities.length} opportunities with contact information`);
+    // Get opportunities with non-null contactInfo
+    const opportunities = await db
+      .select({
+        id: schema.discoveredOpportunities.id,
+        domain: schema.discoveredOpportunities.domain,
+        contactInfo: schema.discoveredOpportunities.contactInfo
+      })
+      .from(schema.discoveredOpportunities)
+      .where(not(isNull(schema.discoveredOpportunities.contactInfo)));
     
-    // Track various formats
-    let standardFormat = 0;
-    let oldFormat = 0;
-    let unknownFormat = 0;
+    console.log(`Found ${opportunities.length} opportunities with contact information to process`);
     
-    // Process each opportunity
+    let normalized = 0;
+    let alreadyNormalized = 0;
+    let failed = 0;
+    
     for (const opportunity of opportunities) {
-      const id = opportunity.id;
-      let contactInfo: any;
-      
       try {
-        // Parse the contact info from string/json
-        if (typeof opportunity.contactInfo === 'string') {
-          contactInfo = JSON.parse(opportunity.contactInfo);
-        } else {
-          contactInfo = opportunity.contactInfo;
+        let contactInfo;
+        const rawContactInfo = opportunity.contactInfo;
+        
+        // Skip if already in new format
+        if (typeof rawContactInfo === 'object' && 
+            rawContactInfo !== null && 
+            'extractionDetails' in rawContactInfo && 
+            rawContactInfo.extractionDetails?.normalized === true) {
+          alreadyNormalized++;
+          continue;
         }
         
-        // Check the format and normalize if needed
-        let needsUpdate = false;
-        let normalizedInfo: any = {
+        // Initialize with empty values
+        const normalizedInfo: NormalizedContactInfo = {
           emails: [],
           socialProfiles: [],
           contactForms: [],
           extractionDetails: {
             normalized: true,
-            source: "contact-normalizer",
-            version: "1.0",
+            source: 'contact-normalizer',
+            version: '1.0',
             lastUpdated: new Date().toISOString()
           }
         };
         
-        // Case 1: New format from premium contact booster (1.1)
-        if (contactInfo.emails !== undefined && 
-            contactInfo.socialProfiles !== undefined && 
-            contactInfo.contactForms !== undefined) {
-          // Already in the right format
-          normalizedInfo = contactInfo;
-          
-          // Just ensure extractionDetails exists
-          if (!normalizedInfo.extractionDetails) {
-            normalizedInfo.extractionDetails = {
-              normalized: true,
-              source: "contact-normalizer",
-              version: "1.0",
-              lastUpdated: new Date().toISOString()
-            };
-            needsUpdate = true;
-          }
-          
-          standardFormat++;
-        }
-        // Case 2: Legacy format with email, social, form fields
-        else if (contactInfo.email !== undefined || 
-                contactInfo.social !== undefined || 
-                contactInfo.form !== undefined) {
-          // Convert old format to new format
-          if (contactInfo.email) {
-            if (Array.isArray(contactInfo.email)) {
-              normalizedInfo.emails = contactInfo.email;
-            } else {
-              normalizedInfo.emails.push(contactInfo.email);
+        // Handle case where contactInfo is a string (escaped JSON)
+        if (typeof rawContactInfo === 'string') {
+          try {
+            contactInfo = JSON.parse(rawContactInfo);
+            
+            // Check if it's already in the new format
+            if (contactInfo && 
+                typeof contactInfo === 'object' && 
+                'extractionDetails' in contactInfo && 
+                contactInfo.extractionDetails?.normalized === true) {
+              alreadyNormalized++;
+              continue;
             }
-          }
-          
-          if (contactInfo.additionalEmails && Array.isArray(contactInfo.additionalEmails)) {
-            normalizedInfo.emails.push(...contactInfo.additionalEmails);
-          }
-          
-          if (contactInfo.social && Array.isArray(contactInfo.social)) {
-            normalizedInfo.socialProfiles = contactInfo.social.map((profile: any) => ({
-              platform: profile.platform,
-              url: profile.url,
-              username: profile.username
-            }));
-          }
-          
-          if (contactInfo.form) {
-            if (Array.isArray(contactInfo.form)) {
-              normalizedInfo.contactForms = contactInfo.form;
-            } else {
-              normalizedInfo.contactForms.push(contactInfo.form);
+          } catch (e) {
+            console.error(`Could not parse contactInfo string for ${opportunity.domain} (ID: ${opportunity.id}):`, e);
+            
+            // Try to extract data using regex if JSON parsing fails
+            const emailRegex = /"email":\\s*\\["([^"]+)"\\]/g;
+            const formRegex = /"form":\\s*"([^"]+)"/g;
+            
+            // Extract emails using regex
+            const emailMatches = (rawContactInfo as string).match(emailRegex);
+            if (emailMatches) {
+              emailMatches.forEach(match => {
+                const email = match.replace(/"email":\s*\["/, '').replace(/"\]/, '');
+                normalizedInfo.emails.push(email);
+              });
             }
+            
+            // Extract contact form using regex
+            const formMatches = (rawContactInfo as string).match(formRegex);
+            if (formMatches) {
+              formMatches.forEach(match => {
+                const form = match.replace(/"form":\s*"/, '').replace(/"/, '');
+                normalizedInfo.contactForms.push(form);
+              });
+            }
+            
+            contactInfo = null;
+          }
+        } else {
+          contactInfo = rawContactInfo;
+        }
+        
+        // Process old format (form, social, email)
+        if (contactInfo && typeof contactInfo === 'object') {
+          // Extract form URLs
+          if ('form' in contactInfo && typeof contactInfo.form === 'string') {
+            normalizedInfo.contactForms.push(contactInfo.form);
           }
           
-          needsUpdate = true;
-          oldFormat++;
-        }
-        // Case 3: Unknown format, try to extract what we can
-        else {
-          console.log(`Unknown format for opportunity ${id}:`, contactInfo);
+          // Extract alternative format form URLs
+          if ('forms' in contactInfo && Array.isArray(contactInfo.forms)) {
+            contactInfo.forms.forEach((form: string) => {
+              normalizedInfo.contactForms.push(form);
+            });
+          }
           
-          // Look for email-like strings
-          if (typeof contactInfo === 'object') {
-            Object.entries(contactInfo).forEach(([key, value]) => {
-              if (typeof value === 'string' && value.includes('@') && value.includes('.')) {
-                normalizedInfo.emails.push(value);
-                needsUpdate = true;
-              } else if (typeof value === 'string' && value.includes('http') && value.includes('contact')) {
-                normalizedInfo.contactForms.push(value);
-                needsUpdate = true;
+          // Process social profiles
+          if ('social' in contactInfo && Array.isArray(contactInfo.social)) {
+            contactInfo.social.forEach((profile: any) => {
+              if (profile && typeof profile === 'object' && 'url' in profile && 'platform' in profile) {
+                normalizedInfo.socialProfiles.push({
+                  platform: profile.platform,
+                  url: profile.url,
+                  username: profile.username || profile.platform
+                });
               }
             });
           }
           
-          unknownFormat++;
+          // Extract old format emails
+          if ('email' in contactInfo) {
+            if (typeof contactInfo.email === 'string') {
+              normalizedInfo.emails.push(contactInfo.email);
+            } else if (Array.isArray(contactInfo.email)) {
+              contactInfo.email.forEach((email: string) => {
+                if (typeof email === 'string' && email.trim() !== '') {
+                  normalizedInfo.emails.push(email);
+                }
+              });
+            }
+          }
+          
+          // Double-escaped JSON string handling
+          if (contactInfo.emails && typeof contactInfo.emails === 'string') {
+            try {
+              const parsedEmails = JSON.parse(contactInfo.emails);
+              if (Array.isArray(parsedEmails)) {
+                normalizedInfo.emails = normalizedInfo.emails.concat(parsedEmails);
+              }
+            } catch (e) {
+              // Not valid JSON, skip
+            }
+          }
+          
+          // Already has emails array
+          if (contactInfo.emails && Array.isArray(contactInfo.emails)) {
+            normalizedInfo.emails = normalizedInfo.emails.concat(contactInfo.emails);
+          }
+          
+          // Already has socialProfiles array
+          if (contactInfo.socialProfiles && Array.isArray(contactInfo.socialProfiles)) {
+            normalizedInfo.socialProfiles = normalizedInfo.socialProfiles.concat(contactInfo.socialProfiles);
+          }
+          
+          // Already has contactForms array
+          if (contactInfo.contactForms && Array.isArray(contactInfo.contactForms)) {
+            normalizedInfo.contactForms = normalizedInfo.contactForms.concat(contactInfo.contactForms);
+          }
         }
         
-        // Deduplicate arrays
+        // Remove duplicates
         normalizedInfo.emails = [...new Set(normalizedInfo.emails)];
         normalizedInfo.contactForms = [...new Set(normalizedInfo.contactForms)];
         
-        // Update the database if needed
-        if (needsUpdate) {
-          await db.update(discoveredOpportunities)
-            .set({ contactInfo: JSON.stringify(normalizedInfo) })
-            .where(sql`id = ${id}`);
-          
-          console.log(`Updated contact info for opportunity ${id}`);
+        // Remove duplicates in socialProfiles by URL
+        const uniqueSocialUrls = new Set();
+        normalizedInfo.socialProfiles = normalizedInfo.socialProfiles.filter(profile => {
+          if (uniqueSocialUrls.has(profile.url)) {
+            return false;
+          }
+          uniqueSocialUrls.add(profile.url);
+          return true;
+        });
+        
+        // Update the database with normalized contact info
+        await db.update(schema.discoveredOpportunities)
+          .set({
+            contactInfo: normalizedInfo as any
+          })
+          .where(eq(schema.discoveredOpportunities.id, opportunity.id));
+        
+        normalized++;
+        
+        // Log progress every 50 records
+        if (normalized % 50 === 0) {
+          console.log(`Normalized ${normalized} records so far...`);
         }
       } catch (error) {
-        console.error(`Error processing opportunity ${id}:`, error);
+        console.error(`Failed to normalize contact info for ${opportunity.domain} (ID: ${opportunity.id}):`, error);
+        failed++;
       }
     }
     
-    console.log("\nNormalization Summary:");
-    console.log(`- Standard format: ${standardFormat}`);
-    console.log(`- Old format converted: ${oldFormat}`);
-    console.log(`- Unknown format: ${unknownFormat}`);
-    console.log(`- Total processed: ${opportunities.length}`);
+    console.log('\n=== Normalization Complete ===');
+    console.log(`Total opportunities processed: ${opportunities.length}`);
+    console.log(`Already normalized: ${alreadyNormalized}`);
+    console.log(`Newly normalized: ${normalized}`);
+    console.log(`Failed to normalize: ${failed}`);
     
   } catch (error) {
-    console.error("Error in normalization process:", error);
+    console.error('Error in contact info normalization:', error);
+  } finally {
+    await pool.end();
   }
 }
 
-normalizeContactInfo().catch(console.error);
+// Run the normalization
+normalizeContactInfo();
