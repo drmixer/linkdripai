@@ -226,27 +226,34 @@ export default function DripsPage() {
       setSelectedWebsiteId(websiteId);
       setSelectedWebsiteName(websites[0].url);
       setShowSplashConfirmation(true);
-    } else {
-      // Multiple websites, show selection dialog
+    } else if (websites.length > 1) {
+      // Multiple websites, show website selection dialog first
       setIsSplashDialogOpen(true);
     }
   };
   
   // Handle website selection from the website dialog
   const handleWebsiteSelect = (websiteId: number) => {
-    // First close the website selection dialog
-    setIsSplashDialogOpen(false);
-    
     // Find the selected website name
     const website = websites.find(w => w.id === websiteId);
     const websiteName = website ? website.url : '';
     
-    // Set selected website and open confirmation dialog
-    // Using setTimeout to ensure state updates don't conflict
+    // First close the website selection dialog
+    setIsSplashDialogOpen(false);
+    
+    // Set selected website info
+    setSelectedWebsiteId(websiteId);
+    setSelectedWebsiteName(websiteName);
+    
+    // Using setTimeout to ensure dialog states don't conflict
     setTimeout(() => {
-      setSelectedWebsiteId(websiteId);
-      setSelectedWebsiteName(websiteName);
-      setShowSplashConfirmation(true);
+      // Only show confirmation if user has splashes available
+      if (userPlan.remainingSplashes > 0) {
+        setShowSplashConfirmation(true);
+      } else {
+        // If no splashes, show purchase dialog
+        setIsSplashDialogOpen(true);
+      }
     }, 100);
   };
   
