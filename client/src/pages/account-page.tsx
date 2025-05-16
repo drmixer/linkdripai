@@ -176,7 +176,7 @@ const AccountSummary = () => {
 const SubscriptionTab = () => {
   return (
     <div className="max-w-4xl mx-auto">
-      <SubscriptionCard />
+      <SubscriptionCard tier="Starter" />
     </div>
   );
 };
@@ -201,12 +201,14 @@ const AccountTab = ({ icon: Icon, title, description }: AccountTabProps) => {
   );
 };
 
+import DashboardLayout from '@/components/dashboard-layout';
+
 export default function AccountPage() {
   const { toast } = useToast();
   const { user } = useAuth();
 
   return (
-    <>
+    <DashboardLayout>
       <Helmet>
         <title>Account | LinkDripAI</title>
         <meta name="description" content="Manage your LinkDripAI account, subscription, and Splash credits" />
@@ -273,6 +275,6 @@ export default function AccountPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </DashboardLayout>
   );
 }
