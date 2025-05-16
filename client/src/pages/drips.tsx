@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import OpportunityCard from '@/components/opportunity-card';
 import Layout from '@/components/layout';
 import SplashConfirmationDialog from '@/components/splash-confirmation-dialog';
+import SplashButton from '@/components/splash-button';
 import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { 
   Loader2, 
@@ -28,7 +28,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -41,6 +41,7 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DripsPage() {
   const { user } = useAuth();
@@ -363,13 +364,13 @@ export default function DripsPage() {
               Refresh
             </Button>
             
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700 text-white" 
-              onClick={handleUseSplash}
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Use Splash {userPlan.remainingSplashes > 0 && `(${userPlan.remainingSplashes})`}
-            </Button>
+            <SplashButton 
+              remainingSplashes={userPlan.remainingSplashes}
+              totalSplashes={userPlan.totalSplashes}
+              websites={websites}
+              onUseSplash={handleConfirmSplash}
+              onPurchase={() => setIsSplashDialogOpen(true)}
+            />
           </div>
         </div>
         
