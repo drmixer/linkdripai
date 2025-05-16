@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import OpportunityCard from '@/components/opportunity-card';
 import Layout from '@/components/layout';
-import SplashConfirmationDialog from '@/components/splash-confirmation-dialog';
-import SplashButton from '@/components/splash-button';
+import SimpleSplashButton from '@/components/SimpleSplashButton';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { 
@@ -313,25 +312,12 @@ export default function DripsPage() {
               Refresh
             </Button>
             
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => {
-                console.log("Splash button clicked");
-                // If only one website, show confirmation directly, otherwise show selection dialog
-                if (websites.length === 1) {
-                  setSelectedWebsiteId(websites[0].id);
-                  setSelectedWebsiteName(websites[0].url);
-                  setShowSplashConfirmation(true);
-                  console.log("Showing confirmation directly for single website:", websites[0].url);
-                } else {
-                  setIsSplashDialogOpen(true);
-                  console.log("Showing website selection dialog for multiple websites");
-                }
-              }}
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Use Splash {userPlan.remainingSplashes > 0 && `(${userPlan.remainingSplashes})`}
-            </Button>
+            <SimpleSplashButton 
+              websites={websites} 
+              remainingSplashes={userPlan.remainingSplashes} 
+              totalSplashes={userPlan.totalSplashes}
+              onSplashUsed={() => refetch()}
+            />
           </div>
         </div>
         
