@@ -7,7 +7,7 @@
  */
 
 import { db } from '../db';
-import { users, outreachEmails, userEmailSettings, discoveredOpportunities } from '../../shared/schema';
+import { users, outreachEmails, emailSettings, discoveredOpportunities } from '../../shared/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
@@ -81,8 +81,8 @@ async function createSmtpTransporter(userId: number): Promise<Transporter<SMTPTr
     // Get user's email settings
     const [userEmailSettings] = await db
       .select()
-      .from(userEmailSettings)
-      .where(eq(userEmailSettings.userId, userId));
+      .from(emailSettings)
+      .where(eq(emailSettings.userId, userId));
     
     if (!userEmailSettings) {
       console.error(`No email settings found for user ${userId}`);
@@ -125,8 +125,8 @@ async function getGmailOAuthClient(userId: number) {
   try {
     const [userEmailSettings] = await db
       .select()
-      .from(userEmailSettings)
-      .where(eq(userEmailSettings.userId, userId));
+      .from(emailSettings)
+      .where(eq(emailSettings.userId, userId));
     
     if (!userEmailSettings?.gmailClientId || !userEmailSettings?.gmailClientSecret || !userEmailSettings?.gmailRefreshToken) {
       throw new Error('Missing Gmail OAuth credentials');
@@ -147,9 +147,9 @@ async function getGmailOAuthClient(userId: number) {
     
     // Update the token in the database if it changed
     if (token) {
-      await db.update(userEmailSettings)
+      await db.update(emailSettings)
         .set({ gmailRefreshToken: token })
-        .where(eq(userEmailSettings.userId, userId));
+        .where(eq(emailSettings.userId, userId));
     }
     
     return oauth2Client;
@@ -196,8 +196,8 @@ export async function sendEmail(params: SendEmailParams): Promise<{ success: boo
     // Get user's email settings
     const [userEmailSettings] = await db
       .select()
-      .from(userEmailSettings)
-      .where(eq(userEmailSettings.userId, params.userId));
+      .from(emailSettings)
+      .where(eq(emailSettings.userId, params.userId));
     
     if (!userEmailSettings || !userEmailSettings.isConfigured) {
       return { 
@@ -459,8 +459,8 @@ export async function checkForReplies(userId?: number) {
       // Get user's email settings
       const [userEmailSettings] = await db
         .select()
-        .from(userEmailSettings)
-        .where(eq(userEmailSettings.userId, parseInt(userId)));
+        .from(emailSettings)
+        .where(eq(emailSettings.userId, parseInt(userId)));
       
       if (!userEmailSettings || !userEmailSettings.isConfigured) {
         console.warn(`Skipping reply check for user ${userId} - email not configured`);
@@ -657,8 +657,8 @@ export async function verifyEmailSettings(userId: number): Promise<{ success: bo
     // Get user's email settings
     const [userEmailSettings] = await db
       .select()
-      .from(userEmailSettings)
-      .where(eq(userEmailSettings.userId, userId));
+      .from(emailSettings)
+      .where(eq(emailSettings.userId, userId));
     
     if (!userEmailSettings) {
       return { 
@@ -687,9 +687,9 @@ export async function verifyEmailSettings(userId: number): Promise<{ success: bo
           
           if (response.status === 200) {
             // Update verification status
-            await db.update(userEmailSettings)
+            await db.update(emailSettings)
               .set({ isVerified: true })
-              .where(eq(userEmailSettings.userId, userId));
+              .where(eq(emailSettings.userId, userId));
             
             return { 
               success: true, 
@@ -724,9 +724,9 @@ export async function verifyEmailSettings(userId: number): Promise<{ success: bo
           await transporter.verify();
           
           // Update verification status
-          await db.update(userEmailSettings)
+          await db.update(emailSettings)
             .set({ isVerified: true })
-            .where(eq(userEmailSettings.userId, userId));
+            .where(eq(emailSettings.userId, userId));
           
           return { 
             success: true, 
@@ -755,9 +755,9 @@ export async function verifyEmailSettings(userId: number): Promise<{ success: bo
           await transporter.verify();
           
           // Update verification status
-          await db.update(userEmailSettings)
+          await db.update(emailSettings)
             .set({ isVerified: true })
-            .where(eq(userEmailSettings.userId, userId));
+            .where(eq(emailSettings.userId, userId));
           
           return { 
             success: true, 
@@ -807,8 +807,8 @@ export async function sendTestEmail(userId: number, testEmail: string): Promise<
     // Get email settings
     const [userEmailSettings] = await db
       .select()
-      .from(userEmailSettings)
-      .where(eq(userEmailSettings.userId, userId));
+      .from(emailSettings)
+      .where(eq(emailSettings.userId, userId));
     
     if (!userEmailSettings || !userEmailSettings.isConfigured) {
       return { 
@@ -886,8 +886,8 @@ export async function saveEmailSettings(userId: number, settings: {
     // Get existing settings if any
     const [existingSettings] = await db
       .select()
-      .from(userEmailSettings)
-      .where(eq(userEmailSettings.userId, userId));
+      .from(emailSettings)
+      .where(eq(emailSettings.userId, userId));
     
     // Validate settings based on provider
     let isConfigured = false;
@@ -932,7 +932,7 @@ export async function saveEmailSettings(userId: number, settings: {
     
     if (existingSettings) {
       // Update existing settings
-      await db.update(userEmailSettings)
+      await db.update(emailSettings)
         .set({
           provider: settings.provider,
           fromEmail: settings.fromEmail,
@@ -951,10 +951,10 @@ export async function saveEmailSettings(userId: number, settings: {
           ...(settings.gmailRefreshToken ? { gmailRefreshToken: settings.gmailRefreshToken } : {}),
           updatedAt: new Date()
         })
-        .where(eq(userEmailSettings.userId, userId));
+        .where(eq(emailSettings.userId, userId));
     } else {
       // Create new settings
-      await db.insert(userEmailSettings)
+      await db.insert(emailSettings)
         .values({
           userId,
           provider: settings.provider,

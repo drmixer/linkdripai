@@ -10,31 +10,25 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 import CheckoutButton from './checkout-button';
-import { SubscriptionPlan, subscriptionPlans } from '@/lib/subscription-plans';
+import { SubscriptionPlan, PLAN_DETAILS } from '@/lib/subscription-plans';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
 interface SubscriptionCardProps {
-  plan: SubscriptionPlan;
-  price: number;
-  features: string[];
-  current?: boolean;
+  tier: SubscriptionPlan;
   popular?: boolean;
   className?: string;
 }
 
 const SubscriptionCard = ({
-  plan,
-  price,
-  features,
-  current = false,
+  tier,
   popular = false,
   className = '',
 }: SubscriptionCardProps) => {
   const { user } = useAuth();
-  const planDetails = subscriptionPlans.find(p => p.enum === plan);
+  const plan = PLAN_DETAILS[tier];
   
-  const isCurrentPlan = current || (user?.subscription?.toLowerCase() === plan.toLowerCase());
+  const isCurrentPlan = user?.subscription?.toLowerCase() === tier.toLowerCase();
   
   return (
     <Card className={cn(
@@ -48,19 +42,19 @@ const SubscriptionCard = ({
             Most Popular
           </Badge>
         )}
-        <CardTitle className="text-xl">{planDetails?.name || String(plan)}</CardTitle>
+        <CardTitle className="text-xl">{plan.name}</CardTitle>
         <CardDescription>
-          {planDetails?.description || "Subscription plan"}
+          {plan.description}
         </CardDescription>
         <div className="mt-2">
-          <span className="text-3xl font-bold">${price}</span>
+          <span className="text-3xl font-bold">${plan.price}</span>
           <span className="text-muted-foreground">/mo</span>
         </div>
       </CardHeader>
 
       <CardContent className="flex-grow">
         <ul className="space-y-2">
-          {features.map((feature: string, index: number) => (
+          {plan.features.map((feature, index) => (
             <li key={index} className="flex items-start">
               <Check className="h-5 w-5 text-primary flex-shrink-0 mr-2" />
               <span>{feature}</span>
@@ -76,8 +70,8 @@ const SubscriptionCard = ({
           </Button>
         ) : (
           <CheckoutButton
-            planId={plan}
-            buttonText={`Upgrade to ${planDetails?.name || String(plan)}`}
+            planId={tier}
+            buttonText={`Upgrade to ${plan.name}`}
             fullWidth={true}
             variant={popular ? 'default' : 'outline'}
             className="font-semibold"

@@ -8,7 +8,7 @@ import { Router } from 'express';
 import * as EmailIntegrationService from '../services/email-integration-service';
 import { z } from 'zod';
 import { db } from '../db';
-import { userEmailSettings, discoveredOpportunities } from '../../shared/schema';
+import { emailSettings, discoveredOpportunities } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 const router = Router();
@@ -28,8 +28,8 @@ router.get('/api/email/settings', requireAuth, async (req, res) => {
     
     const [userEmailSettings] = await db
       .select()
-      .from(userEmailSettings)
-      .where(eq(userEmailSettings.userId, userId));
+      .from(emailSettings)
+      .where(eq(emailSettings.userId, userId));
     
     if (!userEmailSettings) {
       return res.json({ 
@@ -152,9 +152,9 @@ router.post('/api/email/accept-terms', requireAuth, async (req, res) => {
     const userId = req.user.id;
     
     // Update terms acceptance in the database
-    await db.update(userEmailSettings)
+    await db.update(emailSettings)
       .set({ termsAccepted: true })
-      .where(eq(userEmailSettings.userId, userId));
+      .where(eq(emailSettings.userId, userId));
     
     return res.json({ success: true, message: 'Email terms accepted' });
   } catch (error: any) {
@@ -213,8 +213,8 @@ router.post('/api/email/send-outreach', requireAuth, async (req, res) => {
     // Get email settings to use default fromEmail/fromName if not provided
     const [userEmailSettings] = await db
       .select()
-      .from(userEmailSettings)
-      .where(eq(userEmailSettings.userId, userId));
+      .from(emailSettings)
+      .where(eq(emailSettings.userId, userId));
     
     if (!userEmailSettings?.isConfigured) {
       return res.status(400).json({ error: 'Email not configured. Please set up your email integration first.' });

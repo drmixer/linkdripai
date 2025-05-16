@@ -1,7 +1,6 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, varchar, pgEnum, foreignKey } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, varchar, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
 
 // Users table
 export const users = pgTable("users", {
@@ -112,7 +111,7 @@ export const insertUserSchema = baseInsertUserSchema.extend({
 // Email settings related schemas
 
 // Email settings for users 
-export const userEmailSettings = pgTable("userEmailSettings", {
+export const emailSettings = pgTable("emailSettings", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull().references(() => users.id),
   provider: text("provider"),
@@ -525,22 +524,6 @@ export const crawlerJobs = pgTable("crawlerJobs", {
   error: text("error"),
 });
 
-// Email settings per website (for multi-website support)
-export const websiteEmailSettings = pgTable("websiteEmailSettings", {
-  id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
-  websiteId: integer("websiteId").notNull(),
-  fromEmail: text("fromEmail").notNull(),
-  replyToEmail: text("replyToEmail"),
-  defaultTemplateId: integer("defaultTemplateId"),
-  signatureName: text("signatureName"),
-  signatureTitle: text("signatureTitle"),
-  signatureCompany: text("signatureCompany"),
-  active: boolean("active").default(true),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
-});
-
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -562,8 +545,7 @@ export type OpportunityMatch = typeof opportunityMatches.$inferSelect;
 export type DailyDrip = typeof dailyDrips.$inferSelect;
 export type SplashUsage = typeof splashUsage.$inferSelect;
 export type CrawlerJob = typeof crawlerJobs.$inferSelect;
-export type UserEmailSetting = typeof userEmailSettings.$inferSelect;
-export type WebsiteEmailSetting = typeof websiteEmailSettings.$inferSelect;
+export type EmailSetting = typeof emailSettings.$inferSelect;
 
 // New contact activity types
 export type ContactActivity = typeof contactActivities.$inferSelect;
