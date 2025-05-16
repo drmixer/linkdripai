@@ -16,7 +16,7 @@ import {
   CardHeader, 
   CardTitle
 } from '@/components/ui/card';
-import { SplashPackage } from '@/lib/splash-packages';
+import { SplashPackage, splashPackages } from '@/lib/subscription-plans';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';

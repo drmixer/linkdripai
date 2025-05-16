@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { SplashPackage, SPLASH_DETAILS } from '@/lib/subscription-plans';
+import { SplashPackage, splashPackages } from '@/lib/subscription-plans';
 import CheckoutButton from './checkout-button';
 
 interface SplashButtonProps {
@@ -153,25 +153,24 @@ const SplashButton = ({
               </div>
               
               <div className="grid gap-4 pt-2">
-                {Object.values(SplashPackage).map((pkg) => {
-                  const details = SPLASH_DETAILS[pkg];
+                {splashPackages.map((details) => {
                   return (
-                    <div key={pkg} className="flex justify-between items-center rounded-md border p-4">
+                    <div key={details.enum} className="flex justify-between items-center rounded-md border p-4">
                       <div>
                         <h4 className="font-medium">{details.name}</h4>
                         <p className="text-sm text-muted-foreground">
                           {details.description}
                         </p>
-                        {details.savings > 0 && (
+                        {details.savePercentage && details.savePercentage > 0 && (
                           <p className="text-xs text-green-600 font-medium mt-1">
-                            Save {details.savings}%
+                            Save {details.savePercentage}%
                           </p>
                         )}
                       </div>
                       <div className="text-right">
                         <p className="font-bold">${details.price}</p>
                         <CheckoutButton
-                          splashPackage={pkg}
+                          splashPackage={details.enum}
                           buttonText="Buy"
                           size="sm"
                           className="mt-2"

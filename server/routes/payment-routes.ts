@@ -42,13 +42,13 @@ const subscriptionService = getSubscriptionService();
  */
 paymentRouter.get('/plans', (req, res) => {
   res.json({ 
-    plans: Object.entries(PLAN_DETAILS).map(([id, details]) => ({
-      id,
-      ...details
+    plans: subscriptionPlans.map(plan => ({
+      id: plan.enum,
+      ...plan
     })),
-    splashPackages: Object.entries(SPLASH_DETAILS).map(([id, details]) => ({
-      id,
-      ...details
+    splashPackages: splashPackages.map(pkg => ({
+      id: pkg.enum,
+      ...pkg
     }))
   });
 });
