@@ -18,7 +18,7 @@ export const users = pgTable("users", {
   customerId: text("customer_id"), // Lemon Squeezy customer ID
   subscriptionRenewsAt: timestamp("subscriptionRenewsAt"), // When the subscription renews
   subscriptionEndsAt: timestamp("subscriptionEndsAt"), // When the subscription ends if cancelled
-  splashCredits: integer("splashCredits").default(0), // Purchased splash credits
+  splashCredits: integer("splash_credits").default(0), // Purchased splash credits
   // Old subscription tracking fields - maintained for backward compatibility
   dailyOpportunitiesLimit: integer("dailyOpportunitiesLimit").default(5),
   splashesAllowed: integer("splashesallowed").default(1),
