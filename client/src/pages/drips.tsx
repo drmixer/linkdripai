@@ -179,8 +179,9 @@ export default function DripsPage() {
     return website ? website.url : '';
   }, [selectedWebsiteId, websites]);
 
-  // Handle splash credits
+  // Handle splash credits - initial button click
   const handleGetSplash = () => {
+    // Check if user has any websites
     if (websites.length === 0) {
       toast({
         title: "No websites configured",
@@ -190,40 +191,50 @@ export default function DripsPage() {
       return;
     }
     
+    // Check if user has any splashes remaining
     if (userPlan.remainingSplashes <= 0) {
-      // If no splashes remaining, show purchase dialog directly
+      // If no splashes remaining, skip confirmation and show purchase dialog directly
       setIsSplashDialogOpen(true);
       return;
     }
     
-    // If user has splashes, show confirmation dialog first
+    // User has splashes available, determine next step
     if (websites.length === 1) {
-      // If only one website, store the ID and show confirmation
-      setSelectedWebsiteId(websites[0].id);
+      // Only one website, go straight to confirmation
+      const websiteId = websites[0].id;
+      setSelectedWebsiteId(websiteId);
       setShowConfirmation(true);
     } else {
-      // Otherwise show website selection dialog
+      // Multiple websites, show selection dialog
       setIsSplashDialogOpen(true);
     }
   };
   
-  // Handle website selection for splash
+  // Handle website selection from the website dialog
   const handleWebsiteSelect = (websiteId: number) => {
-    // Store website ID and show confirmation dialog
-    setSelectedWebsiteId(websiteId);
-    setShowConfirmation(true);
-    // Close the website selection dialog
+    // First close the website selection dialog
     setIsSplashDialogOpen(false);
+    
+    // Set selected website and open confirmation dialog
+    // Using setTimeout to ensure state updates don't conflict
+    setTimeout(() => {
+      setSelectedWebsiteId(websiteId);
+      setShowConfirmation(true);
+    }, 100);
   };
   
-  // Handle confirmation of Splash usage
+  // Handle confirmation of Splash usage from the confirmation dialog
   const handleConfirmSplash = () => {
-    if (selectedWebsiteId) {
-      splashMutation.mutate({ websiteId: selectedWebsiteId });
-      // Reset state
-      setSelectedWebsiteId(null);
-      setShowConfirmation(false);
-    }
+    if (!selectedWebsiteId) return;
+    
+    // Execute the splash mutation with the selected website ID
+    splashMutation.mutate({ 
+      websiteId: selectedWebsiteId 
+    });
+    
+    // Reset state and close confirmation dialog
+    setSelectedWebsiteId(null);
+    setShowConfirmation(false);
   };
   
   // View contact info
