@@ -37,7 +37,7 @@ export default function MultiChannelOutreachPage() {
   // Handle missing opportunity ID in URL
   if (!opportunityId) {
     return (
-      <div className="container py-10">
+      <Layout title="Multi-Channel Outreach">
         <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -59,27 +59,29 @@ export default function MultiChannelOutreachPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </Layout>
     );
   }
 
   // Show loading state
   if (isLoading) {
     return (
-      <div className="container py-10 flex justify-center items-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <h2 className="text-xl font-medium">Loading Outreach Options...</h2>
-          <p className="text-gray-500 mt-2">Preparing your outreach channels</p>
+      <Layout title="Multi-Channel Outreach">
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <h2 className="text-xl font-medium">Loading Outreach Options...</h2>
+            <p className="text-gray-500 mt-2">Preparing your outreach channels</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   // Handle error state
   if (error) {
     return (
-      <div className="container py-10">
+      <Layout title="Multi-Channel Outreach">
         <Card className="border-red-200 bg-red-50">
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -101,14 +103,14 @@ export default function MultiChannelOutreachPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </Layout>
     );
   }
 
   // Handle non-existent opportunity
   if (!opportunity) {
     return (
-      <div className="container py-10">
+      <Layout title="Multi-Channel Outreach">
         <Card>
           <CardHeader>
             <CardTitle>Opportunity Not Found</CardTitle>
@@ -126,12 +128,14 @@ export default function MultiChannelOutreachPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </Layout>
     );
   }
 
+  const title = opportunity ? `Outreach: ${opportunity.websiteName || opportunity.domain}` : 'Multi-Channel Outreach';
+  
   return (
-    <div className="container py-10">
+    <Layout title={title} subtitle={opportunity?.domain}>
       <div className="mb-6">
         <Button 
           variant="outline" 
@@ -190,6 +194,6 @@ export default function MultiChannelOutreachPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Layout>
   );
 }
