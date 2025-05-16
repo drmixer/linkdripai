@@ -1,207 +1,204 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { MessageSquare, ExternalLink, Copy, Check, Clipboard } from 'lucide-react';
+import { z } from 'zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, SendIcon, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
+import { Input } from '@/components/ui/input';
 
-// Define form validation schema
+// Form validation schema
 const formSchema = z.object({
   formUrl: z.string().url('Please enter a valid URL'),
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
   subject: z.string().min(5, 'Subject must be at least 5 characters'),
-  message: z.string().min(20, 'Message must be at least 20 characters'),
+  message: z.string().min(50, 'Message must be at least 50 characters'),
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface ContactFormOutreachFormProps {
   opportunityId: number;
   contactForms: string[];
   domain: string;
   websiteName: string;
-  onSuccess?: () => void;
 }
 
-export default function ContactFormOutreachForm({
-  opportunityId,
-  contactForms,
-  domain,
-  websiteName,
-  onSuccess
+export default function ContactFormOutreachForm({ 
+  opportunityId, 
+  contactForms = [], 
+  domain, 
+  websiteName
 }: ContactFormOutreachFormProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [copied, setCopied] = useState('');
-  const [activeFormUrl, setActiveFormUrl] = useState(contactForms[0] || '');
-  
-  // Form definition with default values
-  const form = useForm<z.infer<typeof formSchema>>({
+  const [sendingStatus, setSendingStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+  // Set up the form
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      formUrl: activeFormUrl,
-      name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+      formUrl: contactForms[0] || '',
+      name: user?.username || '',
       email: user?.email || '',
-      subject: `Collaboration opportunity with ${user?.websites?.[0]?.url?.split('//')[1]?.split('/')[0] || 'my website'}`,
-      message: getDefaultMessage(websiteName),
+      subject: `Collaboration opportunity with ${user?.username || 'our website'}`,
+      message: `Hi there,\n\nI came across ${websiteName || domain} and was impressed with your content. I believe we could collaborate on some mutually beneficial content.\n\nOur website focuses on [YOUR NICHE], and we'd love to explore content partnership opportunities with you.\n\nWould you be interested in discussing this further?\n\nBest regards,\n${user?.username || 'Your name'}`,
     },
   });
 
-  // Record contact form outreach mutation
-  const recordOutreachMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
+  // Contact form submission mutation
+  const contactFormMutation = useMutation({
+    mutationFn: async (values: FormValues) => {
+      setSendingStatus('sending');
       const response = await apiRequest('POST', '/api/outreach/contact-form', {
-        ...values,
         opportunityId,
-        domain,
-        websiteName,
+        formUrl: values.formUrl,
+        name: values.name,
+        email: values.email,
+        subject: values.subject,
+        message: values.message,
       });
       return response.json();
     },
     onSuccess: () => {
+      setSendingStatus('success');
       toast({
-        title: 'Outreach recorded',
-        description: 'Your contact form outreach has been recorded',
+        title: 'Message prepared',
+        description: 'Your contact form message has been prepared. Click "Open Form" to copy and submit through their contact form.',
+        variant: 'default',
       });
+      queryClient.invalidateQueries({ queryKey: [`/api/opportunities/${opportunityId}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/outreach/history'] });
-      if (onSuccess) onSuccess();
     },
     onError: (error: Error) => {
+      setSendingStatus('error');
       toast({
-        title: 'Failed to record outreach',
-        description: error.message,
+        title: 'Failed to prepare message',
+        description: error.message || 'There was an error preparing your message. Please try again.',
         variant: 'destructive',
       });
     },
   });
 
-  // Submit handler
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    recordOutreachMutation.mutate(values);
-  }
+  // Handle form submission
+  const onSubmit = (values: FormValues) => {
+    contactFormMutation.mutate(values);
+  };
 
-  // Handle form URL selection
-  function handleFormUrlChange(url: string) {
-    setActiveFormUrl(url);
-    form.setValue('formUrl', url);
-  }
+  // Open the contact form URL in a new tab
+  const openContactForm = () => {
+    const formUrl = form.getValues('formUrl');
+    if (formUrl) {
+      window.open(formUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
 
-  // Copy text to clipboard
-  function copyToClipboard(text: string, type: string) {
-    navigator.clipboard.writeText(text);
-    setCopied(type);
-    setTimeout(() => setCopied(''), 2000);
-  }
-
-  // Generate a default message template
-  function getDefaultMessage(websiteName: string): string {
-    return `Hello ${websiteName} team,
-
-I was exploring your website and was impressed by your content on [topic]. I run a website in a similar niche, and I think there may be an opportunity for us to collaborate.
-
-Recently, I published a comprehensive guide on [your topic] that I believe would be valuable for your audience. Would you be interested in checking it out for a potential link?
-
-I'm also open to discussing other collaboration opportunities that would be mutually beneficial.
-
-Looking forward to your response,
-[Your Name]`;
-  }
+  // Format URLs for display
+  const formatUrl = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
+      if (path === '/') {
+        return `${urlObj.hostname} (Homepage Contact)`;
+      } else if (path.includes('contact')) {
+        return `${urlObj.hostname} (Contact Page)`;
+      } else {
+        return `${urlObj.hostname}${path.length > 20 ? path.substring(0, 20) + '...' : path}`;
+      }
+    } catch (e) {
+      return url;
+    }
+  };
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-4">
-        <MessageSquare className="h-5 w-5 text-blue-500" />
-        <h3 className="text-lg font-medium">Contact Form Outreach</h3>
-      </div>
-      
-      {/* Form URL selection if multiple */}
-      {contactForms.length > 1 && (
-        <div className="mb-6">
-          <FormLabel>Select contact form:</FormLabel>
-          <Select 
-            value={activeFormUrl}
-            onValueChange={handleFormUrlChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a contact form" />
-            </SelectTrigger>
-            <SelectContent>
-              {contactForms.map((url) => (
-                <SelectItem key={url} value={url}>
-                  {url.length > 40 ? url.substring(0, 40) + '...' : url}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Selected form */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <div className="font-medium">Selected Form:</div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center text-xs"
-              onClick={() => copyToClipboard(activeFormUrl, 'form')}
-            >
-              {copied === 'form' ? (
-                <>Copied <Check className="h-3 w-3 ml-1" /></>
-              ) : (
-                <>Copy URL <Copy className="h-3 w-3 ml-1" /></>
-              )}
-            </Button>
-            <a
-              href={activeFormUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-md"
-            >
-              Open Form <ExternalLink className="h-3 w-3 ml-1" />
-            </a>
-          </div>
-        </div>
-        <div className="p-3 bg-gray-50 rounded-md text-sm break-all">
-          {activeFormUrl}
-        </div>
-      </div>
-
-      {/* Message form */}
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Contact Form Outreach</CardTitle>
+        <CardDescription>
+          Send a message through the website's contact form
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="name"
+              name="formUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Name</FormLabel>
+                  <FormLabel>Contact Form</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a contact form" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {contactForms.map((form) => (
+                        <SelectItem key={form} value={form}>
+                          {formatUrl(form)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Choose which contact form to use
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Smith" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="john@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="subject"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subject</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your name" {...field} />
+                    <Input placeholder="Subject line" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -210,109 +207,78 @@ Looking forward to your response,
             
             <FormField
               control={form.control}
-              name="email"
+              name="message"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Email</FormLabel>
+                  <FormLabel>Message</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your email" {...field} />
+                    <Textarea 
+                      placeholder="Your message" 
+                      className="min-h-[200px]" 
+                      {...field} 
+                    />
                   </FormControl>
+                  <FormDescription>
+                    Personalize your message for better response rates
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="subject"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Subject</FormLabel>
-                <FormControl>
-                  <div className="flex">
-                    <Input placeholder="Enter subject" {...field} />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="ml-2"
-                      onClick={() => copyToClipboard(field.value, 'subject')}
-                    >
-                      {copied === 'subject' ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="message"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Message</FormLabel>
-                <FormControl>
-                  <div className="flex">
-                    <Textarea
-                      placeholder="Your message"
-                      className="min-h-[200px] flex-1"
-                      {...field}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="ml-2 self-start"
-                      onClick={() => copyToClipboard(field.value, 'message')}
-                    >
-                      {copied === 'message' ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={recordOutreachMutation.isPending}
-            >
-              {recordOutreachMutation.isPending ? (
-                'Recording...'
-              ) : (
-                'Record Contact Form Outreach'
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
-      
-      {/* Tips */}
-      <Card className="mt-6">
-        <CardContent className="pt-6">
-          <h4 className="font-medium mb-2">Contact Form Tips</h4>
-          <ul className="text-sm text-gray-600 space-y-2 list-disc pl-4">
-            <li>Make sure to check the actual form fields on the website</li>
-            <li>Some forms may have additional required fields</li>
-            <li>Copy and paste the content into the actual form</li>
-            <li>Consider adding your website URL in the message</li>
-            <li>Contact forms often have spam filters - keep your message professional</li>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                type="submit" 
+                className="flex-1" 
+                disabled={sendingStatus === 'sending' || contactFormMutation.isPending}
+              >
+                {sendingStatus === 'sending' || contactFormMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Preparing...
+                  </>
+                ) : sendingStatus === 'success' ? (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Prepared
+                  </>
+                ) : sendingStatus === 'error' ? (
+                  <>
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    Try Again
+                  </>
+                ) : (
+                  <>
+                    <SendIcon className="mr-2 h-4 w-4" />
+                    Prepare Message
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={openContactForm}
+                className="flex-1"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open Form
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+      <CardFooter className="flex-col items-start border-t p-4 bg-gray-50">
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm">Contact Form Tips</h4>
+          <ul className="text-sm space-y-1 text-gray-600 list-disc list-inside">
+            <li>Before opening the form, copy your prepared message to clipboard</li>
+            <li>Be aware that contact forms often have character limitations</li>
+            <li>Some forms may have additional required fields not shown here</li>
+            <li>Use a professional email address to improve response rates</li>
           </ul>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardFooter>
+    </Card>
   );
 }
