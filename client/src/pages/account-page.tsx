@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SubscriptionCard } from '@/components/subscription-card';
+import { SubscriptionPlan } from '@/lib/subscription-plans';
 import SplashDialog from '@/components/splash-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
@@ -176,7 +177,7 @@ const AccountSummary = () => {
 const SubscriptionTab = () => {
   return (
     <div className="max-w-4xl mx-auto">
-      <SubscriptionCard tier="Starter" />
+      <SubscriptionCard tier={SubscriptionPlan.STARTER} />
     </div>
   );
 };
