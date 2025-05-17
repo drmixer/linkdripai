@@ -109,11 +109,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const tableExists = tableCheck.rows[0]?.exists || false;
         
         if (tableExists) {
-          const { rows } = await db.execute(`
-            SELECT SUM(COALESCE("count", 1)) as total_used
-            FROM splashusage
-            WHERE "userid" = $1 AND "usedat" >= $2
-          `, [userId, firstDayOfMonth]);
+          try {
+            const { rows } = await db.execute(`
+              SELECT SUM(COALESCE("count", 1)) as total_used
+              FROM splashusage
+              WHERE "userid" = $1 AND "usedat" >= $2
+            `, [userId, firstDayOfMonth]);
+            
+            splashesUsed = parseInt(rows[0]?.total_used || '0', 10);
+          } catch (error) {
+            console.error("Error getting splash usage:", error);
+            // Silently handle the error and assume 0 splashes used
+            splashesUsed = 0;
+          }
           
           splashesUsed = parseInt(rows[0]?.total_used || '0', 10);
         } else {

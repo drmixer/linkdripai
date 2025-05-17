@@ -44,6 +44,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 export default function DripsPage() {
+  React.useEffect(() => {
+    document.title = "Opportunities | LinkDripAI";
+  }, []);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -799,7 +802,6 @@ export default function DripsPage() {
         remainingSplashes={userPlan.remainingSplashes}
         totalSplashes={userPlan.totalSplashes}
       />
-      </div>
     </Layout>
   );
 }
