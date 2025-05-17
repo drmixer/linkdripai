@@ -110,6 +110,15 @@ export default function Dashboard() {
     },
   });
   
+  // Fetch user's websites
+  const { data: websites = [] } = useQuery({
+    queryKey: ["/api/websites"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/websites");
+      return await res.json();
+    },
+  });
+  
   // Fetch AI-matched opportunities
   const { data: opportunities, isLoading: isLoadingOpportunities } = useQuery({
     queryKey: ["/api/prospects/daily"],
@@ -252,21 +261,14 @@ export default function Dashboard() {
           Here are your latest curated backlink prospects.
         </div>
         
-        {/* Splash Button */}
-        <SimpleSplashButton 
-          websites={websites || []}
-          remainingSplashes={splashesAvailable || 0}
-          totalSplashes={splashesTotal || 0}
-          onSplashUsed={() => {
-            toast({
-              title: "Premium opportunity added!",
-              description: "A high-quality backlink opportunity (DA 40+) has been added to your dashboard.",
-            });
-            // Force refresh
-            dataRefreshNeeded.current = true;
-            queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
-          }}
-        />
+        {/* Simplified Splash Button - no need for websites selection */}
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => setShowBuySplashesDialog(true)}
+        >
+          <Sparkles className="h-4 w-4 mr-2" />
+          Use Splash {splashesAvailable > 0 && `(${splashesAvailable})`}
+        </Button>
       </div>
       
       {/* Stats Bar */}

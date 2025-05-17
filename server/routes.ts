@@ -122,8 +122,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Silently handle the error and assume 0 splashes used
             splashesUsed = 0;
           }
-          
-          splashesUsed = parseInt(rows[0]?.total_used || '0', 10);
         } else {
           // Table doesn't exist, create it
           await db.execute(`
