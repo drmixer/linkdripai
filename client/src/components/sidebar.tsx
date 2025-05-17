@@ -113,12 +113,13 @@ export default function Sidebar() {
               </Tooltip>
             </TooltipProvider>
           ) : (
-            <Link 
-              key={route.href} 
-              href={route.href}
-            >
+            <div key={route.href}>
               <div 
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setOpen(false);
+                  // Force a full page navigation to avoid routing issues
+                  window.location.href = route.href;
+                }}
                 className={cn(
                   "flex items-center px-3 py-2 text-sm font-medium rounded-md cursor-pointer",
                   location === route.href 
@@ -129,7 +130,7 @@ export default function Sidebar() {
                 <route.icon className="h-5 w-5 mr-3 flex-shrink-0" />
                 {route.label}
               </div>
-            </Link>
+            </div>
           )
         ))}
       </div>

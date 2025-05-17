@@ -1,17 +1,13 @@
 import React from 'react';
-import { Link, useLocation } from 'wouter';
 // Import the neon blue glowing logo
 import logoImage from '@assets/LinkDripAI.png';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
-  wrapWithLink?: boolean;
 }
 
-export function Logo({ size = 'md', className = '', wrapWithLink = true }: LogoProps) {
-  const [_, navigate] = useLocation();
-  
+export function Logo({ size = 'md', className = '' }: LogoProps) {
   // Significantly larger sizes to make the logo dominate - per user request
   const sizeClasses = {
     sm: 'h-28 w-auto',
@@ -20,15 +16,11 @@ export function Logo({ size = 'md', className = '', wrapWithLink = true }: LogoP
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Use direct href navigation to avoid any issues with React router
+    // This ensures we completely bypass any SPA routing
+    // It causes a full page reload to the home route
     window.location.href = '/';
   };
 
-  // Just render the image with click handler regardless of wrapWithLink value
-  // This prevents nested link issues
   return (
     <img 
       src={logoImage} 
