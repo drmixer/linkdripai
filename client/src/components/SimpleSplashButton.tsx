@@ -43,16 +43,6 @@ export default function SimpleSplashButton({
   const handleSplashClick = () => {
     console.log("Splash button clicked, websites:", websites.length);
     
-    // No splashes available, show toast message
-    if (remainingSplashes <= 0) {
-      toast({
-        title: "No Splash credits",
-        description: "You don't have any Splash credits available. Purchase Splash credits to get premium opportunities.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     // Only one website, select it automatically and show confirmation
     if (websites.length === 1) {
       setSelectedWebsite(websites[0]);
@@ -83,6 +73,17 @@ export default function SimpleSplashButton({
   // Handle splash confirmation (actually use the splash)
   const handleConfirmSplash = async () => {
     if (!selectedWebsite) return;
+    
+    // Check if user has splashes available
+    if (remainingSplashes <= 0) {
+      toast({
+        title: "No Splash credits",
+        description: "You don't have any Splash credits available. Please purchase Splash credits from the header.",
+        variant: "destructive",
+      });
+      setIsConfirmationDialogOpen(false);
+      return;
+    }
     
     setIsLoading(true);
     
@@ -134,6 +135,7 @@ export default function SimpleSplashButton({
       <Button 
         className="bg-blue-600 hover:bg-blue-700 text-white"
         onClick={handleSplashClick}
+        disabled={remainingSplashes <= 0}
       >
         <Sparkles className="h-4 w-4 mr-2" />
         Use Splash {remainingSplashes > 0 && `(${remainingSplashes})`}
@@ -163,6 +165,7 @@ export default function SimpleSplashButton({
                   variant="outline"
                   className="w-full justify-start"
                   onClick={() => handleWebsiteSelect(website)}
+                  disabled={remainingSplashes <= 0}
                 >
                   <Globe className="mr-2 h-4 w-4" />
                   {website.url}
@@ -215,8 +218,11 @@ export default function SimpleSplashButton({
           </div>
           
           <p className="text-sm text-muted-foreground">
-            You have {remainingSplashes} Splash credit{remainingSplashes !== 1 ? 's' : ''} remaining. 
-            This action cannot be undone.
+            {remainingSplashes > 0 ? (
+              <>You have {remainingSplashes} Splash credit{remainingSplashes !== 1 ? 's' : ''} remaining. This action cannot be undone.</>
+            ) : (
+              <>You don't have any Splash credits remaining. Please purchase more from the header menu.</>
+            )}
           </p>
           
           <DialogFooter className="flex sm:justify-between gap-3 mt-4">
