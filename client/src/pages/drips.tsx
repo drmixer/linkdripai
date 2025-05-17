@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import OpportunityCard from '@/components/opportunity-card';
 import Layout from '@/components/layout';
-import SimpleSplashButton from '@/components/SimpleSplashButton';
+import { SplashConfirmationDialog } from '@/components/splash-confirmation-dialog';
+import { EmptyState } from '@/components/empty-state';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { 
@@ -312,12 +313,33 @@ export default function DripsPage() {
               Refresh
             </Button>
             
-            <SimpleSplashButton 
-              websites={websites} 
-              remainingSplashes={userPlan.remainingSplashes} 
-              totalSplashes={userPlan.totalSplashes}
-              onSplashUsed={() => refetch()}
-            />
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => {
+                // Only one website, select it automatically and show confirmation
+                if (websites.length === 1) {
+                  setSelectedWebsiteId(websites[0].id);
+                  setSelectedWebsiteName(websites[0].url);
+                  setShowSplashConfirmation(true);
+                } 
+                // Multiple websites, show selection dialog
+                else if (websites.length > 1) {
+                  setIsSplashDialogOpen(true);
+                }
+                // No websites, show error
+                else {
+                  toast({
+                    title: "No websites found",
+                    description: "Please add a website before using Splash.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              disabled={userPlan.remainingSplashes <= 0}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Use Splash {userPlan.remainingSplashes > 0 && `(${userPlan.remainingSplashes})`}
+            </Button>
           </div>
         </div>
         
