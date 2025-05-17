@@ -125,9 +125,9 @@ export default function AuthPage() {
     <div className="flex min-h-screen">
       {/* Left side - Auth forms */}
       <div className="flex flex-col justify-center w-full max-w-md p-8 bg-white">
-        <Link to="/" className="flex items-center mb-8 cursor-pointer hover:opacity-90 transition-opacity">
+        <div className="flex items-center mb-8">
           <Logo size="sm" />
-        </Link>
+        </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
