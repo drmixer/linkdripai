@@ -18,13 +18,11 @@ export function Logo({ size = 'md', className = '' }: LogoProps) {
 
   return (
     <Link href="/">
-      <div className={`flex items-center cursor-pointer ${className}`}>
-        <img 
-          src={logoImage} 
-          alt="LinkDripAI" 
-          className={`${sizeClasses[size]} object-contain drop-shadow-[0_0_12px_rgba(0,157,255,0.8)] hover:drop-shadow-[0_0_18px_rgba(0,157,255,1)] hover:scale-105 transition-all duration-300`}
-        />
-      </div>
+      <img 
+        src={logoImage} 
+        alt="LinkDripAI" 
+        className={`${sizeClasses[size]} object-contain drop-shadow-[0_0_12px_rgba(0,157,255,0.8)] hover:drop-shadow-[0_0_18px_rgba(0,157,255,1)] hover:scale-105 transition-all duration-300 ${className}`}
+      />
     </Link>
   );
 }
