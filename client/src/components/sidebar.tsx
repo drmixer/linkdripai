@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import Logo from "@/components/logo";
 
 export default function Sidebar() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -92,9 +92,12 @@ export default function Sidebar() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="mx-auto">
-                    <Link href={route.href} key={route.href}>
+                    <div key={route.href}>
                       <div 
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          setOpen(false);
+                          navigate(route.href);
+                        }}
                         className={cn(
                           "flex items-center justify-center p-2 rounded-md cursor-pointer",
                           location === route.href 
@@ -104,7 +107,7 @@ export default function Sidebar() {
                       >
                         <route.icon className="h-5 w-5" />
                       </div>
-                    </Link>
+                    </div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="right">
@@ -117,8 +120,8 @@ export default function Sidebar() {
               <div 
                 onClick={() => {
                   setOpen(false);
-                  // Force a full page navigation to avoid routing issues
-                  window.location.href = route.href;
+                  // Use navigate instead of direct window.location
+                  navigate(route.href);
                 }}
                 className={cn(
                   "flex items-center px-3 py-2 text-sm font-medium rounded-md cursor-pointer",

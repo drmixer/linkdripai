@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'wouter';
 // Import the neon blue glowing logo
 import logoImage from '@assets/LinkDripAI.png';
 
@@ -8,6 +9,8 @@ interface LogoProps {
 }
 
 export function Logo({ size = 'md', className = '' }: LogoProps) {
+  const [_, navigate] = useLocation();
+  
   // Significantly larger sizes to make the logo dominate - per user request
   const sizeClasses = {
     sm: 'h-28 w-auto',
@@ -16,9 +19,8 @@ export function Logo({ size = 'md', className = '' }: LogoProps) {
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    // This ensures we completely bypass any SPA routing
-    // It causes a full page reload to the home route
-    window.location.href = '/';
+    e.preventDefault();
+    navigate('/');
   };
 
   return (
