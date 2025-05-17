@@ -646,6 +646,24 @@ export default function Dashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Splash Confirmation Dialog */}
+      {websites && websites.length > 0 && (
+        <SplashConfirmationDialog
+          open={showSplashConfirmationDialog}
+          onOpenChange={setShowSplashConfirmationDialog}
+          websiteId={selectedWebsiteId}
+          websiteName={websites.find(w => w.id === selectedWebsiteId)?.name || "Your Website"}
+          remainingSplashes={splashesAvailable || 0}
+          totalSplashes={splashesTotal || 0}
+        />
+      )}
+
+      {/* Buy Splashes Dialog */}
+      <SplashDialog
+        open={showBuySplashesDialog}
+        onOpenChange={setShowBuySplashesDialog}
+      />
     </Layout>
   );
 }
