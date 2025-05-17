@@ -269,24 +269,7 @@ export default function Dashboard() {
       </div>
       
       {/* Stats Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="p-4 group cursor-pointer hover:border-blue-300 transition-all" onClick={() => setShowBuySplashesDialog(true)}>
-          <CardContent className="p-0">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Splashes Available (across all sites)</h3>
-                <p className="text-2xl font-bold mt-1">{splashesAvailable} / {splashesTotal}</p>
-                <p className="text-xs text-blue-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Click to get premium opportunities (DA 40+)
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                <Droplet className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <SplashDialog
           open={showBuySplashesDialog}
           onOpenChange={setShowBuySplashesDialog}
