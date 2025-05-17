@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import OpportunityCard from '@/components/opportunity-card';
 import Layout from '@/components/layout';
-import { SplashConfirmationDialog } from '@/components/splash-confirmation-dialog';
+import SplashConfirmationDialog from '@/components/splash-confirmation-dialog';
 import { EmptyState } from '@/components/empty-state';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
