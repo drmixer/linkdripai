@@ -20,28 +20,22 @@ export function Logo({ size = 'md', className = '', wrapWithLink = true }: LogoP
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (!wrapWithLink) return;
     e.preventDefault();
-    navigate('/');
+    e.stopPropagation();
+    
+    // Use direct href navigation to avoid any issues with React router
+    window.location.href = '/';
   };
 
-  const imageElement = (
+  // Just render the image with click handler regardless of wrapWithLink value
+  // This prevents nested link issues
+  return (
     <img 
       src={logoImage} 
       alt="LinkDripAI" 
       onClick={handleClick}
       className={`${sizeClasses[size]} object-contain drop-shadow-[0_0_12px_rgba(0,157,255,0.8)] hover:drop-shadow-[0_0_18px_rgba(0,157,255,1)] hover:scale-105 transition-all duration-300 cursor-pointer ${className}`}
     />
-  );
-
-  if (!wrapWithLink) {
-    return imageElement;
-  }
-
-  return (
-    <a href="/" onClick={handleClick}>
-      {imageElement}
-    </a>
   );
 }
 

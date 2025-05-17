@@ -653,7 +653,7 @@ export default function Dashboard() {
           open={showSplashConfirmationDialog}
           onOpenChange={setShowSplashConfirmationDialog}
           websiteId={selectedWebsiteId}
-          websiteName={websites.find(w => w.id === selectedWebsiteId)?.name || "Your Website"}
+          websiteName={websites.find(w => w.id === selectedWebsiteId)?.url || "Your Website"}
           remainingSplashes={splashesAvailable || 0}
           totalSplashes={splashesTotal || 0}
         />
