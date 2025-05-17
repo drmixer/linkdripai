@@ -3,6 +3,7 @@ import OpportunityCard from "@/components/opportunity-card";
 import EmailGenerator from "@/components/email-generator";
 import SimpleSplashButton from "@/components/SimpleSplashButton";
 import SplashDialog from "@/components/splash-dialog";
+import SplashConfirmationDialog from "@/components/splash-confirmation-dialog";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -71,8 +72,10 @@ export default function Dashboard() {
   const [fitScoreRange, setFitScoreRange] = useState<[number, number]>([50, 100]);
   const [searchQuery, setSearchQuery] = useState("");
   const [hideFilters, setHideFilters] = useState(true);
-  // Set the dialog to explicitly closed by default
+  // Set the dialogs to explicitly closed by default
   const [showBuySplashesDialog, setShowBuySplashesDialog] = useState<boolean>(false);
+  const [showSplashConfirmationDialog, setShowSplashConfirmationDialog] = useState<boolean>(false);
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<number | null>(null);
   
   // Use a ref to track when we need to refresh the data
   const dataRefreshNeeded = useRef(true);
@@ -261,10 +264,29 @@ export default function Dashboard() {
           Here are your latest curated backlink prospects.
         </div>
         
-        {/* Simplified Splash Button - no need for websites selection */}
+        {/* Simplified Splash Button - checks credits first */}
         <Button 
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => setShowBuySplashesDialog(true)}
+          onClick={() => {
+            if (splashesAvailable > 0) {
+              // User has splashes available, show confirmation dialog
+              if (websites && websites.length > 0) {
+                // If they have a website, set it as selected and show confirmation
+                setSelectedWebsiteId(websites[0].id);
+                setShowSplashConfirmationDialog(true);
+              } else {
+                // No website configured
+                toast({
+                  title: "Website Required",
+                  description: "Please set up a website first to use Splash.",
+                  variant: "destructive",
+                });
+              }
+            } else {
+              // No splashes available, show purchase dialog
+              setShowBuySplashesDialog(true);
+            }
+          }}
         >
           <Sparkles className="h-4 w-4 mr-2" />
           Use Splash {splashesAvailable > 0 && `(${splashesAvailable})`}
