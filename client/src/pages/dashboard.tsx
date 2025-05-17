@@ -1,7 +1,7 @@
 import Layout from "@/components/layout";
 import OpportunityCard from "@/components/opportunity-card";
 import EmailGenerator from "@/components/email-generator";
-import SplashButton from "@/components/splash-button";
+import SimpleSplashButton from "@/components/SimpleSplashButton";
 import SplashDialog from "@/components/splash-dialog";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -253,9 +253,11 @@ export default function Dashboard() {
         </div>
         
         {/* Splash Button */}
-        <SplashButton 
-          remainingSplashes={splashesAvailable}
-          onUseSplash={() => {
+        <SimpleSplashButton 
+          websites={websites || []}
+          remainingSplashes={splashesAvailable || 0}
+          totalSplashes={splashesTotal || 0}
+          onSplashUsed={() => {
             toast({
               title: "Premium opportunity added!",
               description: "A high-quality backlink opportunity (DA 40+) has been added to your dashboard.",
@@ -264,7 +266,6 @@ export default function Dashboard() {
             dataRefreshNeeded.current = true;
             queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
           }}
-          className="px-4"
         />
       </div>
       
