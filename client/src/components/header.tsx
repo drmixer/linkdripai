@@ -10,6 +10,7 @@ import {
   Plus,
   Sparkles,
 } from "lucide-react";
+import { storeSelectedWebsiteId, getSelectedWebsiteId } from "@/lib/session-helper";
 import Logo from "@/components/logo";
 import SplashDialog from "@/components/splash-dialog";
 import { 
@@ -45,10 +46,26 @@ export default function Header() {
     enabled: !!user, // Only run if user is authenticated
   });
   
-  // Set the first website as selected when websites load
+  // Set website from localStorage or use first site when websites load
   useEffect(() => {
-    if (websites.length > 0 && !selectedWebsite) {
-      setSelectedWebsite(websites[0].url);
+    // Look for a matching website ID in localStorage
+    const storedWebsiteId = getSelectedWebsiteId();
+    
+    if (websites.length > 0) {
+      // If we have a stored website ID, find that website in the list
+      if (storedWebsiteId) {
+        const storedWebsite = websites.find((site: any) => site.id === storedWebsiteId);
+        if (storedWebsite) {
+          setSelectedWebsite(storedWebsite.url);
+          return;
+        }
+      }
+      
+      // Fall back to first website if no stored site or stored site not found
+      if (!selectedWebsite) {
+        setSelectedWebsite(websites[0].url);
+        storeSelectedWebsiteId(websites[0].id);
+      }
     } else if (websites.length === 0 && !selectedWebsite) {
       // Default placeholder when no websites are available
       setSelectedWebsite("Select a website");
@@ -61,8 +78,9 @@ export default function Header() {
     logoutMutation.mutate();
   };
 
-  const handleWebsiteChange = (url: string) => {
+  const handleWebsiteChange = (url: string, websiteId: number) => {
     setSelectedWebsite(url);
+    storeSelectedWebsiteId(websiteId);
   };
 
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : 'U';
@@ -106,7 +124,7 @@ export default function Header() {
               websites.map((site: any) => (
                 <DropdownMenuItem 
                   key={site.id} 
-                  onClick={() => handleWebsiteChange(site.url)}
+                  onClick={() => handleWebsiteChange(site.url, site.id)}
                   className={cn("cursor-pointer", selectedWebsite === site.url && "bg-primary-50")}
                 >
                   <div className="flex items-center w-full">
