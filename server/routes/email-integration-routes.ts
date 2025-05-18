@@ -235,7 +235,7 @@ router.post('/api/email/send-outreach', requireAuth, async (req, res) => {
       const currentDate = new Date();
       
       // Store the email message in the database
-      const [email] = await db.insert(schema.emails)
+      const [email] = await db.insert(emails)
         .values({
           userId: userId,
           opportunityId: data.opportunityId,

@@ -25,7 +25,7 @@ import {
   User
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { EmailOutreachForm } from "./email-outreach-form";
+import { EmailOutreachForm } from "./email-outreach-form-fixed";
 
 interface OpportunityDetailDialogProps {
   opportunity: any;
