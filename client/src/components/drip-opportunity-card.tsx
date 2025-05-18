@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import OpportunityDetailDialog from "./opportunity-detail-dialog";
 
 interface DripOpportunityCardProps {
   opportunity: any;
@@ -21,6 +22,8 @@ export default function DripOpportunityCard({
   websiteId,
   onContactClick
 }: DripOpportunityCardProps) {
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [isSaved, setIsSaved] = useState(opportunity.isSaved || false);
   const { toast } = useToast();
   
   // Get color based on DA score
@@ -109,9 +112,9 @@ export default function DripOpportunityCard({
         <div className="mt-auto">
           <div className="flex justify-between pt-2 border-t">
             <Button 
-              variant="ghost" 
+              variant={isSaved ? "outline" : "ghost"}
               size="sm" 
-              className="flex-1 mr-1"
+              className={`flex-1 mr-1 ${isSaved ? "bg-yellow-50 border-yellow-200 text-yellow-700" : ""}`}
               onClick={() => {
                 // Save opportunity to favorites
                 fetch(`/api/opportunities/${opportunity.id}/favorite`, {
@@ -121,6 +124,7 @@ export default function DripOpportunityCard({
                 })
                 .then(res => {
                   if (res.ok) {
+                    setIsSaved(true);
                     toast({
                       title: "Opportunity saved",
                       description: "This opportunity has been saved to your favorites.",
@@ -137,23 +141,42 @@ export default function DripOpportunityCard({
                   });
                 });
               }}
+              disabled={isSaved}
             >
-              <Star className="h-4 w-4 mr-2" />
-              Save
+              {isSaved ? (
+                <>
+                  <Star className="h-4 w-4 mr-2 fill-yellow-400" />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Star className="h-4 w-4 mr-2" />
+                  Save
+                </>
+              )}
             </Button>
             <Button
               variant="default"
               size="sm"
               className="flex-1 ml-1"
-              onClick={() => onContactClick ? onContactClick(opportunity) : 
-                window.location.href = `/opportunities/${opportunity.id}?websiteId=${websiteId}`
-              }
+              onClick={() => {
+                // Show the detail dialog
+                setShowDetailDialog(true);
+              }}
             >
               <Info className="h-4 w-4 mr-2" />
               Details
             </Button>
           </div>
         </div>
+        
+        {/* Opportunity Detail Dialog */}
+        <OpportunityDetailDialog
+          opportunity={{...opportunity, isSaved}}
+          websiteId={websiteId}
+          isOpen={showDetailDialog}
+          onClose={() => setShowDetailDialog(false)}
+        />
       </CardContent>
     </Card>
   );
