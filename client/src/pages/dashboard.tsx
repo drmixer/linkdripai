@@ -7,6 +7,7 @@ import SplashConfirmationDialog from "@/components/splash-confirmation-dialog";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { storeSelectedWebsiteId, getSelectedWebsiteId } from "@/lib/session-helper";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -75,7 +76,7 @@ export default function Dashboard() {
   // Set the dialogs to explicitly closed by default
   const [showBuySplashesDialog, setShowBuySplashesDialog] = useState<boolean>(false);
   const [showSplashConfirmationDialog, setShowSplashConfirmationDialog] = useState<boolean>(false);
-  const [selectedWebsiteId, setSelectedWebsiteId] = useState<number | null>(null);
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<number | null>(getSelectedWebsiteId());
   
   // Use a ref to track when we need to refresh the data
   const dataRefreshNeeded = useRef(true);

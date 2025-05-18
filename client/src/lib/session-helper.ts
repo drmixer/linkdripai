@@ -50,6 +50,22 @@ export function storeUserSession(userData: any): void {
 export function clearUserSession(): void {
   localStorage.removeItem('userData');
   localStorage.removeItem('session');
+  localStorage.removeItem('selectedWebsiteId');
   sessionStorage.removeItem('userData');
   sessionStorage.removeItem('session');
+}
+
+/**
+ * Store selected website ID in localStorage
+ */
+export function storeSelectedWebsiteId(websiteId: number): void {
+  localStorage.setItem('selectedWebsiteId', websiteId.toString());
+}
+
+/**
+ * Get selected website ID from localStorage
+ */
+export function getSelectedWebsiteId(): number | null {
+  const storedId = localStorage.getItem('selectedWebsiteId');
+  return storedId ? parseInt(storedId, 10) : null;
 }
