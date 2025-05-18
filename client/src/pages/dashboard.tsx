@@ -127,8 +127,10 @@ export default function Dashboard() {
   const { data: opportunities, isLoading: isLoadingOpportunities } = useQuery({
     queryKey: ["/api/prospects/daily"],
     queryFn: async () => {
-      // Using the AI-driven opportunities endpoint
-      const res = await apiRequest("GET", "/api/drips/opportunities");
+      // Using the AI-driven opportunities endpoint with improved quality filtering
+      const selectedWebsiteId = getSelectedWebsiteId();
+      const websiteParam = selectedWebsiteId ? `?websiteId=${selectedWebsiteId}` : '';
+      const res = await apiRequest("GET", `/api/drips/opportunities${websiteParam}`);
       return await res.json();
     },
   });

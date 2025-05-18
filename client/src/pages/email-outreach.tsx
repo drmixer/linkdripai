@@ -59,50 +59,8 @@ export default function EmailOutreachPage() {
     refetchEmails();
   };
 
-  // Show configuration needed message if email is not configured
-  if (!settingsLoading && !settings?.isConfigured) {
-    return (
-      <Layout title="Email Outreach" subtitle="Manage your email outreach campaigns and track responses from your prospects.">
-        <Helmet>
-          <title>Email Outreach - LinkDripAI</title>
-          <meta 
-            name="description" 
-            content="Manage your email outreach campaigns and track responses from your prospects."
-          />
-        </Helmet>
-        
-        <div className="bg-white rounded-lg border shadow-sm p-8 text-center">
-          <div className="mb-6">
-            <Settings className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">Email Setup Required</h2>
-            <p className="text-muted-foreground max-w-lg mx-auto mb-6">
-              To use the email outreach features, you need to configure your email settings first.
-              You can set up your preferred email provider (SendGrid, SMTP, or Gmail).
-            </p>
-            
-            <Alert className="max-w-lg mx-auto mb-6 text-left bg-blue-50 border-blue-200">
-              <AlertTitle>Important</AlertTitle>
-              <AlertDescription>
-                <p className="mb-2">
-                  Your email provider settings are securely stored and only used to send emails on your behalf.
-                  We support multiple providers to fit your needs:
-                </p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>SendGrid</strong> - Easy cloud-based email delivery service</li>
-                  <li><strong>SMTP</strong> - Works with most email providers like Gmail, Outlook, etc.</li>
-                  <li><strong>Gmail</strong> - Direct integration with your Google account</li>
-                </ul>
-              </AlertDescription>
-            </Alert>
-            
-            <Button size="lg" onClick={() => window.location.href = '/settings?tab=email'}>
-              Set Up Email
-            </Button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  // Email setup warning alert, but still show the rest of the page
+  const showEmailSetupAlert = !settingsLoading && !settings?.isConfigured;
 
   // Show loading while settings and emails are being fetched
   if (settingsLoading) {
@@ -121,16 +79,16 @@ export default function EmailOutreachPage() {
   }
 
   return (
-    <Layout title="Email Outreach" subtitle="Manage your email outreach campaigns and track responses from your prospects.">
+    <Layout title="Multi-Channel Outreach" subtitle="Manage your email and other outreach campaigns to connect with prospects.">
       <Helmet>
-        <title>Email Outreach - LinkDripAI</title>
+        <title>Multi-Channel Outreach - LinkDripAI</title>
         <meta 
           name="description" 
-          content="Manage your email outreach campaigns and track responses from your prospects."
+          content="Manage your email, social media, and contact form outreach campaigns to connect with prospects."
         />
       </Helmet>
       
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-6">
         <div className="flex gap-3">
           <Dialog open={showEmailSettings} onOpenChange={setShowEmailSettings}>
             <DialogTrigger asChild>
@@ -154,17 +112,17 @@ export default function EmailOutreachPage() {
                   <div className="space-y-4">
                     <div className="flex justify-between py-2 border-b">
                       <span className="font-medium">Provider</span>
-                      <span className="capitalize">{settings.provider}</span>
+                      <span className="capitalize">{settings?.provider || "Not configured"}</span>
                     </div>
                     
                     <div className="flex justify-between py-2 border-b">
                       <span className="font-medium">From Email</span>
-                      <span>{settings.fromEmail}</span>
+                      <span>{settings?.fromEmail || "Not configured"}</span>
                     </div>
                     
                     <div className="flex justify-between py-2 border-b">
                       <span className="font-medium">Verified</span>
-                      <span>{settings.isVerified ? 
+                      <span>{settings?.isVerified ? 
                         <Check className="text-green-500 h-5 w-5" /> : 
                         <Button size="sm" variant="outline" onClick={() => {
                           // Open verification dialog/flow
@@ -180,24 +138,16 @@ export default function EmailOutreachPage() {
                         </Button>
                       }</span>
                     </div>
-                    
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="font-medium">Terms Accepted</span>
-                      <span>{settings.termsAccepted ? 
-                        <Check className="text-green-500 h-5 w-5" /> : 
-                        'No'
-                      }</span>
-                    </div>
                   </div>
                 )}
                 
                 <div className="mt-6">
                   <Button 
                     onClick={() => {
-                      window.location.href = '/onboarding?step=email';
+                      window.location.href = '/settings?tab=email';
                     }}
                   >
-                    Update Email Settings
+                    {settings?.isConfigured ? "Update Email Settings" : "Set Up Email"}
                   </Button>
                 </div>
               </div>
@@ -206,44 +156,165 @@ export default function EmailOutreachPage() {
         </div>
       </div>
       
-      {settings?.isConfigured ? (
-        <div className="space-y-6">
-          {!settings.isVerified && (
-            <Alert className="mb-6 bg-amber-50 border-amber-200">
-              <AlertTitle>Email Not Verified</AlertTitle>
-              <AlertDescription>
-                Your email address is not verified. Please verify your email to ensure reliable delivery.
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-amber-700 underline ml-2"
-                  onClick={() => {
-                    window.location.href = '/settings?tab=email';
-                  }}
-                >
-                  Verify now
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <OutreachTable 
-            emails={emails} 
-            isLoading={emailsLoading} 
-            onRefresh={refreshEmails} 
-          />
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg border shadow-sm p-8 text-center">
-          <Inbox className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Email Setup Required</h2>
-          <p className="text-muted-foreground mb-6">
-            To use email outreach features, you need to configure your email settings first.
-          </p>
-          <Button size="lg" onClick={() => window.location.href = '/onboarding?step=email'}>
-            Set Up Email
-          </Button>
-        </div>
+      {showEmailSetupAlert && (
+        <Alert className="mb-6 bg-blue-50 border-blue-200">
+          <AlertTitle>Email Setup Recommended</AlertTitle>
+          <AlertDescription className="flex items-center justify-between">
+            <div>
+              <p className="mb-2">
+                Setting up email will enable direct email outreach capabilities, but you can still use other outreach methods.
+              </p>
+              <p className="text-sm text-blue-700">
+                Configure your preferred email provider (SendGrid, SMTP, or Gmail) to enable email outreach features.
+              </p>
+            </div>
+            <Button 
+              size="sm"
+              className="whitespace-nowrap"
+              onClick={() => window.location.href = '/settings?tab=email'}
+            >
+              Set Up Email
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
+      
+      <div className="space-y-6">
+        <Tabs defaultValue="outreach" className="w-full">
+          <TabsList className="w-full mb-6">
+            <TabsTrigger value="outreach">Outreach Dashboard</TabsTrigger>
+            <TabsTrigger value="email-history">Email History</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="outreach">
+            <div className="grid grid-cols-1 gap-8">
+              {settings?.isConfigured ? (
+                <>
+                  <OutreachTable 
+                    emails={emails || []} 
+                    isLoading={emailsLoading} 
+                    onRefresh={refreshEmails} 
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="bg-white rounded-lg border shadow-sm p-6">
+                    <h2 className="text-xl font-semibold mb-4">Multi-Channel Outreach</h2>
+                    <p className="text-muted-foreground mb-6">
+                      Reach out to opportunities through multiple channels including social media, contact forms, and more.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="border rounded-lg p-4 bg-blue-50">
+                        <h3 className="text-lg font-medium mb-2 flex items-center">
+                          <Mail className="h-5 w-5 mr-2 text-blue-600" />
+                          Email Outreach
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-3">Send personalized emails directly from the platform.</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-blue-700 border-blue-300"
+                          onClick={() => window.location.href = '/settings?tab=email'}
+                        >
+                          Set Up Email
+                        </Button>
+                      </div>
+                      
+                      <div className="border rounded-lg p-4">
+                        <h3 className="text-lg font-medium mb-2 flex items-center">
+                          <MessageSquare className="h-5 w-5 mr-2 text-purple-600" />
+                          Social Media Outreach
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-3">Connect via LinkedIn, Twitter and other platforms.</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // This would normally navigate to a social media outreach page
+                            // For now, we'll just show a toast
+                            toast({
+                              title: "Social Media Outreach",
+                              description: "This feature is available now. Visit the opportunity details to use it."
+                            });
+                          }}
+                        >
+                          Available Now
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="email-history">
+            {settings?.isConfigured ? (
+              <OutreachTable 
+                emails={emails || []} 
+                isLoading={emailsLoading} 
+                onRefresh={refreshEmails} 
+              />
+            ) : (
+              <div className="bg-white rounded-lg border shadow-sm p-8 text-center">
+                <Inbox className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h2 className="text-2xl font-semibold mb-2">Email History</h2>
+                <p className="text-muted-foreground mb-6">
+                  Set up email to see your outreach history and track responses.
+                </p>
+                <Button size="lg" onClick={() => window.location.href = '/settings?tab=email'}>
+                  Set Up Email
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="templates">
+            <div className="bg-white rounded-lg border shadow-sm p-6">
+              <h2 className="text-xl font-semibold mb-4">Outreach Templates</h2>
+              <p className="text-muted-foreground mb-6">
+                Create and manage templates for your outreach campaigns.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-lg font-medium mb-2">Email Templates</h3>
+                  <p className="text-sm text-gray-600 mb-3">Customizable email templates for different outreach scenarios.</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Email Templates",
+                        description: "Email templates are available on the opportunity details page."
+                      });
+                    }}
+                  >
+                    Available Now
+                  </Button>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-lg font-medium mb-2">Social Media Templates</h3>
+                  <p className="text-sm text-gray-600 mb-3">Templates for LinkedIn, Twitter, and other social platforms.</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Social Media Templates",
+                        description: "Social media templates are available on the opportunity details page."
+                      });
+                    }}
+                  >
+                    Available Now
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </Layout>
   );
 }
