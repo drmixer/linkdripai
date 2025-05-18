@@ -303,7 +303,7 @@ async function extractEmailsFromPage(url: string): Promise<string[]> {
   
   // First, extract from visible text content
   // Remove script and style elements which might contain false positives
-  const cleanedHtml = $.clone();
+  const cleanedHtml = cheerio.load($.html());
   cleanedHtml('script, style, noscript').remove();
   
   // Get text content
@@ -571,7 +571,8 @@ async function findContactPages(baseUrl: string): Promise<string[]> {
 }
 
 /**
- * Find a contact form URL on a website with improved detection
+ * Find a contact form URL on a website with significantly improved detection
+ * This enhanced version uses multiple techniques to identify contact forms and pages
  */
 async function findContactFormUrl(url: string): Promise<string | null> {
   try {
@@ -581,48 +582,200 @@ async function findContactFormUrl(url: string): Promise<string | null> {
     
     const $ = cheerio.load(mainHtml);
     
-    // Check if this page has a form
+    // More comprehensive form detection using multiple indicators
     if ($('form').length > 0) {
-      const title = $('title').text().toLowerCase();
-      const h1 = $('h1').text().toLowerCase();
-      
-      if (title.includes('contact') || h1.includes('contact') || 
-          url.toLowerCase().includes('contact')) {
-        return url;
+      const forms = $('form');
+      for (let i = 0; i < forms.length; i++) {
+        const form = forms.eq(i);
+        const action = form.attr('action') || '';
+        const id = form.attr('id') || '';
+        const className = form.attr('class') || '';
+        const method = form.attr('method') || '';
+        const name = form.attr('name') || '';
+        
+        // Check if form attributes suggest it's a contact form
+        const formAttributesIndicateContact = (
+          action.toLowerCase().includes('contact') ||
+          action.toLowerCase().includes('message') ||
+          action.toLowerCase().includes('feedback') ||
+          id.toLowerCase().includes('contact') ||
+          id.toLowerCase().includes('message') ||
+          id.toLowerCase().includes('feedback') ||
+          className.toLowerCase().includes('contact') ||
+          className.toLowerCase().includes('message') ||
+          className.toLowerCase().includes('feedback') ||
+          name.toLowerCase().includes('contact') ||
+          name.toLowerCase().includes('message') ||
+          name.toLowerCase().includes('feedback')
+        );
+        
+        // Check for contact form input fields
+        const hasEmailField = form.find('input[type="email"], input[name*="email"], input[id*="email"], input[class*="email"]').length > 0;
+        const hasNameField = form.find('input[name*="name"], input[id*="name"], input[placeholder*="name"]').length > 0;
+        const hasMessageField = form.find('textarea, input[name*="message"], input[id*="message"], div[contenteditable="true"]').length > 0;
+        const hasSubjectField = form.find('input[name*="subject"], select[name*="subject"], input[id*="subject"]').length > 0;
+        const hasPhoneField = form.find('input[type="tel"], input[name*="phone"], input[id*="phone"], input[placeholder*="phone"]').length > 0;
+        
+        // Check for submit button with contact-related text
+        const submitButtons = form.find('button[type="submit"], input[type="submit"], button, input[type="button"], a.button, .btn, .button');
+        let hasContactSubmitButton = false;
+        
+        submitButtons.each((_, element) => {
+          const buttonText = $(element).text().toLowerCase();
+          const buttonValue = $(element).attr('value')?.toLowerCase() || '';
+          if (
+            buttonText.includes('send') ||
+            buttonText.includes('submit') ||
+            buttonText.includes('contact') ||
+            buttonText.includes('message') ||
+            buttonValue.includes('send') ||
+            buttonValue.includes('submit') ||
+            buttonValue.includes('contact')
+          ) {
+            hasContactSubmitButton = true;
+          }
+        });
+        
+        // Check for CAPTCHA or reCAPTCHA elements (common in contact forms)
+        const hasCaptcha = form.find('[class*="captcha"], [id*="captcha"], [class*="recaptcha"], [id*="recaptcha"], [data-sitekey]').length > 0;
+        
+        // Check for honeypot fields (spam prevention technique used in contact forms)
+        const hasHoneypot = form.find('input[name*="honey"], input[name*="pot"], input[style*="display:none"]').length > 0;
+        
+        // Score the form based on contact form indicators (more comprehensive)
+        let contactFormScore = 0;
+        if (formAttributesIndicateContact) contactFormScore += 3;
+        if (hasEmailField) contactFormScore += 2;
+        if (hasNameField) contactFormScore += 1;
+        if (hasMessageField) contactFormScore += 2;
+        if (hasSubjectField) contactFormScore += 1;
+        if (hasPhoneField) contactFormScore += 1;
+        if (hasContactSubmitButton) contactFormScore += 2;
+        if (hasCaptcha) contactFormScore += 1;
+        if (hasHoneypot) contactFormScore += 1;
+        
+        // Check surrounding context for contact form hints
+        const formParent = form.parent();
+        const parentText = formParent.text().toLowerCase();
+        const nearHeadings = formParent.find('h1, h2, h3, h4, h5, h6').text().toLowerCase();
+        
+        if (
+          parentText.includes('contact') ||
+          parentText.includes('get in touch') ||
+          parentText.includes('send us a message') ||
+          parentText.includes('send a message') ||
+          nearHeadings.includes('contact') ||
+          nearHeadings.includes('get in touch')
+        ) {
+          contactFormScore += 2;
+        }
+        
+        // Check page title and URL for contact indicators
+        const title = $('title').text().toLowerCase();
+        const h1 = $('h1').text().toLowerCase();
+        
+        if (
+          title.includes('contact') ||
+          h1.includes('contact') ||
+          url.toLowerCase().includes('contact')
+        ) {
+          contactFormScore += 2;
+        }
+        
+        // If the form has enough contact form indicators (threshold of 4)
+        if (contactFormScore >= 4) {
+          return url; // This page contains a contact form
+        }
       }
     }
     
-    // Look for contact links
+    // Check if the page itself has contact indicators even without a formal <form>
+    // Some modern sites use JavaScript forms without traditional form elements
+    const pageTitle = $('title').text().toLowerCase();
+    const headings = $('h1, h2, h3').text().toLowerCase();
+    const bodyText = $('body').text().toLowerCase();
+    
+    if (
+      (pageTitle.includes('contact') || pageTitle.includes('get in touch')) &&
+      (bodyText.includes('email us') || bodyText.includes('send us') || bodyText.includes('message') || bodyText.includes('write to'))
+    ) {
+      return url; // This page is likely a contact page even without a traditional form
+    }
+    
+    // Look for JavaScript form handlers
+    const scriptTags = $('script').text();
+    if (
+      scriptTags.includes('contact') && 
+      (scriptTags.includes('form') || scriptTags.includes('submit') || scriptTags.includes('ajax')) &&
+      (scriptTags.includes('email') || scriptTags.includes('message'))
+    ) {
+      return url; // This page likely has a JavaScript-based contact form
+    }
+    
+    // Look for contact links with enhanced detection
     const contactLinks: string[] = [];
     $('a').each((_, element) => {
       const href = $(element).attr('href');
       const text = $(element).text().toLowerCase();
+      const aria = $(element).attr('aria-label')?.toLowerCase() || '';
+      const title = $(element).attr('title')?.toLowerCase() || '';
       
-      if (href && (text.includes('contact') || 
-                  text.includes('get in touch') || 
-                  text.includes('reach us'))) {
+      // Check text and attributes for contact indicators
+      if (href && (
+          text.includes('contact') || 
+          text.includes('get in touch') || 
+          text.includes('reach us') ||
+          text.includes('send message') ||
+          text.includes('send us') ||
+          text.includes('write to us') ||
+          text.includes('support') ||
+          aria.includes('contact') ||
+          title.includes('contact') ||
+          href.toLowerCase().includes('contact') ||
+          href.toLowerCase().includes('get-in-touch')
+      )) {
         try {
           // Convert relative to absolute URL
           let fullUrl = new URL(href, url).href;
-          contactLinks.push(fullUrl);
+          if (!contactLinks.includes(fullUrl)) {
+            contactLinks.push(fullUrl);
+          }
         } catch (error) {
           // Skip invalid URLs
         }
       }
     });
     
-    // Try to find a form on the contact links
+    // Try to find a form on the contact links with enhanced detection
     for (const link of contactLinks) {
       const contactHtml = await fetchHtml(link);
       if (contactHtml) {
         const $contact = cheerio.load(contactHtml);
+        
+        // Check for forms
         if ($contact('form').length > 0) {
+          return link;
+        }
+        
+        // Check if it's obviously a contact page
+        const contactTitle = $contact('title').text().toLowerCase();
+        const contactH1 = $contact('h1').text().toLowerCase();
+        const contactH2 = $contact('h2').text().toLowerCase();
+        
+        if (
+          contactTitle.includes('contact') || 
+          contactH1.includes('contact') || 
+          contactH2.includes('contact') ||
+          contactTitle.includes('get in touch') || 
+          contactH1.includes('get in touch') || 
+          contactH2.includes('get in touch')
+        ) {
           return link;
         }
       }
     }
     
-    // Check common contact paths
+    // Check common contact paths with enhanced detection
     const urlObj = new URL(cleanupUrl(url));
     const domain = urlObj.hostname;
     const protocol = urlObj.protocol;
@@ -635,7 +788,9 @@ async function findContactFormUrl(url: string): Promise<string | null> {
 }
 
 /**
- * Check common contact paths for a contact form
+ * Check common contact paths for a contact form with enhanced detection capabilities
+ * This function uses a sophisticated scoring system to identify contact pages
+ * even when they don't have a traditional <form> element
  */
 async function checkCommonContactPaths(protocol: string, domain: string, paths: string[]): Promise<string | null> {
   for (const path of paths) {
@@ -645,7 +800,82 @@ async function checkCommonContactPaths(protocol: string, domain: string, paths: 
       
       if (html) {
         const $ = cheerio.load(html);
+        
+        // First check for traditional forms
         if ($('form').length > 0) {
+          // Score the page as a contact page
+          let contactScore = 0;
+          
+          // Check page title and headings
+          const title = $('title').text().toLowerCase();
+          const h1 = $('h1').text().toLowerCase();
+          const h2 = $('h2').text().toLowerCase();
+          const bodyText = $('body').text().toLowerCase();
+          
+          // Check for contact-related terms in page title and headings
+          if (title.includes('contact') || title.includes('get in touch')) contactScore += 3;
+          if (h1.includes('contact') || h1.includes('get in touch')) contactScore += 2;
+          if (h2.includes('contact') || h2.includes('get in touch')) contactScore += 1;
+          
+          // Check for contact form fields
+          const hasEmailField = $('input[type="email"], input[name*="email"], input[id*="email"]').length > 0;
+          const hasMessageField = $('textarea, [name*="message"]').length > 0;
+          const hasNameField = $('input[name*="name"]').length > 0;
+          
+          if (hasEmailField) contactScore += 2;
+          if (hasMessageField) contactScore += 2;
+          if (hasNameField) contactScore += 1;
+          
+          // Check for submission buttons
+          const hasSubmitButton = $('button[type="submit"], input[type="submit"]').length > 0;
+          if (hasSubmitButton) contactScore += 1;
+          
+          // Check for CAPTCHA elements (common in contact forms)
+          const hasCaptcha = $('[class*="captcha"], [id*="captcha"], [data-sitekey]').length > 0;
+          if (hasCaptcha) contactScore += 1;
+          
+          // If the URL contains contact-related terms
+          if (path.includes('contact') || path.includes('reach-us') || path.includes('get-in-touch')) {
+            contactScore += 2;
+          }
+          
+          // If the score is high enough, it's likely a contact form
+          if (contactScore >= 3) {
+            return contactUrl;
+          }
+        }
+        
+        // Even if no form is found, check if the page content strongly indicates it's a contact page
+        // Modern sites may use JavaScript forms without traditional <form> tags
+        const bodyText = $('body').text().toLowerCase();
+        const pageTitle = $('title').text().toLowerCase();
+        
+        // Strong signals of a contact page without a traditional form
+        if (
+          (pageTitle.includes('contact') || pageTitle.includes('get in touch') || 
+           path.includes('contact') || path.includes('get-in-touch')) &&
+          (
+            bodyText.includes('email us') || 
+            bodyText.includes('send us a message') || 
+            bodyText.includes('get in touch') || 
+            bodyText.includes('contact us') ||
+            $('input[type="email"]').length > 0 ||
+            $('[class*="contact-"], [id*="contact-"]').length > 0
+          )
+        ) {
+          return contactUrl;
+        }
+        
+        // Look for contact information presentation
+        if (
+          (path.includes('contact') || path.includes('about')) &&
+          (
+            $('a[href^="mailto:"]').length > 0 ||
+            bodyText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/) ||
+            $('a[href^="tel:"]').length > 0 ||
+            bodyText.match(/\+?[0-9\s\(\)\-\.]{10,20}/) // Phone number pattern
+          )
+        ) {
           return contactUrl;
         }
       }
@@ -654,7 +884,7 @@ async function checkCommonContactPaths(protocol: string, domain: string, paths: 
     }
     
     // Small delay between requests
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 200)); // Further reduced delay for faster processing
   }
   
   return null;
