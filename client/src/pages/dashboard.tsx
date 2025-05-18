@@ -366,15 +366,37 @@ export default function Dashboard() {
             {opportunities
               .slice(0, 6)
               .filter((opp: any) => !opp.isHidden)
-              .map((opportunity: any) => (
-                <DripOpportunityCard
-                  key={opportunity.id}
-                  opportunity={opportunity}
-                  onEmail={() => handleEmailClick(opportunity)}
-                  onHide={() => handleHideOpportunity(opportunity.id)}
-                  onStar={() => handleStarOpportunity(opportunity.id)}
-                />
-              ))}
+              .map((prospect: any) => {
+                // Map Prospect to DiscoveredOpportunity 
+                const opportunity: DiscoveredOpportunity = {
+                  id: prospect.id,
+                  siteName: prospect.siteName || '',
+                  siteType: prospect.siteType || '',
+                  domain: prospect.domain || '',
+                  url: prospect.url || '',
+                  domainAuthority: prospect.domainAuthority || '0',
+                  pageAuthority: prospect.pageAuthority || '0',
+                  spamScore: prospect.spamScore || '0',
+                  description: prospect.description || '',
+                  category: prospect.category || '',
+                  relevanceScore: prospect.relevanceScore || 0,
+                  isPremium: prospect.isPremium || false,
+                  matchExplanation: prospect.matchExplanation || {},
+                  websiteId: prospect.websiteId || 1,
+                  niche: prospect.niche || '',
+                  createdAt: prospect.createdAt || null,
+                  contactInfo: prospect.contactInfo || null
+                };
+                
+                return (
+                  <OpportunityCard 
+                    key={prospect.id} 
+                    opportunity={opportunity}
+                    websiteId={prospect.websiteId || 1}
+                    onContactClick={() => handleEmailClick(prospect)}
+                  />
+                );
+              })}
           </div>
         ) : (
           <Card className="p-8 text-center">
