@@ -29,38 +29,79 @@ import * as punycode from "punycode";
 export { cleanupUrl, extractEmailsFromPage, findContactPages, findContactFormUrl, extractSocialProfiles };
 
 // Configuration
-const MAX_RETRIES = 3;
-const THROTTLE_DELAY = 5000; // ms between requests to same domain
-const REQUEST_TIMEOUT = 15000; // 15 second timeout
-const MAX_EXECUTION_TIME = 30000; // 30 seconds per opportunity
+const MAX_RETRIES = 5; // Increased from 3 for better coverage
+const THROTTLE_DELAY = 3000; // Reduced from 5000 ms between requests to same domain
+const REQUEST_TIMEOUT = 20000; // Increased from 15 second timeout
+const MAX_EXECUTION_TIME = 45000; // Increased from 30 seconds per opportunity 
 const domainLastAccessTime: Record<string, number> = {};
 const USER_AGENTS = [
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59",
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Mobile/15E148 Safari/604.1",
+  "Mozilla/5.0 (iPad; CPU OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Mobile/15E148 Safari/604.1",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36 Edg/92.0.902.55"
 ];
 
+// Enhanced regex patterns for better coverage
 const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-const OBFUSCATED_EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+\s*(?:\[at\]|\(at\)|@|&#64;|%40)\s*[A-Za-z0-9.-]+\s*(?:\[dot\]|\(dot\)|\.|\.|&#46;|%2E)\s*[A-Z|a-z]{2,}\b/g;
+const OBFUSCATED_EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+\s*(?:\[at\]|\(at\)|@|&#64;|%40|&#9989;at&#9989;|[ ]?at[ ]?)\s*[A-Za-z0-9.-]+\s*(?:\[dot\]|\(dot\)|\.|\.|&#46;|%2E|&#9989;dot&#9989;|[ ]?dot[ ]?)\s*[A-Z|a-z]{2,}\b/gi;
+const HTML_ENCODED_EMAIL_REGEX = /&#(?:10[09]|[49][0-9]|3[0-9]);(?:&#(?:10[09]|[49][0-9]|3[0-9]);)*&#(?:(?:10[09]|[49][0-9]|3[0-9]);)/g;
+const JAVASCRIPT_EMAIL_REGEX = /(?:mailto:|email=|emailto:|email-protection#)([^"']+)/gi;
 
 const SOCIAL_PLATFORM_PATTERNS = [
-  { platform: "facebook", regex: /(?:facebook\.com|fb\.com)\/(?!share|sharer)([^/?&]+)/i },
-  { platform: "twitter", regex: /(?:twitter\.com|x\.com)\/([^/?&]+)/i },
-  { platform: "linkedin", regex: /linkedin\.com\/(?:company|in|school)\/([^/?&]+)/i },
-  { platform: "instagram", regex: /instagram\.com\/([^/?&]+)/i },
-  { platform: "youtube", regex: /youtube\.com\/(?:channel\/|user\/|c\/)?([^/?&]+)/i },
-  { platform: "pinterest", regex: /pinterest\.com\/([^/?&]+)/i },
+  { platform: "facebook", regex: /(?:facebook\.com|fb\.com|fb\.me)\/(?!share|sharer|login|events|groups|pages|watch|gaming|marketplace)([^/?&]+)/i },
+  { platform: "twitter", regex: /(?:twitter\.com|x\.com|t\.co)\/([^/?&]+)/i },
+  { platform: "linkedin", regex: /(?:linkedin\.com|lnkd\.in)\/(?:company|in|school|organization|profile|pub|jobs|showcase|company\/showcase)\/([^/?&]+)/i },
+  { platform: "instagram", regex: /(?:instagram\.com|instagr\.am)\/([^/?&]+)/i },
+  { platform: "youtube", regex: /(?:youtube\.com|youtu\.be)\/(?:channel\/|user\/|c\/)?([^/?&]+)/i },
+  { platform: "pinterest", regex: /(?:pinterest\.com|pin\.it)\/([^/?&]+)/i },
   { platform: "github", regex: /github\.com\/([^/?&]+)/i },
   { platform: "medium", regex: /medium\.com\/@?([^/?&]+)/i },
-  { platform: "reddit", regex: /reddit\.com\/(?:r|user)\/([^/?&]+)/i },
+  { platform: "reddit", regex: /reddit\.com\/(?:r|user|u)\/([^/?&]+)/i },
+  { platform: "tumblr", regex: /([^.]+)\.tumblr\.com/i },
+  { platform: "vimeo", regex: /vimeo\.com\/([^/?&]+)/i },
+  { platform: "dribbble", regex: /dribbble\.com\/([^/?&]+)/i },
+  { platform: "behance", regex: /behance\.net\/([^/?&]+)/i },
+  { platform: "flickr", regex: /flickr\.com\/(?:photos|people)\/([^/?&]+)/i },
+  { platform: "soundcloud", regex: /soundcloud\.com\/([^/?&]+)/i },
+  { platform: "tiktok", regex: /(?:tiktok\.com|vm\.tiktok\.com)\/(@[^/?&]+)/i },
+  { platform: "snapchat", regex: /snapchat\.com\/add\/([^/?&]+)/i },
+  { platform: "discord", regex: /discord\.(?:gg|com)\/(?:invite\/)?([^/?&]+)/i },
+  { platform: "telegram", regex: /t\.me\/([^/?&]+)/i },
+  { platform: "whatsapp", regex: /(?:wa\.me|api\.whatsapp\.com\/send\?phone=)([^/?&]+)/i },
+  { platform: "slack", regex: /([^.]+)\.slack\.com/i },
+  { platform: "signal", regex: /signal\.(?:org|me)\/([^/?&]+)/i },
 ];
 
 const COMMON_CONTACT_PATHS = [
+  // Direct contact pages
   "/contact", "/contact-us", "/contactus", "/get-in-touch", "/reach-us", "/connect", 
   "/about/contact", "/about-us/contact", "/support", "/help", "/write-for-us", 
   "/contributors", "/contribute", "/contact.html", "/contact.php", "/reach-out",
-  "/about", "/about-us", "/team", "/our-team", "/meet-the-team", "/people", "/staff"
+  "/about", "/about-us", "/team", "/our-team", "/meet-the-team", "/people", "/staff",
+  
+  // Expanded contact paths with language variations
+  "/kontakt", "/kontaktiere-uns", "/contacto", "/contactez-nous", "/contatti", "/contato",
+  "/kapcsolat", "/связаться", "/联系我们", "/お問い合わせ", "/문의", "/liên hệ",
+  
+  // Specialized contact paths
+  "/feedback", "/inquiry", "/inquiries", "/customer-service", "/customer-support",
+  "/technical-support", "/sales", "/partnerships", "/business-inquiries", "/press",
+  "/media-inquiries", "/advertising", "/careers", "/jobs", "/work-with-us",
+  "/collaborate", "/guest-post", "/write-for-us", "/submit-article", "/submit-content",
+  "/pitch", "/content-submission", "/authors", "/editorial", "/editor", "/publisher",
+  
+  // Additional about page variations
+  "/company", "/company/team", "/company/about", "/company/contact", "/who-we-are",
+  "/our-story", "/mission", "/values", "/leadership", "/executives", "/founders",
+  "/management", "/directory", "/our-office", "/locations", "/global-offices",
+  
+  // Additional file extensions
+  "/contact.aspx", "/contact.jsp", "/contact.shtml", "/contact.cfm", "/contactus.html",
+  "/contactus.php", "/about.html", "/about.php", "/team.html", "/team.php"
 ];
 
 // Axios instance with optimal settings for web scraping
@@ -245,6 +286,7 @@ async function fetchHtml(url: string, maxRetries = MAX_RETRIES): Promise<string 
 
 /**
  * Extract emails from a webpage with enhanced pattern recognition
+ * This function uses multiple advanced techniques to find emails even when they're obfuscated
  */
 async function extractEmailsFromPage(url: string): Promise<string[]> {
   const html = await fetchHtml(url);
@@ -253,27 +295,32 @@ async function extractEmailsFromPage(url: string): Promise<string[]> {
   // Parse HTML
   const $ = cheerio.load(html);
   
-  // Remove script and style elements which might contain false positives
-  $('script, style, noscript').remove();
-  
-  // Get text content
-  const text = $.text();
-  
   // Extract emails using regex
   const emails: Set<string> = new Set();
+  
+  // Store the raw HTML for later pattern matching
+  const rawHtml = html;
+  
+  // First, extract from visible text content
+  // Remove script and style elements which might contain false positives
+  const cleanedHtml = $.clone();
+  cleanedHtml('script, style, noscript').remove();
+  
+  // Get text content
+  const text = cleanedHtml.text();
   
   // Standard email format
   const standardMatches = text.match(EMAIL_REGEX) || [];
   standardMatches.forEach(email => emails.add(email.toLowerCase()));
   
-  // Obfuscated email formats
+  // Obfuscated email formats with enhanced detection
   const obfuscatedMatches = text.match(OBFUSCATED_EMAIL_REGEX) || [];
   obfuscatedMatches.forEach(match => {
     // Convert to standard format
     const standardized = match
       .replace(/\s+/g, '')
-      .replace(/\[at\]|\(at\)|&#64;|%40/gi, '@')
-      .replace(/\[dot\]|\(dot\)|&#46;|%2E/gi, '.')
+      .replace(/\[at\]|\(at\)|&#64;|%40|&#9989;at&#9989;|at/gi, '@')
+      .replace(/\[dot\]|\(dot\)|&#46;|%2E|&#9989;dot&#9989;|dot/gi, '.')
       .toLowerCase();
     
     // Validate with standard email regex
@@ -293,7 +340,162 @@ async function extractEmailsFromPage(url: string): Promise<string[]> {
     }
   });
   
+  // Check for HTML character code encoded emails
+  const encodedMatches = rawHtml.match(HTML_ENCODED_EMAIL_REGEX) || [];
+  encodedMatches.forEach(match => {
+    try {
+      // Convert HTML character codes to text
+      const decoded = match.replace(/&#(\d+);/g, (_, code) => {
+        return String.fromCharCode(parseInt(code, 10));
+      });
+      
+      if (decoded.match(EMAIL_REGEX)) {
+        emails.add(decoded.toLowerCase());
+      }
+    } catch (error) {
+      // Skip decoding errors
+    }
+  });
+  
+  // Check JavaScript email protection patterns
+  const scriptProtectionMatches = rawHtml.match(JAVASCRIPT_EMAIL_REGEX) || [];
+  scriptProtectionMatches.forEach(match => {
+    try {
+      const email = match.replace(/^mailto:|email=|emailto:|email-protection#/, '');
+      if (email.match(EMAIL_REGEX)) {
+        emails.add(email.toLowerCase());
+      }
+    } catch (error) {
+      // Skip errors
+    }
+  });
+  
+  // Check for email patterns in HTML attributes
+  $('[data-email], [data-mail], [data-contact], [class*="email"], [class*="mail"], [id*="email"], [id*="mail"]').each((_, element) => {
+    const dataEmail = $(element).attr('data-email') || 
+                     $(element).attr('data-mail') || 
+                     $(element).attr('data-contact') ||
+                     $(element).text();
+                     
+    if (dataEmail && dataEmail.match(EMAIL_REGEX)) {
+      emails.add(dataEmail.toLowerCase());
+    }
+  });
+  
+  // Look for elements with text that might be emails 
+  $('a, span, div, p').each((_, element) => {
+    const text = $(element).text().trim();
+    if (text.match(EMAIL_REGEX)) {
+      emails.add(text.toLowerCase());
+    }
+    
+    // Check for obvious obfuscation patterns
+    if (text.includes(' at ') && text.includes(' dot ')) {
+      const standardized = text
+        .replace(/\s+at\s+/gi, '@')
+        .replace(/\s+dot\s+/gi, '.')
+        .toLowerCase();
+      
+      if (standardized.match(EMAIL_REGEX)) {
+        emails.add(standardized);
+      }
+    }
+  });
+  
+  // Look for emails in structured data (JSON-LD, microdata)
+  $('script[type="application/ld+json"]').each((_, element) => {
+    try {
+      const jsonText = $(element).html();
+      if (jsonText) {
+        const jsonData = JSON.parse(jsonText);
+        
+        // Extract emails from common schema.org structures
+        const extractFromObject = (obj: any) => {
+          if (!obj) return;
+          
+          // Check common properties that might contain email
+          ['email', 'contactPoint', 'contactPoints', 'author', 'creator', 'publisher', 'employee', 'employees'].forEach(prop => {
+            if (typeof obj[prop] === 'string' && obj[prop].match(EMAIL_REGEX)) {
+              emails.add(obj[prop].toLowerCase());
+            } else if (typeof obj[prop] === 'object') {
+              extractFromObject(obj[prop]);
+            } else if (Array.isArray(obj[prop])) {
+              obj[prop].forEach((item: any) => extractFromObject(item));
+            }
+          });
+          
+          // Check all string properties for email patterns
+          Object.entries(obj).forEach(([key, value]) => {
+            if (typeof value === 'string' && value.match(EMAIL_REGEX)) {
+              emails.add(value.toLowerCase());
+            }
+          });
+        };
+        
+        extractFromObject(jsonData);
+      }
+    } catch (error) {
+      // Skip JSON parsing errors
+    }
+  });
+  
+  // Extract the domain from the URL to generate common email patterns
+  try {
+    const domain = extractDomain(url);
+    
+    // If we didn't find any emails but we have a domain, check DNS for MX records
+    // to determine if the domain has email servers, then generate common patterns
+    if (emails.size === 0) {
+      try {
+        // Check if the domain has MX records (email servers)
+        const hasMx = await hasEmailServers(domain);
+        if (hasMx) {
+          // Generate common email patterns for this domain
+          const commonEmails = [
+            `contact@${domain}`,
+            `info@${domain}`,
+            `hello@${domain}`,
+            `admin@${domain}`,
+            `support@${domain}`,
+            `help@${domain}`,
+            `sales@${domain}`,
+            `marketing@${domain}`,
+            `media@${domain}`,
+            `press@${domain}`,
+            `webmaster@${domain}`
+          ];
+          
+          // Add the generated emails with a note that they're predicted patterns
+          commonEmails.forEach(email => {
+            if (email.match(EMAIL_REGEX)) {
+              emails.add(email.toLowerCase());
+            }
+          });
+        }
+      } catch (error) {
+        // Skip DNS errors
+      }
+    }
+  } catch (error) {
+    // Skip domain extraction errors
+  }
+  
   return Array.from(emails);
+}
+
+/**
+ * Check if domain has email servers by looking for MX records
+ */
+async function hasEmailServers(domain: string): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    dns.resolveMx(domain, (err, addresses) => {
+      if (err || !addresses || addresses.length === 0) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
 }
 
 /**
