@@ -20,7 +20,8 @@ export function Logo({ size = 'md', className = '' }: LogoProps) {
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    navigate('/');
+    // Try direct navigation to dashboard as a more reliable approach
+    window.location.href = '/dashboard';
   };
 
   return (

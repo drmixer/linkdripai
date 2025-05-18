@@ -27,7 +27,16 @@ import AccountPage from "@/pages/account-page";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={LandingPage} />
+      <Route path="/" component={() => {
+        // Check if user is logged in through localStorage to avoid blank screens
+        const hasSession = localStorage.getItem('session') || sessionStorage.getItem('session');
+        if (hasSession) {
+          window.location.href = '/dashboard';
+          return null;
+        } else {
+          return <LandingPage />;
+        }
+      }} />
       <Route path="/pricing" component={PricingPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/drips" component={DripsSimplePage} />
