@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
-import { Check, Inbox, Settings, Loader2 } from 'lucide-react';
+import { Check, Inbox, Settings, Loader2, Mail, MessageSquare } from 'lucide-react';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
