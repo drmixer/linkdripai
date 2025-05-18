@@ -21,15 +21,11 @@ export function Logo({ size = 'md', className = '' }: LogoProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // Check if user is logged in by checking session storage
-    const hasSession = localStorage.getItem('session') || sessionStorage.getItem('session');
-    
-    // Direct to appropriate page based on login status
-    if (hasSession) {
-      window.location.href = '/dashboard';
-    } else {
-      window.location.href = '/auth';
-    }
+    // Use our dedicated session helper to check login status and navigate
+    import('@/lib/session-helper').then(module => {
+      const { isLoggedIn, navigateBasedOnAuth } = module;
+      navigateBasedOnAuth(isLoggedIn());
+    });
   };
 
   return (
