@@ -27,7 +27,10 @@ export class OpportunityCrawler {
   private continuousCrawlRunning: boolean = false;
   private continuousIntervalId: NodeJS.Timeout | null = null;
   private refreshIntervalId: NodeJS.Timeout | null = null;
-  private crawlDelay = 5000; // 5 seconds between requests to be respectful
+  private crawlDelay = 3000; // 3 seconds between requests (optimized from 5s)
+  private maxConcurrentRequests = 3; // Allow up to 3 concurrent requests
+  private activeCrawls = 0; // Track number of active crawls
+  private domainThrottleMap: Record<string, Record<string, number>> = {}; // Track domain throttling by service
   
   private userAgents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
@@ -986,9 +989,12 @@ export class OpportunityCrawler {
         // Keep track of URLs we've already visited
         const visitedUrls = new Set<string>();
         
-        // Process each start URL
-        for (const url of startUrls) {
-          if (visitedUrls.has(url)) continue;
+        // Process URLs concurrently with limits
+        const processUrl = async (url: string) => {
+          if (visitedUrls.has(url)) {
+            this.activeCrawls--;
+            return;
+          }
           visitedUrls.add(url);
           
           results.crawled++;
@@ -997,13 +1003,15 @@ export class OpportunityCrawler {
             // Use the specified max crawl depth
             const result = await this.crawlUrl(url, 0, maxCrawlDepth);
             
+            this.activeCrawls--; // Decrease active crawls counter
+            
             if (result.status === 'error') {
               results.errors++;
               results.details.push({
                 url,
                 error: result.error,
               });
-              continue;
+              return;
             }
             
             // Check if it's a valid opportunity with more comprehensive quality filtering
