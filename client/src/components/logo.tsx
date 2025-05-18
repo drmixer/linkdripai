@@ -18,10 +18,17 @@ export function Logo({ size = 'md', className = '' }: LogoProps) {
     lg: 'h-56 w-auto',
   };
 
+  const [location] = useLocation();
+  
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // Use our dedicated session helper to check login status and navigate
+    // If we're on the landing page, don't navigate away
+    if (location === '/' || location === '') {
+      return; // Stay on the landing page
+    }
+    
+    // For other pages, use session helper to check login status and navigate
     import('@/lib/session-helper').then(module => {
       const { isLoggedIn, navigateBasedOnAuth } = module;
       navigateBasedOnAuth(isLoggedIn());
