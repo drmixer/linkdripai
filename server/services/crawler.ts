@@ -1578,6 +1578,19 @@ export class OpportunityCrawler {
         'https://adamenfroy.com/resources',
         'https://www.robbierichards.com/resources/',
         'https://www.indiehackers.com/resources',
+        // New additions - high-quality marketing and SEO resources
+        'https://yoast.com/seo-blog/resources/',
+        'https://www.searchenginewatch.com/category/resources/',
+        'https://www.searchmetrics.com/resources/',
+        'https://www.seerinteractive.com/resources/',
+        'https://www.quicksprout.com/resources/',
+        'https://growandconvert.com/resources/',
+        'https://www.webfx.com/blog/web-design/web-design-resources/',
+        'https://blog.hubspot.com/marketing/free-marketing-resources',
+        'https://www.bluleadz.com/blog/hubspot-marketing-resources',
+        'https://www.impactbnd.com/blog/marketing-resources',
+        'https://www.conductor.com/learning-center/resources/',
+        'https://cxl.com/blog/category/guides-and-resources/',
         
         // Web development resources
         'https://css-tricks.com/guides/',
@@ -1684,6 +1697,18 @@ export class OpportunityCrawler {
         'https://buffer.com/resources/write-for-us/',
         'https://www.copyblogger.com/guest-post-guidelines/',
         'https://www.searchenginewatch.com/contact-us/',
+        // New high-quality guest post opportunities
+        'https://www.forbes.com/sites/groupthink/',
+        'https://www.inc.com/contributors.html',
+        'https://www.business2community.com/become-a-contributor',
+        'https://www.smartinsights.com/help-with-digital-marketing/submit-articles/',
+        'https://mashable.com/submit/',
+        'https://www.techcrunch.com/submit-your-startup/',
+        'https://www.wired.com/about/contribute-to-wired/',
+        'https://www.fastcompany.com/3029657/how-to-pitch-fastcompany-com',
+        'https://marketingland.com/how-to-contribute',
+        'https://thenextweb.com/about/#contact',
+        'https://www.adweek.com/contact-us/',
         
         // Social media and digital marketing
         'https://www.socialmediaexaminer.com/writers/',
@@ -1752,6 +1777,18 @@ export class OpportunityCrawler {
         'https://www.seohut.com/',
         'https://www.bigseo.com/',
         'https://www.cre8asiteforums.com/',
+        // Major tech and business forums
+        'https://www.reddit.com/r/SEO/',
+        'https://www.reddit.com/r/marketing/',
+        'https://www.reddit.com/r/content_marketing/',
+        'https://www.reddit.com/r/bigseo/',
+        'https://www.reddit.com/r/Entrepreneur/',
+        'https://www.reddit.com/r/startups/',
+        'https://www.quora.com/topic/Search-Engine-Optimization-SEO',
+        'https://www.quora.com/topic/Content-Marketing',
+        'https://www.quora.com/topic/Digital-Marketing',
+        'https://stackoverflow.com/questions/tagged/seo',
+        'https://community.ahrefs.com/',
         
         // Tech and startup communities
         'https://www.producthunt.com/',
