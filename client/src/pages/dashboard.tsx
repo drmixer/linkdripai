@@ -378,20 +378,113 @@ export default function Dashboard() {
             ))}
           </div>
         ) : opportunities && opportunities.length > 0 ? (
-          <div className={viewMode === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-            : "flex flex-col space-y-3"
-          }>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredOpportunities
               .slice(0, 6)
-              .map((opportunity: any) => (
-                <OpportunityCard
-                  key={opportunity.id}
-                  opportunity={opportunity}
-                  isPremium={opportunity.isPremium}
-                  websiteId={opportunity.websiteId || (websites && websites[0]?.id) || 1}
-                  onContactClick={handleEmailClick}
-                />
+              .map((opp: any) => (
+                <Card key={opp.id} className={`overflow-hidden ${opp.isPremium ? 'border-purple-200 bg-purple-50/30' : ''}`}>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-sm truncate">
+                          {opp.domain || opp.url}
+                          {opp.isPremium && (
+                            <span className="inline-flex items-center ml-2">
+                              <Sparkles size={14} className="text-purple-500" />
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-xs text-slate-500 truncate">{opp.url}</p>
+                      </div>
+                      <Badge variant="outline" className={`whitespace-nowrap text-xs px-2 py-0 h-5 ${
+                        parseFloat(opp.domainAuthority) >= 40 ? 'bg-purple-100 text-purple-700 border-purple-200' : 
+                        parseFloat(opp.domainAuthority) >= 30 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                        'bg-blue-100 text-blue-700 border-blue-200'
+                      }`}>
+                        DA {parseFloat(opp.domainAuthority).toFixed(1)}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pb-3 pt-0">
+                    <div className="flex justify-between items-center gap-4 text-xs">
+                      <div className="flex items-center gap-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-1 cursor-help">
+                                <BarChart3 size={14} className="text-blue-500" />
+                                <span>{parseFloat(opp.pageAuthority || '0').toFixed(1)}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Page Authority</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-1 cursor-help">
+                                <AlertTriangle size={14} className={parseFloat(opp.spamScore || '5') <= 2 ? 'text-green-500' : parseFloat(opp.spamScore || '5') <= 4 ? 'text-amber-500' : 'text-red-500'} />
+                                <span>{parseFloat(opp.spamScore || '5').toFixed(1)}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Spam Score (lower is better)</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {opp.isSaved && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center">
+                                  <Star size={14} className="text-amber-500 fill-amber-500" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Saved opportunity</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="pt-0 flex justify-between">
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewDetails(opp)}
+                      >
+                        <Info size={14} className="mr-1" />
+                        Details
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleStarOpportunity(opp.id)}
+                      >
+                        <Star size={14} className={opp.isSaved ? "fill-amber-500 text-amber-500 mr-1" : "mr-1"} />
+                        {opp.isSaved ? 'Saved' : 'Save'}
+                      </Button>
+                    </div>
+                    <div>
+                      <Button 
+                        size="sm"
+                        onClick={() => handleEmailClick(opp)}
+                        disabled={!opp.contactInfo}
+                      >
+                        <Mail size={14} className="mr-1" />
+                        Contact
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
               ))}
           </div>
         ) : (
