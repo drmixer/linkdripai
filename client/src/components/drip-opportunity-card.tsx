@@ -8,6 +8,7 @@ import {
   Star
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
 
 interface DripOpportunityCardProps {
   opportunity: any;
@@ -110,7 +111,31 @@ export default function DripOpportunityCard({
               variant="ghost" 
               size="sm" 
               className="flex-1 mr-1"
-              onClick={() => {}}
+              onClick={() => {
+                // Save opportunity to favorites
+                fetch(`/api/opportunities/${opportunity.id}/favorite`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ websiteId })
+                })
+                .then(res => {
+                  if (res.ok) {
+                    toast({
+                      title: "Opportunity saved",
+                      description: "This opportunity has been saved to your favorites.",
+                    });
+                  } else {
+                    throw new Error("Failed to save opportunity");
+                  }
+                })
+                .catch(err => {
+                  toast({
+                    title: "Error saving opportunity",
+                    description: "There was a problem saving this opportunity.",
+                    variant: "destructive"
+                  });
+                });
+              }}
             >
               <Star className="h-4 w-4 mr-2" />
               Save
