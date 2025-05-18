@@ -21,6 +21,7 @@ export default function DripOpportunityCard({
   websiteId,
   onContactClick
 }: DripOpportunityCardProps) {
+  const { toast } = useToast();
   
   // Get color based on DA score
   const getDaColor = (score: number) => {
@@ -144,7 +145,9 @@ export default function DripOpportunityCard({
               variant="default"
               size="sm"
               className="flex-1 ml-1"
-              onClick={() => onContactClick && onContactClick(opportunity)}
+              onClick={() => onContactClick ? onContactClick(opportunity) : 
+                window.location.href = `/opportunities/${opportunity.id}?websiteId=${websiteId}`
+              }
             >
               <Info className="h-4 w-4 mr-2" />
               Details
