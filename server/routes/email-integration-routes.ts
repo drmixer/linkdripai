@@ -231,32 +231,23 @@ router.post('/api/email/send-outreach', requireAuth, async (req, res) => {
     if (req.user?.username === 'cocomoon') {
       console.log('Processing test outreach for cocomoon account');
       
-      // Create a test email record
-      const currentDate = new Date();
+      // For test account, we'll just simulate a successful email sending
+      // without actually inserting into the database
       
-      // Store the email message in the database
-      const [email] = await db.insert(emails)
-        .values({
-          userId: userId,
-          opportunityId: data.opportunityId,
-          websiteId: data.websiteId || null,
-          to: toEmail,
-          from: data.fromEmail || 'test@linkdripai.com',
-          subject: data.subject,
-          body: data.body,
-          status: 'sent',
-          sentAt: currentDate,
-          messageId: `test-${Date.now()}`,
-          provider: 'test',
-          metadata: { testMode: true }
+      // Update the opportunity status to 'contacted'
+      await db.update(discoveredOpportunities)
+        .set({ 
+          status: 'contacted',
+          statusNote: `Test email sent on ${new Date().toISOString()}`,
+          lastUpdated: new Date()
         })
-        .returning();
+        .where(eq(discoveredOpportunities.id, data.opportunityId));
       
       return res.json({ 
         success: true, 
         message: 'Email sent successfully (TEST MODE)',
-        messageId: email.messageId,
-        emailId: email.id
+        messageId: `test-${Date.now()}`,
+        emailId: 0
       });
     }
     
