@@ -79,13 +79,14 @@ export default function OpportunityCard({
   const hasContactMethods = hasContactEmail || hasContactForm;
   
   // Quality indicators - convert all to 0-100 scale for consistency
-  const domainAuthority = opportunity.domainAuthority || 0;
-  const daScore = Math.min(100, Math.round((domainAuthority / 100) * 100));
+  // Ensure we're parsing string values to numbers
+  const domainAuthority = parseFloat(opportunity.domainAuthority as string) || 0;
+  const daScore = Math.min(100, Math.round(domainAuthority));
   
-  const pageAuthority = opportunity.pageAuthority || 0;
-  const paScore = Math.min(100, Math.round((pageAuthority / 100) * 100));
+  const pageAuthority = parseFloat(opportunity.pageAuthority as string) || 0;
+  const paScore = Math.min(100, Math.round(pageAuthority));
   
-  const spamScore = opportunity.spamScore !== undefined ? opportunity.spamScore : 5;
+  const spamScore = parseFloat(opportunity.spamScore as string) || 5;
   const spamScoreFormatted = spamScore.toFixed(1);
   // Invert spam score for display (lower is better)
   const spamScorePercent = Math.max(0, Math.min(100, 100 - (spamScore * 10)));
