@@ -1,5 +1,6 @@
 import Layout from "@/components/layout";
 import OpportunityCard from "@/components/opportunity-card";
+import DripOpportunityCard from "@/components/drip-opportunity-card";
 import EmailGenerator from "@/components/email-generator";
 import SimpleSplashButton from "@/components/SimpleSplashButton";
 import SplashDialog from "@/components/splash-dialog";
@@ -382,85 +383,12 @@ export default function Dashboard() {
             {filteredOpportunities
               .slice(0, 6)
               .map((opp: any) => (
-                <Card key={opp.id} className={`overflow-hidden ${opp.isPremium ? 'border-purple-100' : ''}`}>
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-sm">{opp.domain || opp.url.split('/')[2]}</h3>
-                        <p className="text-xs text-slate-500 truncate">{opp.url}</p>
-                      </div>
-                      <Badge className={`${
-                        parseFloat(opp.domainAuthority) >= 40 ? 'bg-purple-100 text-purple-800' : 
-                        parseFloat(opp.domainAuthority) >= 30 ? 'bg-green-100 text-green-800' : 
-                        'bg-slate-100 text-slate-800'
-                      }`}>
-                        {parseFloat(opp.domainAuthority) >= 40 ? 'Premium' : 
-                         parseFloat(opp.domainAuthority) >= 30 ? 'High' : 'Standard'}
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      <div className="text-center p-2 bg-gray-50 rounded-md">
-                        <div className={`text-lg font-bold ${
-                          parseFloat(opp.domainAuthority) >= 40 ? 'text-purple-600' : 
-                          parseFloat(opp.domainAuthority) >= 30 ? 'text-green-600' : 
-                          'text-blue-600'
-                        }`}>
-                          {parseFloat(opp.domainAuthority).toFixed(1)}
-                        </div>
-                        <div className="text-xs text-gray-500">Domain Auth.</div>
-                      </div>
-                      <div className="text-center p-2 bg-gray-50 rounded-md">
-                        <div className="text-lg font-bold text-blue-600">
-                          {parseFloat(opp.pageAuthority || '0').toFixed(1)}
-                        </div>
-                        <div className="text-xs text-gray-500">Page Auth.</div>
-                      </div>
-                      <div className="text-center p-2 bg-gray-50 rounded-md">
-                        <div className={`text-lg font-bold ${
-                          parseFloat(opp.spamScore || '5') <= 2 ? 'text-green-600' : 
-                          parseFloat(opp.spamScore || '5') <= 4 ? 'text-amber-600' : 
-                          'text-red-600'
-                        }`}>
-                          {parseFloat(opp.spamScore || '5').toFixed(1)}
-                        </div>
-                        <div className="text-xs text-gray-500">Spam Score</div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between pt-2 border-t">
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewDetails(opp)}
-                        >
-                          <Info size={14} className="mr-1" />
-                          Details
-                        </Button>
-                        <Button
-                          variant={opp.isSaved ? "outline" : "ghost"}
-                          size="sm"
-                          className={opp.isSaved ? "bg-yellow-50 border-yellow-200 text-yellow-700" : ""}
-                          onClick={() => handleStarOpportunity(opp.id)}
-                          disabled={opp.isSaved}
-                        >
-                          <Star size={14} className={`mr-1 ${opp.isSaved ? "fill-yellow-400" : ""}`} />
-                          {opp.isSaved ? 'Saved' : 'Save'}
-                        </Button>
-                      </div>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleEmailClick(opp)}
-                        disabled={!opp.contactInfo}
-                      >
-                        <Mail size={14} className="mr-1" />
-                        Contact
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
+                <DripOpportunityCard 
+                  key={opp.id} 
+                  opportunity={opp}
+                  websiteId={selectedWebsiteId} 
+                  onContactClick={handleEmailClick}
+                />
               ))}
           </div>
         ) : (
