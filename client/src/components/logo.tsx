@@ -28,6 +28,12 @@ export function Logo({ size = 'md', className = '' }: LogoProps) {
       return; // Stay on the landing page
     }
     
+    // If we're on the auth page, go to landing page
+    if (location === '/auth') {
+      navigate('/');
+      return;
+    }
+    
     // For other pages, use session helper to check login status and navigate
     import('@/lib/session-helper').then(module => {
       const { isLoggedIn, navigateBasedOnAuth } = module;
