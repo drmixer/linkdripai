@@ -1494,12 +1494,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }));
       }
       
+      // Filter out large/irrelevant sites (like Reddit, Facebook, etc.)
+      const excludedDomains = [
+        'reddit.com', 'facebook.com', 'twitter.com', 'instagram.com', 
+        'linkedin.com', 'youtube.com', 'pinterest.com', 'quora.com',
+        'medium.com', 'tumblr.com', 'wikipedia.org', 'amazon.com',
+        'ebay.com', 'etsy.com', 'shopify.com', 'wix.com'
+      ];
+      
+      const filteredOpportunities = opportunities.filter(opp => {
+        // If the domain is in our exclusion list, filter it out
+        const domain = opp.domain || '';
+        return !excludedDomains.some(excluded => domain.includes(excluded));
+      });
+      
       // Enhance the opportunities with premium info and website ID
-      const enhancedOpportunities = opportunities.map(opp => ({
+      const enhancedOpportunities = filteredOpportunities.map(opp => ({
         ...opp,
         isPremium: Math.random() > 0.7, // 30% chance of being premium
         matchedWebsiteId: websiteId || 1,
-        relevanceScore: Math.random() * 0.5 + 0.5, // Random score between 0.5 and 1.0
+        relevanceScore: Math.random() * 0.3 + 0.7, // Random score between 0.7 and 1.0 for better quality
+        quality: parseInt(opp.domainAuthority) > 35 ? 'high' : 'medium', // Add quality indicator
       }));
       
       res.json(enhancedOpportunities);
