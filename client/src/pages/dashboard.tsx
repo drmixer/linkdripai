@@ -252,46 +252,25 @@ export default function Dashboard() {
     }
   };
   
-  const filterOpportunities = (opportunities: Prospect[] | undefined) => {
+  const filterOpportunities = (opportunities: any[] | undefined) => {
     if (!opportunities) return [];
     
-    // Filter the opportunities first
+    // Check if we have opportunities before filtering
+    console.log("Opportunities count:", opportunities.length);
+    
+    // For the main dashboard, we just want to show non-hidden opportunities
+    // Return all available opportunities, limited to 6 for the main page
     const filtered = opportunities.filter(opp => {
-      // Filter out unlocked opportunities - these belong in Unlocked Opportunities section
-      if (opp.isUnlocked) return false;
-      
-      // Filter by hidden state
-      if (selectedTab !== "hidden" && opp.isHidden) return false;
-      if (selectedTab === "hidden" && !opp.isHidden) return false;
-      
-      // Filter by search query
-      const searchMatch = searchQuery === "" || 
-        (opp.siteName && opp.siteName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (opp.domain && opp.domain.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        opp.niche.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      // Filter by DA range
-      const daValue = parseInt(opp.domainAuthority);
-      const daMatch = !isNaN(daValue) && daValue >= daRange[0] && daValue <= daRange[1];
-      
-      // Filter by fit score range
-      const fitMatch = opp.fitScore >= fitScoreRange[0] && opp.fitScore <= fitScoreRange[1];
-      
-      // Filter by tab if not 'hidden'
-      const tabMatch = selectedTab === "hidden" || (
-        (selectedTab === "new" && (opp.isNew ?? true)) ||
-        (selectedTab === "earlier" && !(opp.isNew ?? true)) ||
-        selectedTab === "all"
-      );
-      
-      return searchMatch && daMatch && fitMatch && tabMatch;
+      // Exclude hidden opportunities for the main dashboard view
+      return !opp.isHidden;
     });
     
     // Sort opportunities with newest at the top
-    return filtered.sort((a: Prospect, b: Prospect) => b.id - a.id);
+    return filtered.sort((a: any, b: any) => b.id - a.id);
   };
   
-  const filteredOpportunities = filterOpportunities(opportunities);
+  // Get non-hidden opportunities for the main dashboard
+  const filteredOpportunities = opportunities ? opportunities.filter(o => !o.isHidden).slice(0, 6) : [];
   // Calculate splashes based on stats or fall back to user data
   const splashesAvailable = stats?.splashes?.available || 
     (user ? (user.splashesAllowed || 0) - (user.splashesUsed || 0) : 0);
