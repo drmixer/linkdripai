@@ -332,8 +332,100 @@ export default function Dashboard() {
         </Card>
       </div>
       
-      {/* Top Bar */}
+      {/* Today's Opportunities */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Today's Opportunities</h2>
+        
+        {isLoadingOpportunities ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="shadow-sm">
+                <div className="p-4 flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="rounded-md bg-slate-200 h-10 w-10"></div>
+                      <div>
+                        <div className="h-4 w-20 bg-slate-200 rounded mb-2"></div>
+                        <div className="h-3 w-16 bg-slate-200 rounded"></div>
+                      </div>
+                    </div>
+                    <div className="h-6 w-16 bg-slate-200 rounded"></div>
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 w-full bg-slate-200 rounded"></div>
+                    <div className="h-4 w-2/3 bg-slate-200 rounded"></div>
+                  </div>
+                  <div className="h-9 bg-slate-200 rounded mt-4"></div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : opportunities && opportunities.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {opportunities.slice(0, 6).map((prospect: Prospect) => {
+              // Map Prospect to DiscoveredOpportunity
+              const opportunity: DiscoveredOpportunity = {
+                id: prospect.id,
+                siteName: prospect.siteName || '',
+                siteType: prospect.siteType || '',
+                domain: prospect.domain || '',
+                url: prospect.url || '',
+                domainAuthority: prospect.domainAuthority || '0',
+                pageAuthority: prospect.pageAuthority || '0',
+                spamScore: prospect.spamScore || '0',
+                description: prospect.description || '',
+                category: prospect.category || '',
+                relevanceScore: prospect.relevanceScore || 0,
+                isPremium: prospect.isPremium || false,
+                matchExplanation: prospect.matchExplanation || {},
+                websiteId: prospect.websiteId || 1,
+                niche: prospect.niche || '',
+                createdAt: prospect.createdAt || null,
+                contactInfo: prospect.contactInfo || null
+              };
+              
+              return (
+                <OpportunityCard 
+                  key={prospect.id} 
+                  opportunity={opportunity}
+                  websiteId={prospect.websiteId || 1}
+                  onContactClick={() => handleEmailClick(prospect)}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <Card className="p-8 text-center">
+            <CardContent>
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
+                <Sparkles className="h-6 w-6 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">No opportunities found</h3>
+              <p className="text-gray-500 mb-4">
+                We're working on finding new opportunities for you. Check back soon or try using a Splash to find premium opportunities right now.
+              </p>
+              <Button 
+                onClick={() => {
+                  if (splashesAvailable > 0) {
+                    setShowSplashConfirmationDialog(true);
+                  } else {
+                    setShowBuySplashesDialog(true);
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Use Splash
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+      
+      {/* All Opportunities Heading */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h2 className="text-xl font-semibold">All Opportunities</h2>
+        
         {/* Left side options */}
         <div className="flex items-center">
           <Button 
