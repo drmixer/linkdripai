@@ -123,9 +123,9 @@ export default function Dashboard() {
     },
   });
   
-  // Fetch AI-matched opportunities
+  // Fetch AI-matched opportunities for both dashboard and drips
   const { data: opportunities, isLoading: isLoadingOpportunities } = useQuery({
-    queryKey: ["/api/prospects/daily"],
+    queryKey: ["/api/prospects/daily", selectedWebsiteId],
     queryFn: async () => {
       // Using the AI-driven opportunities endpoint with improved quality filtering
       const selectedWebsiteId = getSelectedWebsiteId();
