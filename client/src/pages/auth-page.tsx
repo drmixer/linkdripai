@@ -74,6 +74,11 @@ export default function AuthPage() {
     },
   });
 
+  // Scroll to top when component mounts, especially when redirected from pricing page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     if (user) {
       // For existing users, go straight to dashboard
