@@ -27,8 +27,8 @@ export class OpportunityCrawler {
   private continuousCrawlRunning: boolean = false;
   private continuousIntervalId: NodeJS.Timeout | null = null;
   private refreshIntervalId: NodeJS.Timeout | null = null;
-  private crawlDelay = 2000; // 2 seconds between requests (optimized from 5s)
-  private maxConcurrentRequests = 5; // Allow up to 5 concurrent requests
+  private crawlDelay = 1500; // 1.5 seconds between requests (further optimized from 2s)
+  private maxConcurrentRequests = 8; // Allow up to 8 concurrent requests
   private activeCrawls = 0; // Track number of active crawls
   private domainThrottleMap: Record<string, Record<string, number>> = {}; // Track domain throttling by service
   
@@ -1345,18 +1345,18 @@ export class OpportunityCrawler {
           
           // Adjust strategy based on opportunity type and focus
           if (premiumTypes.includes(type)) {
-            numUrlsToUse = premiumFocus ? 8 : 6; // More seeds for premium types during premium focus hours
-            crawlDepth = highQualityFocus ? 4 : 3; // Even deeper crawl for premium types during high quality focus
+            numUrlsToUse = premiumFocus ? 15 : 10; // Significantly more seeds for premium types during premium focus hours
+            crawlDepth = highQualityFocus ? 5 : 4; // Much deeper crawl for premium types during high quality focus
           } else if (highValueTypes.includes(type)) {
-            numUrlsToUse = highQualityFocus ? 6 : 5;
-            crawlDepth = highQualityFocus ? 3 : 2;
+            numUrlsToUse = highQualityFocus ? 12 : 8;
+            crawlDepth = highQualityFocus ? 4 : 3;
           } else if (type === 'forum' && (premiumFocus || highQualityFocus)) {
             // Forums can yield high-quality opportunities if properly crawled
-            numUrlsToUse = 6;
-            crawlDepth = 3;
+            numUrlsToUse = 12;
+            crawlDepth = 4;
           } else {
-            numUrlsToUse = 4;
-            crawlDepth = 1; // Shallower crawl for supplementary types
+            numUrlsToUse = 8;
+            crawlDepth = 2; // Increased crawl for supplementary types to improve discovery
           }
           
           // Create a copy of the array to sample from
@@ -1848,6 +1848,26 @@ export class OpportunityCrawler {
         'https://backlinko.com/blog',
         'https://www.singlegrain.com/blog/',
         'https://bloggerspassion.com/blog/',
+        'https://www.gsqi.com/marketing-blog/',
+        'https://www.seoroundtable.com/',
+        'https://www.searchengineland.com/',
+        'https://contentmarketinginstitute.com/blog/',
+        'https://authorityhacker.com/blog/',
+        'https://www.matthewwoodward.co.uk/blog/',
+        // Additional high-quality marketing blogs
+        'https://www.similarweb.com/blog/',
+        'https://www.wordstream.com/blog',
+        'https://unbounce.com/blog/',
+        'https://www.gotchseo.com/blog/',
+        'https://www.crazyegg.com/blog/',
+        'https://www.copyblogger.com/blog/',
+        'https://buffer.com/resources',
+        'https://sproutsocial.com/insights/',
+        'https://www.socialmediaexaminer.com/',
+        'https://blog.hootsuite.com/',
+        'https://www.entrepreneur.com/topic/marketing',
+        'https://www.convinceandconvert.com/blog/',
+        'https://www.duct-tape-marketing.com/blog/',
         'https://rankmath.com/blog/',
         'https://yoast.com/seo-blog/',
         'https://cognitiveseo.com/blog/',
