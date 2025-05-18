@@ -20,8 +20,16 @@ export function Logo({ size = 'md', className = '' }: LogoProps) {
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Try direct navigation to dashboard as a more reliable approach
-    window.location.href = '/dashboard';
+    
+    // Check if user is logged in by checking session storage
+    const hasSession = localStorage.getItem('session') || sessionStorage.getItem('session');
+    
+    // Direct to appropriate page based on login status
+    if (hasSession) {
+      window.location.href = '/dashboard';
+    } else {
+      window.location.href = '/auth';
+    }
   };
 
   return (
