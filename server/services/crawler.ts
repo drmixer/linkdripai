@@ -27,8 +27,8 @@ export class OpportunityCrawler {
   private continuousCrawlRunning: boolean = false;
   private continuousIntervalId: NodeJS.Timeout | null = null;
   private refreshIntervalId: NodeJS.Timeout | null = null;
-  private crawlDelay = 3000; // 3 seconds between requests (optimized from 5s)
-  private maxConcurrentRequests = 3; // Allow up to 3 concurrent requests
+  private crawlDelay = 2000; // 2 seconds between requests (optimized from 5s)
+  private maxConcurrentRequests = 5; // Allow up to 5 concurrent requests
   private activeCrawls = 0; // Track number of active crawls
   private domainThrottleMap: Record<string, Record<string, number>> = {}; // Track domain throttling by service
   
@@ -965,7 +965,7 @@ export class OpportunityCrawler {
    * @param startUrls Array of seed URLs to start crawling from
    * @param maxCrawlDepth Maximum crawl depth (default: 2)
    */
-  async startDiscoveryCrawl(type: string, startUrls: string[], maxCrawlDepth: number = 2): Promise<CrawlerJob> {
+  async startDiscoveryCrawl(type: string, startUrls: string[], maxCrawlDepth: number = 3): Promise<CrawlerJob> {
     // Initialize the job
     const job = await this.initializeJob(type, startUrls.join(','));
     
