@@ -431,20 +431,48 @@ export default function Dashboard() {
                     <CardContent className="pb-3 pt-0">
                       <div className="flex justify-between items-center gap-4 text-xs">
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1 cursor-help">
-                            <BarChart3 size={14} className="text-blue-500" />
-                            <span>{parseFloat(opportunity.pageAuthority || '0').toFixed(1)}</span>
-                          </div>
-                          <div className="flex items-center gap-1 cursor-help">
-                            <AlertTriangle size={14} className={parseFloat(opportunity.spamScore || '5') <= 2 ? 'text-green-500' : parseFloat(opportunity.spamScore || '5') <= 4 ? 'text-amber-500' : 'text-red-500'} />
-                            <span>{parseFloat(opportunity.spamScore || '5').toFixed(1)}</span>
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 cursor-help">
+                                  <BarChart3 size={14} className="text-blue-500" />
+                                  <span>{parseFloat(opportunity.pageAuthority || '0').toFixed(1)}</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Page Authority</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 cursor-help">
+                                  <AlertTriangle size={14} className={parseFloat(opportunity.spamScore || '5') <= 2 ? 'text-green-500' : parseFloat(opportunity.spamScore || '5') <= 4 ? 'text-amber-500' : 'text-red-500'} />
+                                  <span>{parseFloat(opportunity.spamScore || '5').toFixed(1)}</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Spam Score (lower is better)</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                         <div className="flex items-center gap-1">
                           {opportunity.isSaved && (
-                            <div className="flex items-center">
-                              <Star size={14} className="text-amber-500 fill-amber-500" />
-                            </div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center">
+                                    <Star size={14} className="text-amber-500 fill-amber-500" />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Saved opportunity</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                       </div>
