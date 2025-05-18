@@ -362,37 +362,19 @@ export default function Dashboard() {
           </div>
         ) : opportunities && opportunities.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {opportunities.slice(0, 6).map((prospect: Prospect) => {
-              // Map Prospect to DiscoveredOpportunity
-              const opportunity: DiscoveredOpportunity = {
-                id: prospect.id,
-                siteName: prospect.siteName || '',
-                siteType: prospect.siteType || '',
-                domain: prospect.domain || '',
-                url: prospect.url || '',
-                domainAuthority: prospect.domainAuthority || '0',
-                pageAuthority: prospect.pageAuthority || '0',
-                spamScore: prospect.spamScore || '0',
-                description: prospect.description || '',
-                category: prospect.category || '',
-                relevanceScore: prospect.relevanceScore || 0,
-                isPremium: prospect.isPremium || false,
-                matchExplanation: prospect.matchExplanation || {},
-                websiteId: prospect.websiteId || 1,
-                niche: prospect.niche || '',
-                createdAt: prospect.createdAt || null,
-                contactInfo: prospect.contactInfo || null
-              };
-              
-              return (
-                <OpportunityCard 
-                  key={prospect.id} 
+            {/* Display only latest opportunities in the Today's section (up to 6) */}
+            {opportunities
+              .slice(0, 6)
+              .filter((opp: any) => !opp.isHidden)
+              .map((opportunity: any) => (
+                <DripOpportunityCard
+                  key={opportunity.id}
                   opportunity={opportunity}
-                  websiteId={prospect.websiteId || 1}
-                  onContactClick={() => handleEmailClick(prospect)}
+                  onEmail={() => handleEmailClick(opportunity)}
+                  onHide={() => handleHideOpportunity(opportunity.id)}
+                  onStar={() => handleStarOpportunity(opportunity.id)}
                 />
-              );
-            })}
+              ))}
           </div>
         ) : (
           <Card className="p-8 text-center">

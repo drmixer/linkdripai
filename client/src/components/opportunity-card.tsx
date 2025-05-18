@@ -74,8 +74,8 @@ export default function OpportunityCard({
   
   // Format contact info
   const contactInfo = opportunity.contactInfo || {};
-  const hasContactEmail = contactInfo.email;
-  const hasContactForm = contactInfo.form;
+  const hasContactEmail = contactInfo.emails && contactInfo.emails.length > 0;
+  const hasContactForm = contactInfo.contactForms && contactInfo.contactForms.length > 0;
   const hasContactMethods = hasContactEmail || hasContactForm;
   
   // Quality indicators - convert all to 0-100 scale for consistency

@@ -1509,13 +1509,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Enhance the opportunities with premium info and website ID
-      const enhancedOpportunities = filteredOpportunities.map(opp => ({
-        ...opp,
-        isPremium: Math.random() > 0.7, // 30% chance of being premium
-        matchedWebsiteId: websiteId || 1,
-        relevanceScore: Math.random() * 0.3 + 0.7, // Random score between 0.7 and 1.0 for better quality
-        quality: parseInt(opp.domainAuthority) > 35 ? 'high' : 'medium', // Add quality indicator
-      }));
+      const enhancedOpportunities = filteredOpportunities.map(opp => {
+        // Make premium opportunities much rarer (only ~5% of opportunities)
+        // Premium opportunities should typically have higher DA and lower spam score
+        const isPremiumByMetrics = 
+          parseInt(opp.domainAuthority) >= 40 && 
+          (parseInt(opp.spamScore) <= 2 || !opp.spamScore) &&
+          Math.random() > 0.95; // Only 5% random chance even with good metrics
+        
+        return {
+          ...opp,
+          isPremium: isPremiumByMetrics,
+          matchedWebsiteId: websiteId || 1,
+          relevanceScore: Math.random() * 0.3 + 0.7, // Random score between 0.7 and 1.0 for better quality
+          quality: parseInt(opp.domainAuthority) > 35 ? 'high' : 'medium', // Add quality indicator
+        };
+      });
       
       res.json(enhancedOpportunities);
     } catch (error: any) {
