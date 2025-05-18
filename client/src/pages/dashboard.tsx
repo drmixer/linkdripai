@@ -78,6 +78,7 @@ export default function Dashboard() {
   const [location] = useLocation();
   const { toast } = useToast();
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedTab, setSelectedTab] = useState("new");
@@ -225,6 +226,30 @@ export default function Dashboard() {
   const handleBulkHide = () => {
     if (selectedItems.length === 0) return;
     bulkHideMutation.mutate(selectedItems);
+  };
+  
+  // Handle viewing opportunity details 
+  const handleViewDetails = (opportunity: any) => {
+    setSelectedOpportunity(opportunity);
+  };
+  
+  // Handle starring/saving an opportunity
+  const handleStarOpportunity = async (opportunityId: number) => {
+    try {
+      await apiRequest("POST", `/api/opportunities/${opportunityId}/star`);
+      // Refresh data after starring
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects/daily"] });
+      toast({
+        title: "Success",
+        description: "Opportunity saved",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save opportunity",
+        variant: "destructive",
+      });
+    }
   };
   
   const filterOpportunities = (opportunities: Prospect[] | undefined) => {
