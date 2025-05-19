@@ -67,6 +67,7 @@ export default function OpportunitiesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [websiteFilter, setWebsiteFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [activeFilters, setActiveFilters] = useState<{
     minDA?: number;
     maxSpamScore?: number;
@@ -180,6 +181,11 @@ export default function OpportunitiesPage() {
       );
     }
     
+    // Filter saved only
+    if (showSavedOnly) {
+      filtered = filtered.filter(opp => opp.isSaved);
+    }
+    
     // Apply active filters if any
     if (activeFilters.minDA) {
       filtered = filtered.filter(opp => (opp.domainAuthority || 0) >= activeFilters.minDA!);
@@ -203,7 +209,7 @@ export default function OpportunitiesPage() {
     }
     
     return filtered;
-  }, [opportunities, websiteFilter, searchQuery, activeFilters, activeTab]);
+  }, [opportunities, websiteFilter, searchQuery, activeFilters, activeTab, showSavedOnly]);
   
   // Handle "use splash" action
   const handleUseSplash = (websiteId: number) => {
@@ -458,6 +464,15 @@ export default function OpportunitiesPage() {
                 ))}
               </SelectContent>
             </Select>
+            
+            <Button
+              variant={showSavedOnly ? "default" : "outline"}
+              className="gap-2"
+              onClick={() => setShowSavedOnly(!showSavedOnly)}
+            >
+              <Star size={16} className={showSavedOnly ? "fill-yellow-400" : ""} />
+              {showSavedOnly ? "Saved Only" : "Show Saved"}
+            </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
