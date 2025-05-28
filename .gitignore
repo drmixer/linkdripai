@@ -4,3 +4,10 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Supabase CLI config folder
+.supabase/
+
+# Supabase environment files (if you use separate ones)
+.env.supabase
+.env.supabase.local
