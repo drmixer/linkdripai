@@ -37,7 +37,7 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       secure: process.env.NODE_ENV === "production",
-    }
+    },
   };
 
   app.set("trust proxy", 1);
@@ -57,7 +57,7 @@ export function setupAuth(app: Express) {
       } catch (error) {
         return done(error);
       }
-    }),
+    })
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
@@ -72,19 +72,19 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      console.log("[DEBUG] Incoming registration:", req.body);
+
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
-      
-      // Extract the plan from the request
+
       const plan = req.body.plan || "Free Trial";
-      
-      // Set default credits and limits based on the plan
+
       let credits = 10;
       let totalCredits = 10;
       let dailyOpportunitiesLimit = 5;
-      
+
       if (plan === "Starter") {
         credits = 50;
         totalCredits = 50;
@@ -105,7 +105,7 @@ export function setupAuth(app: Express) {
         subscription: plan,
         credits,
         totalCredits,
-        dailyOpportunitiesLimit
+        dailyOpportunitiesLimit,
       });
 
       req.login(user, (err) => {
@@ -113,7 +113,8 @@ export function setupAuth(app: Express) {
         res.status(201).json(user);
       });
     } catch (error) {
-      next(error);
+      console.error("[ERROR] Registration failed:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
